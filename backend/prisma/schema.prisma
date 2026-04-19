@@ -1,0 +1,118 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  createdAt   DateTime @default(now())
+
+  // Relacionamentos
+  enrollments BaseEnrollment[]
+  uploads     NotebookUpload[]
+  materials   Material[]
+  posts       Post[]
+  comments    Comment[]
+  messages    Message[]
+}
+
+model Subject {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  semester    String
+
+  enrollments BaseEnrollment[]
+  uploads     NotebookUpload[]
+  materials   Material[]
+  posts       Post[]
+  messages    Message[]
+}
+
+model BaseEnrollment {
+  userId      String
+  subjectId   String
+  user        User    @relation(fields: [userId], references: [id])
+  subject     Subject @relation(fields: [subjectId], references: [id])
+
+  @@id([userId, subjectId])
+}
+
+model NotebookUpload {
+  id          String   @id @default(uuid())
+  imageUrl    String
+  category    String
+  description String?
+  createdAt   DateTime @default(now())
+
+  userId      String
+  subjectId   String
+  user        User    @relation(fields: [userId], references: [id])
+  subject     Subject @relation(fields: [subjectId], references: [id])
+}
+
+enum MaterialType {
+  AC
+  PO
+  REVISION
+}
+
+model Material {
+  id          String       @id @default(uuid())
+  fileUrl     String
+  fileType    String
+  type        MaterialType 
+  title       String
+  description String?
+  createdAt   DateTime     @default(now())
+
+  userId      String
+  subjectId   String
+  user        User    @relation(fields: [userId], references: [id])
+  subject     Subject @relation(fields: [subjectId], references: [id])
+}
+
+model Post {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  createdAt   DateTime @default(now())
+
+  userId      String
+  subjectId   String
+  user        User      @relation(fields: [userId], references: [id])
+  subject     Subject   @relation(fields: [subjectId], references: [id])
+  
+  comments    Comment[]
+}
+
+model Comment {
+  id          String   @id @default(uuid())
+  content     String
+  createdAt   DateTime @default(now())
+
+  postId      String
+  userId      String
+  post        Post   @relation(fields: [postId], references: [id])
+  user        User   @relation(fields: [userId], references: [id])
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  content     String
+  createdAt   DateTime @default(now())
+
+  subjectId   String
+  userId      String
+  subject     Subject @relation(fields: [subjectId], references: [id])
+  user        User    @relation(fields: [userId], references: [id])
+}
