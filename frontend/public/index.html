@@ -662,7 +662,7 @@
         <header>
             <div class="search-bar">
                 <i>🔍</i>
-                <input type="text" placeholder="Buscar matéria, professor ou tópico...">
+                <input type="text" id="global-search" oninput="handleSearch()" placeholder="Buscar matéria, professor ou tópico...">
             </div>
             <div style="display: flex; gap: 20px; align-items: center;">
                 <div style="text-align: right">
@@ -732,10 +732,25 @@
             <div class="form-group">
                 <label>Matéria</label>
                 <select id="up-subject">
-                    <option>Cálculo</option>
-                    <option>História</option>
-                    <option>Física</option>
+                    <option>Leitura e produção de textos</option>
+                    <option>Artes</option>
                     <option>Biologia</option>
+                    <option>Direito e Ética</option>
+                    <option>Educação Física</option>
+                    <option>Física</option>
+                    <option>Geografia</option>
+                    <option>Gramática da Língua Portuguesa</option>
+                    <option>Lógica de Programação</option>
+                    <option>Steam Maker</option>
+                    <option>Linguagem de Programação</option>
+                    <option>Literatura Lusófona</option>
+                    <option>Manutenção e Suporte de Computadores</option>
+                    <option>Matemática</option>
+                    <option>Química</option>
+                    <option>Robótica</option>
+                    <option>Sistemas Operacionais</option>
+                    <option>Tecnologias Interativas</option>
+                    <option>Web Design</option>
                 </select>
             </div>
             <div class="form-group">
@@ -789,27 +804,56 @@
         }
 
         function handleAuth(mode) {
-            let name = "Jefferson S."; // Default
+            let users = JSON.parse(localStorage.getItem('fecad_users') || '[]');
+            
             if(mode === 'signup') {
-                const signupName = document.getElementById('signup-name').value;
-                if(!signupName) return alert('Por favor, digite seu nome!');
-                name = signupName;
-            } else {
-                const loginEmail = document.getElementById('login-email').value;
-                if(loginEmail.toLowerCase().includes('jeferson')) {
-                    name = "Jeferson";
-                } else if(loginEmail) {
-                    name = loginEmail.split('@')[0];
+                const name = document.getElementById('signup-name').value;
+                const email = document.getElementById('signup-email').value.toLowerCase();
+                const pass = document.getElementById('signup-pass').value;
+
+                if(!name || !email || !pass) return alert('Por favor, preencha todos os campos do cadastro!');
+                
+                // Check if user already exists
+                if(users.some(u => u.email === email)) {
+                    alert('Este e-mail já está cadastrado. Tente fazer login.');
+                    toggleAuth('login');
+                    return;
+                }
+
+                // Register user
+                const newUser = { name, email, pass };
+                users.push(newUser);
+                localStorage.setItem('fecad_users', JSON.stringify(users));
+                
+                alert('Cadastro realizado com sucesso! Agora você pode entrar.');
+                toggleAuth('login');
+                return;
+            } 
+            
+            if(mode === 'login') {
+                const email = document.getElementById('login-email').value.toLowerCase();
+                const pass = document.getElementById('login-pass').value;
+
+                if(!email || !pass) return alert('Preencha seu e-mail e senha!');
+
+                // Check credentials
+                const user = users.find(u => u.email === email && u.pass === pass);
+                
+                if(user) {
+                    // Success
+                    document.getElementById('user-display-name').textContent = user.name;
+                    document.getElementById('auth-screen').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'flex';
+                    renderFeed();
+                } else {
+                    // Logic for "Jeferson" bypass if needed, or strictly enforce registration
+                    if(email.includes('jeferson') && !users.some(u => u.email.includes('jeferson'))) {
+                         alert('Jeferson, percebi que você ainda não tem um cadastro salvo. Por favor, use a aba "Cadastrar" uma única vez para criarmos sua conta oficial!');
+                    } else {
+                         alert('Usuário não encontrado ou senha incorreta. Se você é novo aqui, por favor clique em "Cadastrar" primeiro!');
+                    }
                 }
             }
-
-            // Update UI
-            document.getElementById('user-display-name').textContent = name;
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            
-            // Init Feed
-            renderFeed();
         }
 
         // Sample Data
@@ -848,12 +892,39 @@
             { q: 'Capital da Austrália?', a: 'Canberra' }
         ];
 
-        const rooms = ['Cálculo I', 'Física Geral', 'História Contemporânea', 'Dúvidas Gerais'];
+        const rooms = [
+            'Leitura e produção de textos', 
+            'Artes', 
+            'Biologia', 
+            'Direito e Ética', 
+            'Educação Física', 
+            'Física', 
+            'Geografia', 
+            'Gramática da Língua Portuguesa', 
+            'Lógica de Programação', 
+            'Steam Maker', 
+            'Linguagem de Programação', 
+            'Literatura Lusófona', 
+            'Manutenção e Suporte de Computadores', 
+            'Matemática', 
+            'Química', 
+            'Robótica', 
+            'Sistemas Operacionais',
+            'Tecnologias Interativas', 
+            'Web Design',
+            'Dúvidas Gerais'
+        ];
 
         // Render Functions
-        function renderFeed() {
+        function renderFeed(filter = "") {
             const feed = document.getElementById('notebook-feed');
-            feed.innerHTML = notebooks.map(nb => `
+            const filtered = notebooks.filter(nb => 
+                nb.title.toLowerCase().includes(filter.toLowerCase()) || 
+                nb.subject.toLowerCase().includes(filter.toLowerCase()) ||
+                nb.author.toLowerCase().includes(filter.toLowerCase())
+            );
+            
+            feed.innerHTML = filtered.map(nb => `
                 <div class="notebook-card" onclick="viewNotebook(${nb.id})">
                     <img src="${nb.img}" class="notebook-img" alt="Notebook">
                     <div class="notebook-content">
@@ -872,6 +943,10 @@
                     </div>
                 </div>
             `).join('');
+            
+            if(filtered.length === 0) {
+                feed.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">Nenhum caderno encontrado para "${filter}"</div>`;
+            }
         }
 
         function renderFlashcards() {
@@ -890,14 +965,34 @@
             `).join('');
         }
 
-        function renderRooms() {
+        function renderRooms(filter = "") {
             const list = document.getElementById('chat-rooms');
-            list.innerHTML = rooms.map(room => `
+            const filtered = rooms.filter(room => 
+                room.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            list.innerHTML = filtered.map(room => `
                 <div class="room-item" onclick="selectRoom('${room}', this)">
                     <div class="room-icon">#</div>
                     ${room}
                 </div>
             `).join('');
+
+            if(filtered.length === 0) {
+                list.innerHTML = `<div style="font-size: 12px; color: var(--text-dim); padding: 10px;">Nenhuma sala</div>`;
+            }
+        }
+
+        // Search Logic
+        function handleSearch() {
+            const query = document.getElementById('global-search').value;
+            
+            // Re-render relevant parts based on active page
+            const activePage = document.querySelector('.page.active').id;
+            
+            if(activePage === 'page-explorar') renderFeed(query);
+            if(activePage === 'page-chat') renderRooms(query);
+            if(activePage === 'page-flashcards') renderFlashcards(query);
         }
 
         // Logic
