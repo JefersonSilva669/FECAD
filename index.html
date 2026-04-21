@@ -495,15 +495,132 @@
             gap: 6px;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+        /* Auth Screen */
+        #auth-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-deep);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dim);
+            transition: all 0.2s;
+        }
+
+        .auth-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .auth-footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        /* App visibility */
+        #main-app {
+            display: none;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo-icon" style="margin: 0 auto 16px;">F</div>
+                <h2 style="font-size: 24px;">Bem-vindo ao FECAD</h2>
+                <p style="color: var(--text-dim); font-size: 14px; margin-top: 4px;">Sua rede de estudos colaborativa</p>
+            </div>
+
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="tab-login" onclick="toggleAuth('login')">Entrar</div>
+                <div class="auth-tab" id="tab-signup" onclick="toggleAuth('signup')">Cadastrar</div>
+            </div>
+
+            <div id="form-login">
+                <div class="form-group">
+                    <label>E-mail ou Usuário</label>
+                    <input type="text" id="login-email" placeholder="nome@exemplo.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="login-pass" placeholder="••••••••">
+                </div>
+                <button class="btn-upload" style="width: 100%;" onclick="handleAuth('login')">Entrar na Conta</button>
+            </div>
+
+            <div id="form-signup" style="display: none;">
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="signup-name" placeholder="Como quer ser chamado?">
+                </div>
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="signup-email" placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Materia de Interesse</label>
+                    <select>
+                        <option>Exatas</option>
+                        <option>Humanas</option>
+                        <option>Biológicas</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Crie uma Senha</label>
+                    <input type="password" id="signup-pass" placeholder="Mínimo 6 caracteres">
+                </div>
+                <button class="btn-upload" style="width: 100%;" onclick="handleAuth('signup')">Finalizar Cadastro</button>
+            </div>
+
+            <div class="auth-footer">
+                Esqueceu sua senha? <a href="#" style="color: var(--primary-light); text-decoration: none;">Recuperar</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="main-app" style="display: flex; min-height: 100vh;">
 
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -549,7 +666,7 @@
             </div>
             <div style="display: flex; gap: 20px; align-items: center;">
                 <div style="text-align: right">
-                    <div style="font-weight: 700;">Jefferson S.</div>
+                    <div id="user-display-name" style="font-weight: 700;">Visitante</div>
                     <div style="font-size: 12px; color: var(--accent)">Premium Student</div>
                 </div>
                 <div class="author-avatar" style="width: 45px; height: 45px; border: 2px solid var(--primary);"></div>
@@ -659,9 +776,42 @@
                 </div>
             </div>
         </div>
-    </div>
+        </div> <!-- End of main-app -->
 
     <script>
+        // Auth Logic
+        function toggleAuth(mode) {
+            const isLogin = mode === 'login';
+            document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
+            document.getElementById('form-signup').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('tab-login').classList.toggle('active', isLogin);
+            document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+        }
+
+        function handleAuth(mode) {
+            let name = "Jefferson S."; // Default
+            if(mode === 'signup') {
+                const signupName = document.getElementById('signup-name').value;
+                if(!signupName) return alert('Por favor, digite seu nome!');
+                name = signupName;
+            } else {
+                const loginEmail = document.getElementById('login-email').value;
+                if(loginEmail.toLowerCase().includes('jeferson')) {
+                    name = "Jeferson";
+                } else if(loginEmail) {
+                    name = loginEmail.split('@')[0];
+                }
+            }
+
+            // Update UI
+            document.getElementById('user-display-name').textContent = name;
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            
+            // Init Feed
+            renderFeed();
+        }
+
         // Sample Data
         const notebooks = [
             { 
