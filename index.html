@@ -804,18 +804,24 @@
         }
 
         function handleAuth(mode) {
-            let users = JSON.parse(localStorage.getItem('fecad_users') || '[]');
+            let users = [];
+            try {
+                users = JSON.parse(localStorage.getItem('fecad_users') || '[]');
+            } catch(e) {
+                console.error("Erro ao ler usuários:", e);
+                users = [];
+            }
             
             if(mode === 'signup') {
-                const name = document.getElementById('signup-name').value;
-                const email = document.getElementById('signup-email').value.toLowerCase();
-                const pass = document.getElementById('signup-pass').value;
+                const name = document.getElementById('signup-name').value.trim();
+                const email = document.getElementById('signup-email').value.trim().toLowerCase();
+                const pass = document.getElementById('signup-pass').value.trim();
 
                 if(!name || !email || !pass) return alert('Por favor, preencha todos os campos do cadastro!');
                 
                 // Check if user already exists
                 if(users.some(u => u.email === email)) {
-                    alert('Este e-mail já está cadastrado. Tente fazer login.');
+                    alert('Este e-mail já está cadastrado. Tente fazer login na aba ao lado.');
                     toggleAuth('login');
                     return;
                 }
@@ -825,14 +831,19 @@
                 users.push(newUser);
                 localStorage.setItem('fecad_users', JSON.stringify(users));
                 
-                alert('Cadastro realizado com sucesso! Agora você pode entrar.');
+                alert('Cadastro realizado com sucesso! Agora você pode entrar usando seu e-mail e senha na aba "Entrar".');
                 toggleAuth('login');
+                
+                // Limpar campos de cadastro
+                document.getElementById('signup-name').value = '';
+                document.getElementById('signup-email').value = '';
+                document.getElementById('signup-pass').value = '';
                 return;
             } 
             
             if(mode === 'login') {
-                const email = document.getElementById('login-email').value.toLowerCase();
-                const pass = document.getElementById('login-pass').value;
+                const email = document.getElementById('login-email').value.trim().toLowerCase();
+                const pass = document.getElementById('login-pass').value.trim();
 
                 if(!email || !pass) return alert('Preencha seu e-mail e senha!');
 
@@ -846,11 +857,14 @@
                     document.getElementById('main-app').style.display = 'flex';
                     renderFeed();
                 } else {
-                    // Logic for "Jeferson" bypass if needed, or strictly enforce registration
-                    if(email.includes('jeferson') && !users.some(u => u.email.includes('jeferson'))) {
-                         alert('Jeferson, percebi que você ainda não tem um cadastro salvo. Por favor, use a aba "Cadastrar" uma única vez para criarmos sua conta oficial!');
+                    // Specific feedback
+                    const existingUser = users.find(u => u.email === email);
+                    if(existingUser) {
+                        alert('Senha incorreta! Por favor, tente novamente.');
+                    } else if(email.includes('jeferson') && !users.some(u => u.email.includes('jeferson'))) {
+                        alert('Olá Jeferson! Notei que você ainda não criou uma conta oficial. Por favor, use a aba "Cadastrar" para se registrar pela primeira vez.');
                     } else {
-                         alert('Usuário não encontrado ou senha incorreta. Se você é novo aqui, por favor clique em "Cadastrar" primeiro!');
+                        alert('Conta não encontrada com este e-mail. Por favor, crie uma conta na aba "Cadastrar" antes de entrar.');
                     }
                 }
             }
