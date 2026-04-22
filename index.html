@@ -377,16 +377,240 @@
             outline: none;
         }
 
-        /* Flashcards */
+        /* Flashcards + IA Chat Layout */
+        .fc-ai-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            height: calc(100vh - 185px);
+        }
+
+        /* Chat Panel */
+        .fc-chat-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .fc-chat-header {
+            padding: 20px 22px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1));
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .fc-ai-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 0 16px rgba(99,102,241,0.4);
+        }
+
+        .fc-ai-info h4 { font-size: 15px; font-weight: 700; }
+        .fc-ai-info span { font-size: 12px; color: var(--accent); }
+
+        .fc-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .fc-messages::-webkit-scrollbar { width: 4px; }
+        .fc-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .fc-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .fc-bubble.ai {
+            background: rgba(99,102,241,0.12);
+            border: 1px solid rgba(99,102,241,0.2);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .fc-bubble.user {
+            background: var(--primary);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            color: white;
+        }
+
+        .fc-bubble.ai .ai-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Subject buttons */
+        .fc-subject-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .fc-subject-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .fc-subject-btn:hover {
+            background: rgba(99,102,241,0.2);
+            border-color: var(--primary-light);
+            color: var(--primary-light);
+        }
+
+        /* Number buttons */
+        .fc-num-grid {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .fc-num-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fc-num-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Typing indicator */
+        .fc-typing {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            padding: 12px 16px;
+        }
+
+        .fc-typing span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            animation: bounce 1.2s infinite;
+        }
+
+        .fc-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .fc-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+            30% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        /* Chat input */
+        .fc-input-area {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .fc-input-area input {
+            flex: 1;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .fc-input-area input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Results Panel */
+        .fc-results-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .fc-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .fc-results-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .fc-badge {
+            background: rgba(99,102,241,0.15);
+            border: 1px solid var(--primary);
+            color: var(--primary-light);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .fc-cards-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .fc-cards-container::-webkit-scrollbar { width: 4px; }
+        .fc-cards-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
         .flashcard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 30px;
-            padding: 20px 0;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+            padding: 4px 0;
         }
 
         .flashcard {
-            height: 200px;
+            height: 180px;
             perspective: 1000px;
             cursor: pointer;
         }
@@ -412,10 +636,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 30px;
+            padding: 24px;
             text-align: center;
             font-weight: 600;
-            font-size: 18px;
+            font-size: 15px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
         }
@@ -425,11 +649,56 @@
             color: var(--text-main);
         }
 
+        .flashcard-front::after {
+            content: '👆 clique para ver';
+            position: absolute;
+            bottom: 12px;
+            font-size: 10px;
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
         .flashcard-back {
             background: var(--gradient);
             color: white;
             transform: rotateY(180deg);
+            font-size: 14px;
         }
+
+        /* Score buttons on back */
+        .fc-score-btns {
+            position: absolute;
+            bottom: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .fc-score-btn {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+
+        .fc-score-btn.ok { background: rgba(255,255,255,0.25); color: white; }
+        .fc-score-btn.err { background: rgba(0,0,0,0.25); color: white; }
+
+        /* Empty state */
+        .fc-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-dim);
+            text-align: center;
+            gap: 14px;
+        }
+
+        .fc-empty-icon { font-size: 64px; }
+        .fc-empty p { font-size: 15px; max-width: 260px; line-height: 1.6; }
 
         /* Modal */
         .modal {
@@ -559,6 +828,204 @@
             display: none;
             width: 100%;
         }
+
+        /* ===== REVISÃO POR MATÉRIA ===== */
+        .revisao-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 28px;
+            height: calc(100vh - 180px);
+        }
+
+        .revisao-subject-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .revisao-subject-list::-webkit-scrollbar { width: 4px; }
+        .revisao-subject-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .subject-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .subject-card:hover {
+            border-color: var(--primary-light);
+            transform: translateX(4px);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+        }
+
+        .subject-card.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .subject-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .subject-card-info h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .subject-card-info span {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        /* Study Content Panel */
+        .revisao-content-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 24px 30px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(99, 102, 241, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .panel-header-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .panel-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .panel-header p {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-body::-webkit-scrollbar { width: 4px; }
+        .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .topic-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .topic-question {
+            padding: 18px 22px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.2s;
+        }
+
+        .topic-question:hover { background: rgba(99, 102, 241, 0.07); }
+
+        .topic-question.open { color: var(--primary-light); }
+
+        .topic-chevron {
+            font-size: 12px;
+            color: var(--text-dim);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .topic-question.open .topic-chevron { transform: rotate(180deg); }
+
+        .topic-answer {
+            display: none;
+            padding: 0 22px 20px;
+            color: var(--text-dim);
+            font-size: 14px;
+            line-height: 1.75;
+            border-top: 1px solid var(--border);
+        }
+
+        .topic-answer.visible { display: block; animation: fadeIn 0.2s ease; }
+
+        .topic-answer code {
+            display: block;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 12px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #a5f3fc;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .topic-answer .tip-box {
+            background: rgba(16, 185, 129, 0.08);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 10px 14px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--accent);
+        }
+
+        .panel-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-dim);
+            gap: 12px;
+            text-align: center;
+        }
+
+        .panel-empty .empty-icon { font-size: 56px; }
+        .panel-empty p { font-size: 15px; max-width: 280px; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -646,6 +1113,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showPage('revisao', this)">
+                    <i>📝</i> Revisão por Matéria
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="#" class="nav-link" onclick="showPage('perfil', this)">
                     <i>👤</i> Meu Perfil
                 </a>
@@ -709,13 +1181,59 @@
 
         <!-- FLASHCARDS PAGE -->
         <div id="page-flashcards" class="page">
-            <header style="margin-bottom: 20px;">
-                <h2 style="font-size: 28px; font-family: 'Outfit';">Flashcards de Revisão</h2>
-                <button class="btn-upload" style="background: var(--glass); color: var(--text-main); margin-top: 0;">+ Criar Card</button>
-            </header>
-            
-            <div class="flashcard-grid" id="flashcard-list">
-                <!-- Cards here -->
+            <h2 style="font-size: 28px; margin-bottom: 20px; font-family: 'Outfit';">🃏 Flashcards com IA</h2>
+            <div class="fc-ai-layout">
+
+                <!-- LEFT: AI Chat Panel -->
+                <div class="fc-chat-panel">
+                    <div class="fc-chat-header">
+                        <div class="fc-ai-avatar">🤖</div>
+                        <div class="fc-ai-info">
+                            <h4>Assistente FECAD</h4>
+                            <span>● Online — Pronto para estudar</span>
+                        </div>
+                    </div>
+                    <div class="fc-messages" id="fc-messages"></div>
+                    <div class="fc-input-area">
+                        <input type="text" id="fc-user-input" placeholder="Digite sua resposta..." onkeydown="if(event.key==='Enter') fcSendUserMessage()">
+                        <button class="btn-upload" style="margin-top:0; padding: 0 18px; font-size:18px;" onclick="fcSendUserMessage()">➤</button>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Generated Flashcards -->
+                <div class="fc-results-panel">
+                    <div class="fc-results-header">
+                        <h3 id="fc-results-title">Seus Flashcards</h3>
+                        <div id="fc-badge" class="fc-badge" style="display:none;"></div>
+                    </div>
+                    <div class="fc-cards-container">
+                        <div id="flashcard-list">
+                            <div class="fc-empty">
+                                <div class="fc-empty-icon">✨</div>
+                                <p>Converse com a IA ao lado para gerar seus flashcards personalizados!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- REVISÃO PAGE -->
+        <div id="page-revisao" class="page">
+            <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">📝 Revisão por Matéria</h2>
+            <div class="revisao-layout">
+                <!-- Subject list -->
+                <div class="revisao-subject-list" id="revisao-subject-list">
+                    <!-- Injected by JS -->
+                </div>
+                <!-- Content panel -->
+                <div class="revisao-content-panel" id="revisao-content-panel">
+                    <div class="panel-empty">
+                        <div class="empty-icon">🎯</div>
+                        <p>Selecione uma matéria ao lado para ver os tópicos de revisão.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -766,6 +1284,8 @@
         </div>
     </div>
 
+    </div> <!-- End of #main-app -->
+
     <!-- Notebook View Modal -->
     <div id="viewModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -791,7 +1311,7 @@
                 </div>
             </div>
         </div>
-        </div> <!-- End of main-app -->
+    </div>
 
     <script>
         // Auth Logic
@@ -899,12 +1419,265 @@
             }
         ];
 
-        const flashcards = [
-            { q: 'O que é a 1ª Lei de Newton?', a: 'Princípio da Inércia: Um corpo em repouso permanece em repouso.' },
-            { q: 'Pai da Psicologia Moderna?', a: 'Wilhelm Wundt' },
-            { q: 'Fórmula da Área do Círculo?', a: 'A = π * r²' },
-            { q: 'Capital da Austrália?', a: 'Canberra' }
-        ];
+        // ===== KNOWLEDGE BASE =====
+        const fcKB = {
+            'Matemática': [
+                {q:'O que é uma equação do 2º grau?', a:'É uma equação na forma ax²+bx+c=0, com a≠0. Resolvida pela fórmula de Bhaskara: x=(-b±√Δ)/2a'},
+                {q:'O que é o MMC?', a:'Mínimo Múltiplo Comum: o menor número divisível por dois ou mais números dados. Ex: MMC(4,6)=12'},
+                {q:'Área do triângulo?', a:'A = (base × altura) / 2'},
+                {q:'O que é uma fração irredutível?', a:'É quando o numerador e denominador não têm divisor comum além do 1. Ex: 3/4 é irredutível.'},
+                {q:'Pitágoras: qual a fórmula?', a:'a² = b² + c², onde "a" é a hipotenusa (lado oposto ao ângulo reto).'},
+                {q:'O que é porcentagem?', a:'É uma fração de denominador 100. Ex: 25% = 25/100 = 0,25'},
+                {q:'O que é média aritmética?', a:'Soma de todos os valores dividida pela quantidade de valores. Ex: média de 4,6,8 = (4+6+8)/3 = 6'},
+                {q:'O que é função linear?', a:'f(x) = ax + b. Seu gráfico é uma reta. "a" é o coeficiente angular e "b" o linear.'}
+            ],
+            'Física': [
+                {q:'1ª Lei de Newton?', a:'Inércia: todo corpo em repouso permanece em repouso, e em movimento permanece em movimento, a menos que uma força externa atue sobre ele.'},
+                {q:'2ª Lei de Newton?', a:'F = m × a (Força = massa × aceleração). A força resultante é proporcional à aceleração.'},
+                {q:'3ª Lei de Newton?', a:'Ação e Reação: para toda ação há uma reação de mesma intensidade, mesma direção e sentido oposto.'},
+                {q:'Fórmula da velocidade média?', a:'Vm = ΔS / Δt (variação do espaço dividida pela variação do tempo)'},
+                {q:'O que é energia cinética?', a:'Ec = m×v²/2 — energia que um corpo possui devido ao seu movimento.'},
+                {q:'Lei de Ohm?', a:'V = R × I (Tensão = Resistência × Corrente). Relaciona tensão, resistência e corrente elétrica.'},
+                {q:'O que é frequência de uma onda?', a:'É o número de oscilações por segundo, medida em Hertz (Hz).'}
+            ],
+            'Química': [
+                {q:'O que é um átomo?', a:'É a menor partícula de um elemento químico. É composto por prótons e nêutrons (no núcleo) e elétrons (na eletrosfera).'},
+                {q:'O que é ligação iônica?', a:'Ocorre quando um metal transfere elétrons para um não-metal, formando íons (Na⁺ e Cl⁻ no sal de cozinha).'},
+                {q:'O que é ligação covalente?', a:'É o compartilhamento de elétrons entre dois não-metais. Ex: H₂O, CO₂.'},
+                {q:'O que é pH?', a:'Medida de acidez. pH < 7 = ácido, pH = 7 = neutro, pH > 7 = básico.'},
+                {q:'O que é massa molar?', a:'É a massa de 1 mol de uma substância, expressa em g/mol. Ex: massa molar da água (H₂O) ≈ 18 g/mol.'},
+                {q:'O que é reação de combustão?', a:'É a reação entre um combustível e oxigênio, liberando luz e calor. Ex: C + O₂ → CO₂'}
+            ],
+            'Biologia': [
+                {q:'O que é célula procarionte?', a:'Célula sem núcleo organizado (sem membrana nuclear). Ex: bactérias e arqueas.'},
+                {q:'O que é fotossíntese?', a:'Processo pelo qual plantas usam luz solar, água e CO₂ para produzir glicose e oxigênio. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂'},
+                {q:'O que são cromossomos?', a:'São estruturas no núcleo celular que contêm o DNA. Humanos possuem 46 cromossomos (23 pares).'},
+                {q:'O que é DNA?', a:'Ácido Desoxirribonucleico — molécula em dupla hélice que contém as informações genéticas de um organismo.'},
+                {q:'O que é ecossistema?', a:'Conjunto de seres vivos (biocenose) e fatores abióticos (clima, solo, água) de uma região, interagindo entre si.'},
+                {q:'O que é mitose?', a:'Divisão celular que origina duas células-filhas geneticamente idênticas à célula-mãe. Usada para crescimento e regeneração.'}
+            ],
+            'Gramática da Língua Portuguesa': [
+                {q:'O que é sujeito?', a:'É o termo da oração sobre o qual o predicado faz uma declaração. Concorda com o verbo em número e pessoa.'},
+                {q:'Diferença entre "há" e "a"?', a:'"Há" é verbo haver (tempo passado ou existência). "A" é preposição ou artigo. Ex: "Há dois dias" vs "Daqui a dois dias".'},
+                {q:'O que é crase?', a:'É a fusão da preposição "a" com o artigo "a". Representada pelo acento grave (à). Ex: "Fui à escola".'},
+                {q:'O que é substantivo?', a:'Palavra que nomeia seres, objetos, lugares, sentimentos e ações. Ex: casa, amor, coragem, Rio de Janeiro.'},
+                {q:'O que é adjunto adnominal?', a:'Termo que se liga a um substantivo para caracterizá-lo. Pode ser adjetivo, artigo, pronome ou numeral.'},
+                {q:'O que é oração coordenada?', a:'Oração independente que se une a outra sem relação de subordinação. São ligadas por conjunções coordenativas.'}
+            ],
+            'Literatura Lusófona': [
+                {q:'Quem escreveu "Os Lusíadas"?', a:'Luís de Camões, obra épica publicada em 1572, narrando a viagem de Vasco da Gama à Índia.'},
+                {q:'O que é Trovadorismo?', a:'Primeira escola literária da língua portuguesa (séc. XII-XIV). Caracterizada por cantigas de amor, amigo e escárnio.'},
+                {q:'O que é Realismo literário?', a:'Movimento do séc. XIX que retratava a realidade social com objetividade, crítica e linguagem direta. Ex: Eça de Queirós.'},
+                {q:'O que é Modernismo em Portugal?', a:'Movimento iniciado em 1915 com a revista Orpheu. Fernando Pessoa é o maior nome, com seus heterônimos.'},
+                {q:'Quem é Fernando Pessoa?', a:'Poeta português (1888-1935), criador de heterônimos: Alberto Caeiro, Ricardo Reis e Álvaro de Campos, além do ortônimo.'}
+            ],
+            'Leitura e produção de textos': [
+                {q:'O que é coesão textual?', a:'É a ligação harmoniosa entre as partes do texto, usando conectivos, pronomes e sinônimos para evitar repetições.'},
+                {q:'O que é coerência textual?', a:'É a lógica e consistência das ideias no texto. Um texto coerente não apresenta contradições.'},
+                {q:'Quais são os tipos de texto?', a:'Narrativo, descritivo, dissertativo-argumentativo, injuntivo (instrucional) e expositivo.'},
+                {q:'O que é argumentação?', a:'Apresentação de razões (argumentos) para defender uma tese (ideia central) e convencer o leitor.'},
+                {q:'O que é parágrafo?', a:'Unidade de texto que desenvolve uma ideia central. Composto por: tópico frasal, desenvolvimento e conclusão.'}
+            ],
+            'Geografia': [
+                {q:'O que é clima tropical?', a:'Clima quente e úmido com duas estações: chuvosa e seca. Predomina nas regiões próximas ao Equador.'},
+                {q:'O que é globalização?', a:'Processo de integração econômica, cultural e política entre países, impulsionado pelo avanço tecnológico e das comunicações.'},
+                {q:'Quais são as placas tectônicas?', a:'Grandes fragmentos da litosfera que se movem lentamente. Seu choque causa terremotos, vulcões e formação de montanhas.'},
+                {q:'O que é IDH?', a:'Índice de Desenvolvimento Humano — mede qualidade de vida combinando longevidade, educação e renda. Varia de 0 a 1.'},
+                {q:'O que é urbanização?', a:'Processo de crescimento das cidades e migração da população do campo para os centros urbanos.'}
+            ],
+            'Artes': [
+                {q:'O que é perspectiva na arte?', a:'Técnica para representar a profundidade e o espaço tridimensional em uma superfície plana, criando ilusão de distância.'},
+                {q:'O que é impressionismo?', a:'Movimento artístico do séc. XIX que captava impressões momentâneas com pinceladas soltas. Principal artista: Claude Monet.'},
+                {q:'O que é arte abstrata?', a:'Arte que não representa a realidade figurativamente, focando em formas, cores e linhas para expressar emoções e ideias.'},
+                {q:'O que é escultura?', a:'Arte tridimensional que molda, entalha ou modela materiais como argila, pedra, metal ou madeira.'}
+            ],
+            'Educação Física': [
+                {q:'O que é frequência cardíaca?', a:'Número de batimentos do coração por minuto. Em repouso: ~60-100 bpm. No exercício, pode chegar a 200 bpm.'},
+                {q:'O que são capacidades físicas?', a:'São: resistência, força, velocidade, flexibilidade e coordenação motora. Base para o desempenho esportivo.'},
+                {q:'O que é aquecimento?', a:'Preparação do corpo para o exercício, aumentando temperatura muscular e fluxo sanguíneo. Previne lesões.'},
+                {q:'O que é IMC?', a:'Índice de Massa Corporal = peso(kg) / altura²(m). Normal: 18,5 a 24,9.'}
+            ],
+            'Direito e Ética': [
+                {q:'O que é ética?', a:'Conjunto de princípios e valores morais que guiam o comportamento humano para o bem-estar individual e coletivo.'},
+                {q:'O que é cidadania?', a:'Conjunto de direitos e deveres de um indivíduo em relação ao Estado e à sociedade. Base da democracia.'},
+                {q:'O que é Constituição?', a:'Lei máxima de um país, que define os direitos e deveres dos cidadãos e a organização do Estado. "Carta Magna".'},
+                {q:'O que são direitos humanos?', a:'Direitos fundamentais e universais de todo ser humano, como vida, liberdade e dignidade, declarados pela ONU em 1948.'}
+            ],
+            'Lógica de Programação': [
+                {q:'Como receber dados do usuário em Python?', a:'Com a função input(): nome = input("Digite seu nome: "). Sempre retorna uma string.'},
+                {q:'Como converter input para número em Python?', a:'Usando int() ou float(): idade = int(input("Sua idade: "))'},
+                {q:'Como fazer um if/else em Python?', a:'if condicao:\n    # código\nelse:\n    # código alternativo\nAtenção: Python usa indentação!'},
+                {q:'Como fazer um loop for em Python?', a:'for i in range(5):\n    print(i)\nImprime de 0 a 4.'},
+                {q:'Como criar uma função em Python?', a:'def saudacao(nome):\n    return "Olá, " + nome\nChamada: saudacao("Ana")'},
+                {q:'O que são listas em Python?', a:'minha_lista = [1, 2, 3]\nAcesso: minha_lista[0] → 1\nAdicionar: minha_lista.append(4)'}
+            ],
+            'Linguagem de Programação': [
+                {q:'Como adicionar um botão no Windows Forms (C#)?', a:'No Visual Studio: abra o Designer → Toolbox → arraste Button para o Form → dê duplo clique para criar o evento Click.'},
+                {q:'Como mudar a cor de fundo em C#?', a:'this.BackColor = Color.DarkBlue; (no Load do Form) ou via Propriedades → BackColor no Designer.'},
+                {q:'Como mostrar uma mensagem em C#?', a:'MessageBox.Show("Texto da mensagem");'},
+                {q:'Como ler texto de um TextBox em C#?', a:'string texto = textBox1.Text;'},
+                {q:'Como criar uma variável em C#?', a:'int numero = 10;\nstring nome = "Ana";\nbool ativo = true;'},
+                {q:'O que é um evento Click em C#?', a:'É um método chamado automaticamente quando o usuário clica num controle. Ex: private void button1_Click(object sender, EventArgs e) { }'}
+            ],
+            'Manutenção e Suporte de Computadores': [
+                {q:'Função da memória RAM?', a:'Memória temporária de trabalho. Armazena dados dos programas em uso. Apagada ao desligar o PC.'},
+                {q:'HD vs SSD: qual a diferença?', a:'HD usa pratos magnéticos giratórios (lento, barato). SSD usa chips flash (rápido, silencioso, mais caro por GB).'},
+                {q:'O que faz a CPU?', a:'"Cérebro" do computador. Executa instruções e cálculos. Medida em GHz (velocidade) e número de núcleos.'},
+                {q:'O que é placa-mãe?', a:'Componente principal que conecta CPU, RAM, HD/SSD, GPU e demais periféricos via slots e barramentos.'},
+                {q:'O que é fonte de alimentação?', a:'Converte a corrente alternada da tomada (110/220V) em corrente contínua para os componentes internos do PC.'},
+                {q:'O que é BIOS/UEFI?', a:'Firmware que inicializa o hardware ao ligar o PC e carrega o sistema operacional. UEFI é a versão moderna da BIOS.'}
+            ],
+            'Robótica': [
+                {q:'O que é Arduino?', a:'Plataforma de prototipagem eletrônica open-source com microcontrolador programável via C/C++ (IDE Arduino).'},
+                {q:'O que mede o Volt (V)?', a:'Tensão elétrica — a "pressão" que empurra os elétrons no circuito. Arduino usa 5V; pilha AA tem 1,5V.'},
+                {q:'O que mede o Ampere (A)?', a:'Corrente elétrica — o fluxo de elétrons por segundo. Um LED típico consome ~20mA (miliamperes).'},
+                {q:'O que mede o Ohm (Ω)?', a:'Resistência elétrica. Lei de Ohm: V = R × I (Tensão = Resistência × Corrente).'},
+                {q:'Como piscar um LED com Arduino?', a:'pinMode(13, OUTPUT); no setup(). No loop(): digitalWrite(13, HIGH); delay(1000); digitalWrite(13, LOW); delay(1000);'},
+                {q:'Para que serve um resistor?', a:'Limita a corrente elétrica no circuito, protegendo componentes. Ex: resistor de 220Ω protege um LED no Arduino.'}
+            ],
+            'Sistemas Operacionais': [
+                {q:'O que é Scrum Master?', a:'Facilitador do time Scrum. Remove impedimentos, garante que o processo seja seguido e protege o time. Não é chefe.'},
+                {q:'O que é Product Owner?', a:'Responsável pelo produto. Define prioridades do Backlog e representa o cliente. Decide "o que" será feito.'},
+                {q:'O que é um Squad?', a:'Equipe autônoma e multidisciplinar (6-12 pessoas) focada numa área do produto. Conceito popularizado pelo Spotify.'},
+                {q:'O que é Sprint no Scrum?', a:'Ciclo de desenvolvimento com duração fixa (1-4 semanas) onde o time entrega um incremento funcional do produto.'},
+                {q:'O que é Product Backlog?', a:'Lista priorizada de funcionalidades e requisitos do produto, gerenciada pelo Product Owner.'},
+                {q:'O que é IA (Inteligência Artificial)?', a:'Área da computação que desenvolve sistemas capazes de simular raciocínio humano: aprendizado, decisão e reconhecimento.'}
+            ],
+            'Tecnologias Interativas': [
+                {q:'Qual a função do Microsoft Word?', a:'Processador de textos para criar, editar e formatar documentos como relatórios, cartas e trabalhos acadêmicos.'},
+                {q:'Atalho para negrito no Word?', a:'Ctrl + N (negrito), Ctrl + I (itálico), Ctrl + S (sublinhado).'},
+                {q:'Como salvar no Word?', a:'Ctrl + S (salvar), F12 (salvar como), Ctrl + Shift + S (salvar como com diálogo).'},
+                {q:'Como inserir tabela no Word?', a:'Aba Inserir → Tabela → arraste para escolher linhas e colunas, ou clique em "Inserir Tabela".'},
+                {q:'O que faz a aba "Referências" no Word?', a:'Permite inserir sumário automático, notas de rodapé, citações e bibliografias.'},
+                {q:'Como verificar ortografia no Word?', a:'Pressione F7 ou vá em Revisão → Ortografia e Gramática. Palavras erradas aparecem sublinhadas em vermelho.'}
+            ],
+            'Web Design': [
+                {q:'Como escurecer imagem no Photoshop?', a:'Imagem → Ajustes → Brilho/Contraste (mova Brilho para negativo). Ou Curvas (Ctrl+M) e puxe a curva para baixo.'},
+                {q:'Como melhorar saturação no Photoshop?', a:'Imagem → Ajustes → Matiz/Saturação (Ctrl+U). Aumente o slider "Saturação" para cores mais vibrantes.'},
+                {q:'Como recortar no Photoshop?', a:'Ferramenta Corte (C) → arraste as alças → Enter para confirmar. Para recortar objeto: Seleção Rápida (W) + delete fundo.'},
+                {q:'O que são camadas (Layers)?', a:'Folhas transparentes sobrepostas. Cada elemento fica numa camada, permitindo edição independente. Painel: F7.'},
+                {q:'Como remover fundo no Photoshop?', a:'Janela → Propriedades → "Remover Fundo" (usa IA). Ou: Seleção → Assunto → Delete.'},
+                {q:'O que é resolução de imagem?', a:'Densidade de pixels por polegada (DPI). 72 DPI para web, 300 DPI para impressão de qualidade.'}
+            ],
+            'Steam Maker': [
+                {q:'O que é pensamento computacional?', a:'Habilidade de resolver problemas usando lógica, decomposição, reconhecimento de padrões e abstração.'},
+                {q:'O que é Maker?', a:'Cultura de criar, modificar e compartilhar objetos e tecnologias usando eletrônica, impressão 3D e programação.'},
+                {q:'O que é impressão 3D?', a:'Tecnologia que constrói objetos camada por camada a partir de um modelo digital, usando materiais como PLA ou ABS.'}
+            ]
+        };
+
+        // ===== AI FLASHCARD SYSTEM =====
+        let fcState = { step: 'idle', count: 5, subject: '', cards: [] };
+
+        function renderFlashcards() {
+            fcInitChat();
+        }
+
+        function fcInitChat() {
+            fcState = { step: 'ask_count', count: 5, subject: '', cards: [] };
+            const msgs = document.getElementById('fc-messages');
+            msgs.innerHTML = '';
+            setTimeout(() => fcAIMessage('Olá! 👋 Sou o <strong>Assistente FECAD</strong>. Vou criar flashcards personalizados para você.<br><br>Quantos cards quer estudar hoje?', `
+                <div class="fc-num-grid">
+                    ${[3,5,8,10,15].map(n=>`<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+                </div>`), 400);
+        }
+
+        function fcAIMessage(text, extra='') {
+            const msgs = document.getElementById('fc-messages');
+            const div = document.createElement('div');
+            div.className = 'fc-bubble ai';
+            div.innerHTML = `<div class="ai-label">🤖 Assistente</div>${text}${extra}`;
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function fcUserMessage(text) {
+            const msgs = document.getElementById('fc-messages');
+            const div = document.createElement('div');
+            div.className = 'fc-bubble user';
+            div.textContent = text;
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function fcTyping(cb) {
+            const msgs = document.getElementById('fc-messages');
+            const t = document.createElement('div');
+            t.className = 'fc-bubble ai fc-typing';
+            t.id = 'fc-typing';
+            t.innerHTML = '<span></span><span></span><span></span>';
+            msgs.appendChild(t);
+            msgs.scrollTop = msgs.scrollHeight;
+            setTimeout(() => { t.remove(); cb(); }, 900);
+        }
+
+        function fcPickCount(n) {
+            fcState.count = n;
+            fcState.step = 'ask_subject';
+            fcUserMessage(n + ' flashcards');
+            const all = Object.keys(fcKB);
+            const normal = ['Matemática','Física','Química','Biologia','Gramática da Língua Portuguesa','Literatura Lusófona','Leitura e produção de textos','Geografia','Artes','Educação Física','Direito e Ética'];
+            const tech = ['Lógica de Programação','Linguagem de Programação','Manutenção e Suporte de Computadores','Robótica','Sistemas Operacionais','Tecnologias Interativas','Web Design','Steam Maker'];
+            fcTyping(() => fcAIMessage(`Ótimo! ${n} cards. 📚 Agora escolha a <strong>matéria</strong>:<br><br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Regulares</strong>
+                <div class="fc-subject-grid">${normal.filter(s=>fcKB[s]).map(s=>`<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>
+                <br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Técnicas</strong>
+                <div class="fc-subject-grid">${tech.filter(s=>fcKB[s]).map(s=>`<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>`));
+        }
+
+        function fcPickSubject(subject) {
+            fcState.subject = subject;
+            fcState.step = 'generating';
+            fcUserMessage(subject);
+            fcTyping(() => {
+                fcAIMessage(`🎯 Gerando ${fcState.count} flashcards de <strong>${subject}</strong>...`);
+                setTimeout(() => fcGenerateCards(), 600);
+            });
+        }
+
+        function fcGenerateCards() {
+            const pool = [...(fcKB[fcState.subject] || [])];
+            // Shuffle
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            fcState.cards = pool.slice(0, Math.min(fcState.count, pool.length));
+            fcRenderCards();
+            fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards prontos!</strong> Clique em cada card para ver a resposta. Boa revisão! 🚀<br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
+        }
+
+        function fcRenderCards() {
+            const list = document.getElementById('flashcard-list');
+            const badge = document.getElementById('fc-badge');
+            const title = document.getElementById('fc-results-title');
+            title.textContent = fcState.subject;
+            badge.style.display = 'block';
+            badge.textContent = fcState.cards.length + ' cards';
+            list.innerHTML = `<div class="flashcard-grid">${fcState.cards.map((c,i) => `
+                <div class="flashcard" id="fc-card-${i}" onclick="this.classList.toggle('flipped')">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">${c.q}</div>
+                        <div class="flashcard-back" style="font-size:13px;white-space:pre-wrap;">${c.a}</div>
+                    </div>
+                </div>`).join('')}</div>`;
+        }
+
+        function fcSendUserMessage() {
+            const inp = document.getElementById('fc-user-input');
+            const val = inp.value.trim();
+            if (!val) return;
+            inp.value = '';
+            if (fcState.step === 'ask_count') {
+                const n = parseInt(val);
+                if (n > 0) fcPickCount(Math.min(n, 15));
+                else fcAIMessage('Por favor, digite um número válido (ex: 5).');
+            } else if (fcState.step === 'ask_subject') {
+                const match = Object.keys(fcKB).find(k => k.toLowerCase().includes(val.toLowerCase()));
+                if (match) fcPickSubject(match);
+                else fcAIMessage('Matéria não encontrada. Por favor, clique em uma das opções acima. 👆');
+            }
+        }
 
         const rooms = [
             'Leitura e produção de textos', 
@@ -963,21 +1736,8 @@
             }
         }
 
-        function renderFlashcards() {
-            const list = document.getElementById('flashcard-list');
-            list.innerHTML = flashcards.map(card => `
-                <div class="flashcard" onclick="this.classList.toggle('flipped')">
-                    <div class="flashcard-inner">
-                        <div class="flashcard-front">
-                            ${card.q}
-                        </div>
-                        <div class="flashcard-back">
-                            ${card.a}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
+
+
 
         function renderRooms(filter = "") {
             const list = document.getElementById('chat-rooms');
@@ -1020,6 +1780,7 @@
             if(pageId === 'explorar') renderFeed();
             if(pageId === 'flashcards') renderFlashcards();
             if(pageId === 'chat') renderRooms();
+            if(pageId === 'revisao') renderRevisao();
         }
 
         function selectRoom(name, el) {
@@ -1079,6 +1840,322 @@
             document.getElementById('chat-box').appendChild(message);
             input.value = '';
             document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // ===== REVISÃO POR MATÉRIA =====
+        const revisaoData = [
+            {
+                id: 'logica',
+                icon: '🐍',
+                color: 'linear-gradient(135deg,#3b82f6,#06b6d4)',
+                name: 'Lógica de Programação',
+                sub: 'Python',
+                topics: [
+                    {
+                        q: 'Como fazer o usuário digitar algo no programa? (input)',
+                        a: `A função <strong>input()</strong> pausa o programa e espera o usuário digitar. Tudo que for digitado é lido como texto (string).<code>nome = input("Digite seu nome: ")
+print("Olá,", nome)</code><div class="tip-box">💡 Para ler números, converta: <strong>int(input("Número: "))</strong> ou <strong>float(input("Decimal: "))</strong></div>`
+                    },
+                    {
+                        q: 'Como mostrar texto na tela? (print)',
+                        a: `A função <strong>print()</strong> exibe informações no console. Você pode combinar texto e variáveis.<code>idade = 17
+print("Você tem", idade, "anos.")
+print(f"Você tem {idade} anos.")  # f-string</code>`
+                    },
+                    {
+                        q: 'Como criar uma condição (if / else)?',
+                        a: `Use <strong>if</strong> para verificar uma condição e <strong>else</strong> para o caso contrário.<code>nota = float(input("Digite sua nota: "))
+if nota >= 6:
+    print("Aprovado!")
+else:
+    print("Recuperação.")</code>`
+                    },
+                    {
+                        q: 'Como criar um loop / repetição? (for / while)',
+                        a: `<strong>for</strong> repete para cada item de uma sequência. <strong>while</strong> repete enquanto a condição for verdadeira.<code>for i in range(5):
+    print("Repetição número", i)
+
+contador = 0
+while contador < 3:
+    print("while rodando")
+    contador += 1</code>`
+                    },
+                    {
+                        q: 'O que são variáveis e como criar uma?',
+                        a: `Variável é um "depósito" que guarda um valor. Em Python, basta escrever o nome e atribuir com <strong>=</strong>.<code>nome = "Ana"
+idade = 16
+altura = 1.65
+aprovado = True</code><div class="tip-box">💡 Nomes de variáveis não podem ter espaços ou começar com números.</div>`
+                    }
+                ]
+            },
+            {
+                id: 'csharp',
+                icon: '🖥️',
+                color: 'linear-gradient(135deg,#7c3aed,#a855f7)',
+                name: 'Linguagem de Programação',
+                sub: 'C# — Windows Forms .NET',
+                topics: [
+                    {
+                        q: 'Como colocar um botão no formulário (Windows Forms)?',
+                        a: `No <strong>Visual Studio</strong>, abra o Designer do formulário, vá na <strong>Caixa de Ferramentas</strong> (Toolbox) à esquerda, encontre <strong>Button</strong> e arraste para o formulário. Para programar a ação, dê duplo clique no botão para criar o evento <strong>Click</strong>.<code>private void button1_Click(object sender, EventArgs e)
+{
+    MessageBox.Show("Botão clicado!");
+}</code><div class="tip-box">💡 Altere as propriedades do botão (Text, Name, Size) na janela <strong>Propriedades</strong> à direita.</div>`
+                    },
+                    {
+                        q: 'Como mudar a cor de fundo do formulário?',
+                        a: `Selecione o formulário (clique na área cinza fora dos controles) e na janela <strong>Propriedades</strong>, altere a propriedade <strong>BackColor</strong>. Você pode fazer isso também via código:<code>// No evento Load do formulário:
+private void Form1_Load(object sender, EventArgs e)
+{
+    this.BackColor = Color.DarkBlue;
+    // Ou use: Color.FromArgb(30, 41, 59);
+}</code>`
+                    },
+                    {
+                        q: 'Como mudar a cor de um botão ou controle?',
+                        a: `Selecione o controle e altere <strong>BackColor</strong> (fundo) e <strong>ForeColor</strong> (texto) nas Propriedades, ou via código:<code>button1.BackColor = Color.Green;
+button1.ForeColor = Color.White;
+label1.ForeColor = Color.Red;</code>`
+                    },
+                    {
+                        q: 'Como exibir uma mensagem ao usuário?',
+                        a: `Use <strong>MessageBox.Show()</strong> para mostrar uma caixa de diálogo simples.<code>MessageBox.Show("Olá, mundo!");
+MessageBox.Show("Erro!", "Título", MessageBoxButtons.OK, MessageBoxIcon.Error);</code>`
+                    },
+                    {
+                        q: 'Como pegar o texto que o usuário digitou (TextBox)?',
+                        a: `Adicione um controle <strong>TextBox</strong> ao formulário e acesse o valor pela propriedade <strong>.Text</strong>.<code>string nome = textBox1.Text;
+MessageBox.Show("Você digitou: " + nome);</code><div class="tip-box">💡 Para limpar o campo: <strong>textBox1.Clear();</strong></div>`
+                    }
+                ]
+            },
+            {
+                id: 'manutencao',
+                icon: '🔧',
+                color: 'linear-gradient(135deg,#f59e0b,#ef4444)',
+                name: 'Manutenção e Suporte',
+                sub: 'Hardware de Computadores',
+                topics: [
+                    {
+                        q: 'O que é o HD (Hard Disk) e para que serve?',
+                        a: `O <strong>HD (Hard Disk Drive)</strong> é o dispositivo de armazenamento permanente do computador. Ele guarda o sistema operacional, programas e arquivos do usuário, mesmo sem energia elétrica. Funciona com pratos magnéticos giratórios.<div class="tip-box">💡 O <strong>SSD (Solid State Drive)</strong> é a versão moderna: muito mais rápido, sem partes móveis, porém mais caro por GB.</div>`
+                    },
+                    {
+                        q: 'O que é a memória RAM e qual a sua função?',
+                        a: `A <strong>RAM (Random Access Memory)</strong> é a memória temporária do computador. Ela armazena os dados dos programas que estão sendo usados no momento. Quando o computador é desligado, todos os dados na RAM são apagados. Quanto mais RAM, mais programas podem rodar ao mesmo tempo sem lentidão.`
+                    },
+                    {
+                        q: 'O que é a CPU (processador) e como ela funciona?',
+                        a: `A <strong>CPU (Central Processing Unit)</strong> é o "cérebro" do computador. Ela executa as instruções dos programas, realizando cálculos e operações lógicas. Medida em <strong>GHz</strong> (gigahertz) — quanto maior a frequência, mais rápido processa.<div class="tip-box">💡 CPUs modernas possuem múltiplos núcleos (cores), permitindo executar várias tarefas ao mesmo tempo (multitarefa).</div>`
+                    },
+                    {
+                        q: 'Qual a diferença entre HD, SSD e Memória RAM?',
+                        a: `<strong>HD/SSD</strong>: Armazenamento permanente (guarda dados mesmo desligado). <br><strong>RAM</strong>: Armazenamento temporário (apaga ao desligar, mas é muito mais rápido que HD/SSD). <br><br>Analogia: a RAM é a mesa de trabalho, o HD/SSD é o arquivo.`
+                    },
+                    {
+                        q: 'O que é a placa-mãe e qual sua importância?',
+                        a: `A <strong>placa-mãe (motherboard)</strong> é o componente central que conecta todos os outros: CPU, RAM, HD/SSD, placas de vídeo, etc. Ela é como a "espinha dorsal" do computador, permitindo a comunicação entre os componentes.`
+                    }
+                ]
+            },
+            {
+                id: 'robotica',
+                icon: '🤖',
+                color: 'linear-gradient(135deg,#10b981,#059669)',
+                name: 'Robótica',
+                sub: 'Arduino e Grandezas Elétricas',
+                topics: [
+                    {
+                        q: 'O que é o Arduino?',
+                        a: `O <strong>Arduino</strong> é uma plataforma de prototipagem eletrônica de código aberto. Possui um microcontrolador que pode ser programado para controlar LEDs, motores, sensores e muito mais. É muito usado em projetos de robótica e automação.<div class="tip-box">💡 A linguagem do Arduino é baseada em C/C++. Todo programa tem duas funções: <strong>setup()</strong> (roda uma vez) e <strong>loop()</strong> (roda infinitamente).</div>`
+                    },
+                    {
+                        q: 'O que é Volt (V) e o que mede?',
+                        a: `O <strong>Volt (V)</strong> é a unidade de medida da <strong>tensão elétrica (voltagem)</strong>. Representa a "força" ou "pressão" com que a eletricidade é empurrada por um circuito. Quanto maior a tensão, maior o potencial elétrico. <br><br>Ex: Pilha AA = 1,5V | Arduino = 5V | Tomada = 127V ou 220V.`
+                    },
+                    {
+                        q: 'O que é Ampere (A) e o que mede?',
+                        a: `O <strong>Ampere (A)</strong> é a unidade de medida da <strong>corrente elétrica</strong>. Representa a quantidade de elétrons que passa por um ponto do circuito por segundo. Quanto mais amperes, mais "fluxo" de eletricidade.<div class="tip-box">💡 Projetos Arduino geralmente usam valores em miliamperes (mA). Um LED típico consome cerca de 20mA.</div>`
+                    },
+                    {
+                        q: 'O que é Ohm (Ω) e o que mede?',
+                        a: `O <strong>Ohm (Ω)</strong> é a unidade de medida da <strong>resistência elétrica</strong>. Indica o quanto um componente dificulta a passagem da corrente elétrica. Resistores são usados em circuitos para proteger componentes, limitando a corrente.<code>Lei de Ohm: V = R × I
+Tensão = Resistência × Corrente</code>`
+                    },
+                    {
+                        q: 'Como acender um LED com Arduino?',
+                        a: `Conecte o LED ao pino 13 (com um resistor de 220Ω) e programe:<code>void setup() {
+  pinMode(13, OUTPUT); // Define pino 13 como saída
+}
+
+void loop() {
+  digitalWrite(13, HIGH); // Liga o LED
+  delay(1000);             // Espera 1 segundo
+  digitalWrite(13, LOW);  // Desliga o LED
+  delay(1000);             // Espera 1 segundo
+}</code>`
+                    }
+                ]
+            },
+            {
+                id: 'so',
+                icon: '⚙️',
+                color: 'linear-gradient(135deg,#6366f1,#ec4899)',
+                name: 'Sistemas Operacionais',
+                sub: 'Scrum, Agile e IA',
+                topics: [
+                    {
+                        q: 'O que é o Scrum Master?',
+                        a: `O <strong>Scrum Master</strong> é o responsável por garantir que a equipe siga o framework Scrum corretamente. Ele remove impedimentos (problemas) que atrapalham o time, facilita as cerimônias (reuniões) e protege o time de interferências externas. <strong>Não é um chefe</strong>, mas um facilitador/líder servidor.`
+                    },
+                    {
+                        q: 'O que é o Product Owner (PO)?',
+                        a: `O <strong>Product Owner</strong> é o responsável por maximizar o valor do produto. Ele representa os interesses do cliente/negócio e define as prioridades do <strong>Product Backlog</strong> (lista de funcionalidades). Decide <em>o que</em> será desenvolvido.`
+                    },
+                    {
+                        q: 'O que é um Squad?',
+                        a: `Um <strong>Squad</strong> é uma equipe pequena, multidisciplinar e autônoma, geralmente com 6 a 12 pessoas. Cada squad trabalha em uma funcionalidade ou área específica do produto com total autonomia para tomar decisões. Conceito popularizado pelo Spotify.<div class="tip-box">💡 Squads se agrupam em <strong>Tribos</strong>, que por sua vez se conectam através de <strong>Chapters</strong> e <strong>Guildas</strong>.</div>`
+                    },
+                    {
+                        q: 'Quais são jogos e aplicações famosas criadas com IA?',
+                        a: `Exemplos de jogos e sistemas onde a IA é protagonista:<br><br>
+• <strong>Chess.com</strong> — IA analisa e joga xadrez em nível humano e além.<br>
+• <strong>AlphaGo (Google DeepMind)</strong> — IA que venceu campeões mundiais de Go.<br>
+• <strong>The Last of Us</strong> — IA dos inimigos simula comportamento de grupo.<br>
+• <strong>F.E.A.R.</strong> — IA de inimigos com planejamento tático avançado.<br>
+• <strong>No Man's Sky</strong> — planetas e criaturas gerados proceduralmente por IA.`
+                    }
+                ]
+            },
+            {
+                id: 'tecinterativas',
+                icon: '📄',
+                color: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+                name: 'Tecnologias Interativas',
+                sub: 'Microsoft Word',
+                topics: [
+                    {
+                        q: 'Qual é a função principal do Microsoft Word?',
+                        a: `O <strong>Microsoft Word</strong> é um processador de textos da Microsoft. Sua função principal é criar, editar, formatar e imprimir documentos de texto, como cartas, relatórios, trabalhos escolares, currículos e contratos.`
+                    },
+                    {
+                        q: 'Como formatar texto (negrito, itálico, sublinhado)?',
+                        a: `Selecione o texto desejado e use os atalhos:<br><br>
+• <strong>Ctrl + N</strong> → Negrito (Bold)<br>
+• <strong>Ctrl + I</strong> → Itálico<br>
+• <strong>Ctrl + S</strong> → Sublinhado<br><br>
+Ou clique nos botões <strong>N / I / S</strong> na aba <strong>Página Inicial</strong>.`
+                    },
+                    {
+                        q: 'Como inserir uma tabela no Word?',
+                        a: `Vá na aba <strong>Inserir → Tabela</strong> e escolha o número de linhas e colunas arrastando o mouse. Ou clique em "Inserir Tabela" para digitar os valores manualmente.<div class="tip-box">💡 Clique dentro da tabela para ver as abas "Design" e "Layout" que aparecem especificamente para editar tabelas.</div>`
+                    },
+                    {
+                        q: 'Como salvar um documento?',
+                        a: `• <strong>Ctrl + S</strong> → Salvar (sobrescreve o arquivo atual)<br>
+• <strong>Ctrl + Shift + S</strong> → Salvar Como (escolhe nome e local)<br>
+• <strong>F12</strong> → Salvar Como (atalho alternativo)<br><br>
+Para salvar como PDF: <strong>Arquivo → Salvar Como → Tipo: PDF</strong>.`
+                    },
+                    {
+                        q: 'O que são as "guias" (abas) do Word e para que servem?',
+                        a: `As guias são as abas na parte superior:<br><br>
+• <strong>Página Inicial</strong> — Formatação básica de texto<br>
+• <strong>Inserir</strong> — Imagens, tabelas, formas, links<br>
+• <strong>Layout</strong> — Margens, orientação da página, colunas<br>
+• <strong>Referências</strong> — Sumário, notas de rodapé, citações<br>
+• <strong>Revisão</strong> — Ortografia, comentários, controle de alterações`
+                    }
+                ]
+            },
+            {
+                id: 'webdesign',
+                icon: '🎨',
+                color: 'linear-gradient(135deg,#ec4899,#f59e0b)',
+                name: 'Web Design',
+                sub: 'Adobe Photoshop',
+                topics: [
+                    {
+                        q: 'Como escurecer uma imagem no Photoshop?',
+                        a: `Vá em <strong>Imagem → Ajustes → Brilho/Contraste</strong> e arraste o slider de Brilho para a esquerda (valores negativos). Outra forma mais profissional: <strong>Imagem → Ajustes → Curvas (Ctrl+M)</strong> e puxe a curva para baixo.<div class="tip-box">💡 Use uma <strong>Camada de Ajuste</strong> (Layer → New Adjustment Layer → Brightness/Contrast) para não destruir o original — é não-destrutivo!</div>`
+                    },
+                    {
+                        q: 'Como melhorar a saturação de uma imagem?',
+                        a: `Vá em <strong>Imagem → Ajustes → Matiz/Saturação (Ctrl+U)</strong>. Arraste o slider de <strong>Saturação</strong> para a direita para tornar as cores mais vibrantes, ou para a esquerda para torná-las mais apagadas (até preto e branco em -100).`
+                    },
+                    {
+                        q: 'Como recortar uma imagem?',
+                        a: `Selecione a ferramenta <strong>Corte/Recorte (C)</strong> na barra de ferramentas. Arraste nas alças para definir a área a manter e pressione <strong>Enter</strong> para confirmar.<br><br>Para recortar um objeto (remover fundo): use a ferramenta <strong>Caneta (P)</strong> ou <strong>Seleção Rápida (W)</strong>, faça a seleção e delete o fundo.<div class="tip-box">💡 Use <strong>Selecionar → Assunto</strong> para que a IA do Photoshop detecte e selecione o objeto principal automaticamente.</div>`
+                    },
+                    {
+                        q: 'Como remover o fundo de uma imagem?',
+                        a: `Forma rápida (Photoshop moderno): vá em <strong>Janela → Propriedades</strong>, com a camada selecionada, clique em <strong>"Remover Fundo"</strong>. O Photoshop usa IA para fazer o recorte automaticamente.`
+                    },
+                    {
+                        q: 'O que são Camadas (Layers) e por que são importantes?',
+                        a: `Camadas são como folhas transparentes empilhadas umas sobre as outras. Cada elemento (imagem, texto, forma) fica em uma camada separada, permitindo editar cada parte sem afetar as outras.<div class="tip-box">💡 O painel de Camadas fica em <strong>Janela → Camadas (F7)</strong>. Sempre que puder, trabalhe em camadas separadas!</div>`
+                    }
+                ]
+            }
+        ];
+
+        function renderRevisao() {
+            const list = document.getElementById('revisao-subject-list');
+            list.innerHTML = revisaoData.map(s => `
+                <div class="subject-card" id="sc-${s.id}" onclick="selectSubject('${s.id}')">
+                    <div class="subject-card-icon" style="background:${s.color};">${s.icon}</div>
+                    <div class="subject-card-info">
+                        <h4>${s.name}</h4>
+                        <span>${s.sub}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectSubject(id) {
+            document.querySelectorAll('.subject-card').forEach(c => c.classList.remove('active'));
+            document.getElementById('sc-' + id).classList.add('active');
+
+            const s = revisaoData.find(x => x.id === id);
+            const panel = document.getElementById('revisao-content-panel');
+            panel.innerHTML = `
+                <div class="panel-header">
+                    <div class="panel-header-icon" style="background:${s.color};">${s.icon}</div>
+                    <div>
+                        <h3>${s.name}</h3>
+                        <p>${s.sub} · ${s.topics.length} tópicos</p>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    ${s.topics.map((t, i) => `
+                        <div class="topic-item">
+                            <div class="topic-question" onclick="toggleTopic(this)" id="tq-${id}-${i}">
+                                <span>${t.q}</span>
+                                <span class="topic-chevron">▼</span>
+                            </div>
+                            <div class="topic-answer" id="ta-${id}-${i}">${t.a}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function toggleTopic(el) {
+            const answerId = el.id.replace('tq-', 'ta-');
+            const answer = document.getElementById(answerId);
+            const isOpen = el.classList.contains('open');
+            // Close all
+            document.querySelectorAll('.topic-question').forEach(q => q.classList.remove('open'));
+            document.querySelectorAll('.topic-answer').forEach(a => a.classList.remove('visible'));
+            // Open clicked if it was closed
+            if (!isOpen) {
+                el.classList.add('open');
+                answer.classList.add('visible');
+            }
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
