@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,9 @@
     <title>FECAD | Compartilhe e Aprenda</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
@@ -105,7 +108,8 @@
             font-size: 20px;
         }
 
-        .nav-link:hover, .nav-link.active {
+        .nav-link:hover,
+        .nav-link.active {
             background: var(--glass);
             color: var(--text-main);
             transform: translateX(4px);
@@ -180,8 +184,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Notebook Feed */
@@ -297,7 +308,8 @@
             color: var(--text-dim);
         }
 
-        .room-item:hover, .room-item.active {
+        .room-item:hover,
+        .room-item.active {
             background: var(--glass);
             color: var(--text-main);
         }
@@ -358,7 +370,9 @@
             color: var(--primary-light);
         }
 
-        .msg-sent .msg-user { color: rgba(255, 255, 255, 0.8); }
+        .msg-sent .msg-user {
+            color: rgba(255, 255, 255, 0.8);
+        }
 
         .chat-input-area {
             padding: 20px;
@@ -398,7 +412,7 @@
         .fc-chat-header {
             padding: 20px 22px;
             border-bottom: 1px solid var(--border);
-            background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1));
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.1));
             display: flex;
             align-items: center;
             gap: 14px;
@@ -414,11 +428,18 @@
             justify-content: center;
             font-size: 22px;
             flex-shrink: 0;
-            box-shadow: 0 0 16px rgba(99,102,241,0.4);
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
         }
 
-        .fc-ai-info h4 { font-size: 15px; font-weight: 700; }
-        .fc-ai-info span { font-size: 12px; color: var(--accent); }
+        .fc-ai-info h4 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .fc-ai-info span {
+            font-size: 12px;
+            color: var(--accent);
+        }
 
         .fc-messages {
             flex: 1;
@@ -428,8 +449,15 @@
             flex-direction: column;
             gap: 14px;
         }
-        .fc-messages::-webkit-scrollbar { width: 4px; }
-        .fc-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .fc-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .fc-messages::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
 
         .fc-bubble {
             max-width: 85%;
@@ -441,8 +469,8 @@
         }
 
         .fc-bubble.ai {
-            background: rgba(99,102,241,0.12);
-            border: 1px solid rgba(99,102,241,0.2);
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.2);
             align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
@@ -472,7 +500,7 @@
         }
 
         .fc-subject-btn {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 7px 12px;
@@ -484,7 +512,7 @@
         }
 
         .fc-subject-btn:hover {
-            background: rgba(99,102,241,0.2);
+            background: rgba(99, 102, 241, 0.2);
             border-color: var(--primary-light);
             color: var(--primary-light);
         }
@@ -501,7 +529,7 @@
             width: 44px;
             height: 44px;
             border-radius: 12px;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
             color: var(--text-main);
             font-size: 16px;
@@ -534,12 +562,27 @@
             animation: bounce 1.2s infinite;
         }
 
-        .fc-typing span:nth-child(2) { animation-delay: 0.2s; }
-        .fc-typing span:nth-child(3) { animation-delay: 0.4s; }
+        .fc-typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .fc-typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
 
         @keyframes bounce {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
-            30% { transform: translateY(-8px); opacity: 1; }
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+
+            30% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
         }
 
         /* Chat input */
@@ -585,7 +628,7 @@
         }
 
         .fc-badge {
-            background: rgba(99,102,241,0.15);
+            background: rgba(99, 102, 241, 0.15);
             border: 1px solid var(--primary);
             color: var(--primary-light);
             padding: 4px 12px;
@@ -599,8 +642,15 @@
             overflow-y: auto;
             padding-right: 4px;
         }
-        .fc-cards-container::-webkit-scrollbar { width: 4px; }
-        .fc-cards-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .fc-cards-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .fc-cards-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
 
         .flashcard-grid {
             display: grid;
@@ -627,7 +677,8 @@
             transform: rotateY(180deg);
         }
 
-        .flashcard-front, .flashcard-back {
+        .flashcard-front,
+        .flashcard-back {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -682,8 +733,15 @@
             border: none;
         }
 
-        .fc-score-btn.ok { background: rgba(255,255,255,0.25); color: white; }
-        .fc-score-btn.err { background: rgba(0,0,0,0.25); color: white; }
+        .fc-score-btn.ok {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+
+        .fc-score-btn.err {
+            background: rgba(0, 0, 0, 0.25);
+            color: white;
+        }
 
         /* Empty state */
         .fc-empty {
@@ -697,14 +755,24 @@
             gap: 14px;
         }
 
-        .fc-empty-icon { font-size: 64px; }
-        .fc-empty p { font-size: 15px; max-width: 260px; line-height: 1.6; }
+        .fc-empty-icon {
+            font-size: 64px;
+        }
+
+        .fc-empty p {
+            font-size: 15px;
+            max-width: 260px;
+            line-height: 1.6;
+        }
 
         /* Modal */
         .modal {
             display: none;
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(8px);
             z-index: 1000;
@@ -723,8 +791,15 @@
         }
 
         @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .form-group {
@@ -738,7 +813,9 @@
             margin-bottom: 8px;
         }
 
-        .form-group input, .form-group select, .form-group textarea {
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             background: var(--bg-deep);
             border: 1px solid var(--border);
@@ -767,7 +844,10 @@
         /* Auth Screen */
         #auth-screen {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: var(--bg-deep);
             z-index: 2000;
             display: flex;
@@ -793,7 +873,7 @@
 
         .auth-tabs {
             display: flex;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0, 0, 0, 0.2);
             padding: 4px;
             border-radius: 12px;
             margin-bottom: 24px;
@@ -845,8 +925,14 @@
             padding-right: 8px;
         }
 
-        .revisao-subject-list::-webkit-scrollbar { width: 4px; }
-        .revisao-subject-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .revisao-subject-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .revisao-subject-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
 
         .subject-card {
             background: var(--bg-card);
@@ -942,11 +1028,17 @@
             gap: 16px;
         }
 
-        .panel-body::-webkit-scrollbar { width: 4px; }
-        .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .panel-body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .panel-body::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
 
         .topic-item {
-            background: rgba(255,255,255,0.02);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border);
             border-radius: 16px;
             overflow: hidden;
@@ -965,9 +1057,13 @@
             transition: background 0.2s;
         }
 
-        .topic-question:hover { background: rgba(99, 102, 241, 0.07); }
+        .topic-question:hover {
+            background: rgba(99, 102, 241, 0.07);
+        }
 
-        .topic-question.open { color: var(--primary-light); }
+        .topic-question.open {
+            color: var(--primary-light);
+        }
 
         .topic-chevron {
             font-size: 12px;
@@ -976,7 +1072,9 @@
             flex-shrink: 0;
         }
 
-        .topic-question.open .topic-chevron { transform: rotate(180deg); }
+        .topic-question.open .topic-chevron {
+            transform: rotate(180deg);
+        }
 
         .topic-answer {
             display: none;
@@ -987,7 +1085,10 @@
             border-top: 1px solid var(--border);
         }
 
-        .topic-answer.visible { display: block; animation: fadeIn 0.2s ease; }
+        .topic-answer.visible {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
 
         .topic-answer code {
             display: block;
@@ -1024,10 +1125,18 @@
             text-align: center;
         }
 
-        .panel-empty .empty-icon { font-size: 56px; }
-        .panel-empty p { font-size: 15px; max-width: 280px; line-height: 1.6; }
+        .panel-empty .empty-icon {
+            font-size: 56px;
+        }
+
+        .panel-empty p {
+            font-size: 15px;
+            max-width: 280px;
+            line-height: 1.6;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- Auth Screen -->
@@ -1036,7 +1145,8 @@
             <div class="auth-header">
                 <div class="logo-icon" style="margin: 0 auto 16px;">F</div>
                 <h2 style="font-size: 24px;">Bem-vindo ao FECAD</h2>
-                <p style="color: var(--text-dim); font-size: 14px; margin-top: 4px;">Sua rede de estudos colaborativa</p>
+                <p style="color: var(--text-dim); font-size: 14px; margin-top: 4px;">Sua rede de estudos colaborativa
+                </p>
             </div>
 
             <div class="auth-tabs">
@@ -1077,11 +1187,13 @@
                     <label>Crie uma Senha</label>
                     <input type="password" id="signup-pass" placeholder="Mínimo 6 caracteres">
                 </div>
-                <button class="btn-upload" style="width: 100%;" onclick="handleAuth('signup')">Finalizar Cadastro</button>
+                <button class="btn-upload" style="width: 100%;" onclick="handleAuth('signup')">Finalizar
+                    Cadastro</button>
             </div>
 
             <div class="auth-footer">
-                Esqueceu sua senha? <a href="#" style="color: var(--primary-light); text-decoration: none;">Recuperar</a>
+                Esqueceu sua senha? <a href="#"
+                    style="color: var(--primary-light); text-decoration: none;">Recuperar</a>
             </div>
         </div>
     </div>
@@ -1089,200 +1201,212 @@
     <!-- Main App Container -->
     <div id="main-app" style="display: flex; min-height: 100vh;">
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo">
-            <div class="logo-icon">F</div>
-            <div class="logo-text">FECAD</div>
-        </div>
-
-        <nav class="nav-menu">
-            <li class="nav-item">
-                <a href="#" class="nav-link active" onclick="showPage('explorar', this)">
-                    <i>📚</i> Explorar Cadernos
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showPage('chat', this)">
-                    <i>💬</i> Chats por Matéria
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showPage('flashcards', this)">
-                    <i>🃏</i> Meus Flashcards
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showPage('revisao', this)">
-                    <i>📝</i> Revisão por Matéria
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showPage('perfil', this)">
-                    <i>👤</i> Meu Perfil
-                </a>
-            </li>
-        </nav>
-
-        <button class="btn-upload" onclick="openModal('uploadModal')">
-            + Enviar Caderno
-        </button>
-    </aside>
-
-    <!-- Main -->
-    <main class="main-content">
-        <header>
-            <div class="search-bar">
-                <i>🔍</i>
-                <input type="text" id="global-search" oninput="handleSearch()" placeholder="Buscar matéria, professor ou tópico...">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">F</div>
+                <div class="logo-text">FECAD</div>
             </div>
-            <div style="display: flex; gap: 20px; align-items: center;">
-                <div style="text-align: right">
-                    <div id="user-display-name" style="font-weight: 700;">Visitante</div>
-                    <div style="font-size: 12px; color: var(--accent)">Premium Student</div>
+
+            <nav class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" onclick="showPage('explorar', this)">
+                        <i>📚</i> Explorar Cadernos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showPage('chat', this)">
+                        <i>💬</i> Chats por Matéria
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showPage('flashcards', this)">
+                        <i>🃏</i> Meus Flashcards
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showPage('revisao', this)">
+                        <i>📝</i> Revisão por Matéria
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showPage('perfil', this)">
+                        <i>👤</i> Meu Perfil
+                    </a>
+                </li>
+            </nav>
+
+            <button class="btn-upload" onclick="openModal('uploadModal')">
+                + Enviar Caderno
+            </button>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+            <header>
+                <div class="search-bar">
+                    <i>🔍</i>
+                    <input type="text" id="global-search" oninput="handleSearch()"
+                        placeholder="Buscar matéria, professor ou tópico...">
                 </div>
-                <div class="author-avatar" style="width: 45px; height: 45px; border: 2px solid var(--primary);"></div>
-            </div>
-        </header>
-
-        <!-- EXPLORAR PAGE -->
-        <div id="page-explorar" class="page active">
-            <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Recém Adicionados</h2>
-            
-            <div class="feed-grid" id="notebook-feed">
-                <!-- Cards will be injected here -->
-            </div>
-        </div>
-
-        <!-- CHAT PAGE -->
-        <div id="page-chat" class="page">
-            <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Salas de Chat</h2>
-            
-            <div class="chat-container">
-                <div class="chat-sidebar" id="chat-rooms">
-                    <!-- Rooms -->
-                </div>
-                <div class="chat-main">
-                    <div id="chat-header" style="padding: 20px; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--primary-light);">
-                        Selecione uma sala para começar
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div style="text-align: right">
+                        <div id="user-display-name" style="font-weight: 700;">Visitante</div>
+                        <div style="font-size: 12px; color: var(--accent)">Premium Student</div>
                     </div>
-                    <div class="chat-messages" id="chat-box">
-                        <div style="color: var(--text-dim); text-align: center; margin-top: 100px;">
-                            Bata um papo com outros estudantes sobre as matérias!
+                    <div class="author-avatar" style="width: 45px; height: 45px; border: 2px solid var(--primary);">
+                    </div>
+                </div>
+            </header>
+
+            <!-- EXPLORAR PAGE -->
+            <div id="page-explorar" class="page active">
+                <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Recém Adicionados</h2>
+
+                <div class="feed-grid" id="notebook-feed">
+                    <!-- Cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- CHAT PAGE -->
+            <div id="page-chat" class="page">
+                <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Salas de Chat</h2>
+
+                <div class="chat-container">
+                    <div class="chat-sidebar" id="chat-rooms">
+                        <!-- Rooms -->
+                    </div>
+                    <div class="chat-main">
+                        <div id="chat-header"
+                            style="padding: 20px; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--primary-light);">
+                            Selecione uma sala para começar
+                        </div>
+                        <div class="chat-messages" id="chat-box">
+                            <div style="color: var(--text-dim); text-align: center; margin-top: 100px;">
+                                Bata um papo com outros estudantes sobre as matérias!
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="msgInput" placeholder="Sua pergunta ou dica...">
+                            <button class="btn-upload" style="margin-top: 0; padding: 0 25px;"
+                                onclick="sendMessage()">Enviar</button>
                         </div>
                     </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="msgInput" placeholder="Sua pergunta ou dica...">
-                        <button class="btn-upload" style="margin-top: 0; padding: 0 25px;" onclick="sendMessage()">Enviar</button>
-                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- FLASHCARDS PAGE -->
-        <div id="page-flashcards" class="page">
-            <h2 style="font-size: 28px; margin-bottom: 20px; font-family: 'Outfit';">🃏 Flashcards com IA</h2>
-            <div class="fc-ai-layout">
+            <!-- FLASHCARDS PAGE -->
+            <div id="page-flashcards" class="page">
+                <h2 style="font-size: 28px; margin-bottom: 20px; font-family: 'Outfit';">🃏 Flashcards com IA</h2>
+                <div class="fc-ai-layout">
 
-                <!-- LEFT: AI Chat Panel -->
-                <div class="fc-chat-panel">
-                    <div class="fc-chat-header">
-                        <div class="fc-ai-avatar">🤖</div>
-                        <div class="fc-ai-info">
-                            <h4>Assistente FECAD</h4>
-                            <span>● Online — Pronto para estudar</span>
+                    <!-- LEFT: AI Chat Panel -->
+                    <div class="fc-chat-panel">
+                        <div class="fc-chat-header">
+                            <div class="fc-ai-avatar">🤖</div>
+                            <div class="fc-ai-info">
+                                <h4>Assistente FECAD</h4>
+                                <span>● Online — Pronto para estudar</span>
+                            </div>
+                        </div>
+                        <div class="fc-messages" id="fc-messages"></div>
+                        <div class="fc-input-area">
+                            <input type="text" id="fc-user-input" placeholder="Digite sua resposta..."
+                                onkeydown="if(event.key==='Enter') fcSendUserMessage()">
+                            <button class="btn-upload" style="margin-top:0; padding: 0 18px; font-size:18px;"
+                                onclick="fcSendUserMessage()">➤</button>
                         </div>
                     </div>
-                    <div class="fc-messages" id="fc-messages"></div>
-                    <div class="fc-input-area">
-                        <input type="text" id="fc-user-input" placeholder="Digite sua resposta..." onkeydown="if(event.key==='Enter') fcSendUserMessage()">
-                        <button class="btn-upload" style="margin-top:0; padding: 0 18px; font-size:18px;" onclick="fcSendUserMessage()">➤</button>
-                    </div>
-                </div>
 
-                <!-- RIGHT: Generated Flashcards -->
-                <div class="fc-results-panel">
-                    <div class="fc-results-header">
-                        <h3 id="fc-results-title">Seus Flashcards</h3>
-                        <div id="fc-badge" class="fc-badge" style="display:none;"></div>
-                    </div>
-                    <div class="fc-cards-container">
-                        <div id="flashcard-list">
-                            <div class="fc-empty">
-                                <div class="fc-empty-icon">✨</div>
-                                <p>Converse com a IA ao lado para gerar seus flashcards personalizados!</p>
+                    <!-- RIGHT: Generated Flashcards -->
+                    <div class="fc-results-panel">
+                        <div class="fc-results-header">
+                            <h3 id="fc-results-title">Seus Flashcards</h3>
+                            <div id="fc-badge" class="fc-badge" style="display:none;"></div>
+                        </div>
+                        <div class="fc-cards-container">
+                            <div id="flashcard-list">
+                                <div class="fc-empty">
+                                    <div class="fc-empty-icon">✨</div>
+                                    <p>Converse com a IA ao lado para gerar seus flashcards personalizados!</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
+                </div>
             </div>
-        </div>
 
-        <!-- REVISÃO PAGE -->
-        <div id="page-revisao" class="page">
-            <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">📝 Revisão por Matéria</h2>
-            <div class="revisao-layout">
-                <!-- Subject list -->
-                <div class="revisao-subject-list" id="revisao-subject-list">
-                    <!-- Injected by JS -->
-                </div>
-                <!-- Content panel -->
-                <div class="revisao-content-panel" id="revisao-content-panel">
-                    <div class="panel-empty">
-                        <div class="empty-icon">🎯</div>
-                        <p>Selecione uma matéria ao lado para ver os tópicos de revisão.</p>
+            <!-- REVISÃO PAGE -->
+            <div id="page-revisao" class="page">
+                <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">📝 Revisão por Matéria</h2>
+                <div class="revisao-layout">
+                    <!-- Subject list -->
+                    <div class="revisao-subject-list" id="revisao-subject-list">
+                        <!-- Injected by JS -->
+                    </div>
+                    <!-- Content panel -->
+                    <div class="revisao-content-panel" id="revisao-content-panel">
+                        <div class="panel-empty">
+                            <div class="empty-icon">🎯</div>
+                            <p>Selecione uma matéria ao lado para ver os tópicos de revisão.</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-    </main>
+        </main>
 
-    <!-- Upload Modal -->
-    <div id="uploadModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 20px; font-size: 22px;">Compartilhar Caderno</h3>
-            <div class="form-group">
-                <label>Título das Notas</label>
-                <input type="text" id="up-title" placeholder="ex: Resumo de Termodinâmica">
-            </div>
-            <div class="form-group">
-                <label>Matéria</label>
-                <select id="up-subject">
-                    <option>Leitura e produção de textos</option>
-                    <option>Artes</option>
-                    <option>Biologia</option>
-                    <option>Direito e Ética</option>
-                    <option>Educação Física</option>
-                    <option>Física</option>
-                    <option>Geografia</option>
-                    <option>Gramática da Língua Portuguesa</option>
-                    <option>Lógica de Programação</option>
-                    <option>Steam Maker</option>
-                    <option>Linguagem de Programação</option>
-                    <option>Literatura Lusófona</option>
-                    <option>Manutenção e Suporte de Computadores</option>
-                    <option>Matemática</option>
-                    <option>Química</option>
-                    <option>Robótica</option>
-                    <option>Sistemas Operacionais</option>
-                    <option>Tecnologias Interativas</option>
-                    <option>Web Design</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Foto do Caderno</label>
-                <div style="border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer;" onclick="alert('Seletor de arquivos abriria aqui')">
-                    Clique ou arraste a foto aqui
+        <!-- Upload Modal -->
+        <div id="uploadModal" class="modal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 20px; font-size: 22px;">Compartilhar Caderno</h3>
+                <div class="form-group">
+                    <label>Título das Notas</label>
+                    <input type="text" id="up-title" placeholder="ex: Resumo de Termodinâmica">
+                </div>
+                <div class="form-group">
+                    <label>Matéria</label>
+                    <select id="up-subject">
+                        <option>Leitura e produção de textos</option>
+                        <option>Artes</option>
+                        <option>Biologia</option>
+                        <option>Direito e Ética</option>
+                        <option>Educação Física</option>
+                        <option>Física</option>
+                        <option>Geografia</option>
+                        <option>Gramática da Língua Portuguesa</option>
+                        <option>Lógica de Programação</option>
+                        <option>Steam Maker</option>
+                        <option>Linguagem de Programação</option>
+                        <option>Literatura Lusófona</option>
+                        <option>Manutenção e Suporte de Computadores</option>
+                        <option>Matemática</option>
+                        <option>Química</option>
+                        <option>Robótica</option>
+                        <option>Sistemas Operacionais</option>
+                        <option>Tecnologias Interativas</option>
+                        <option>Web Design</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Foto do Caderno</label>
+                    <input type="file" id="up-file" style="display: none;" accept="image/*"
+                        onchange="previewImage(event)">
+                    <div style="border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer;"
+                        onclick="document.getElementById('up-file').click()">
+                        <img id="up-preview"
+                            style="max-width: 100%; max-height: 150px; display: none; margin: 0 auto; border-radius: 8px;">
+                        <span id="up-text">Clique ou arraste a foto aqui</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 30px;">
+                    <button class="btn-upload" style="flex: 1; background: var(--glass);"
+                        onclick="closeModal('uploadModal')">Cancelar</button>
+                    <button class="btn-upload" style="flex: 1;" onclick="addNotebook()">Postar</button>
                 </div>
             </div>
-            <div style="display: flex; gap: 12px; margin-top: 30px;">
-                <button class="btn-upload" style="flex: 1; background: var(--glass);" onclick="closeModal('uploadModal')">Cancelar</button>
-                <button class="btn-upload" style="flex: 1;" onclick="addNotebook()">Postar</button>
-            </div>
         </div>
-    </div>
 
     </div> <!-- End of #main-app -->
 
@@ -1296,7 +1420,7 @@
                 <div style="width: 280px; display: flex; flex-direction: column;">
                     <h3 id="view-title" style="margin-bottom: 10px;"></h3>
                     <div id="view-author" style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px;"></div>
-                    
+
                     <div style="flex: 1;">
                         <h4 style="font-size: 14px; margin-bottom: 10px;">Recomendações dos Usuários:</h4>
                         <div id="view-feedbacks" style="font-size: 13px; color: var(--text-dim); line-height: 1.6;">
@@ -1327,20 +1451,20 @@
             let users = [];
             try {
                 users = JSON.parse(localStorage.getItem('fecad_users') || '[]');
-            } catch(e) {
+            } catch (e) {
                 console.error("Erro ao ler usuários:", e);
                 users = [];
             }
-            
-            if(mode === 'signup') {
+
+            if (mode === 'signup') {
                 const name = document.getElementById('signup-name').value.trim();
                 const email = document.getElementById('signup-email').value.trim().toLowerCase();
                 const pass = document.getElementById('signup-pass').value.trim();
 
-                if(!name || !email || !pass) return alert('Por favor, preencha todos os campos do cadastro!');
-                
+                if (!name || !email || !pass) return alert('Por favor, preencha todos os campos do cadastro!');
+
                 // Check if user already exists
-                if(users.some(u => u.email === email)) {
+                if (users.some(u => u.email === email)) {
                     alert('Este e-mail já está cadastrado. Tente fazer login na aba ao lado.');
                     toggleAuth('login');
                     return;
@@ -1350,27 +1474,27 @@
                 const newUser = { name, email, pass };
                 users.push(newUser);
                 localStorage.setItem('fecad_users', JSON.stringify(users));
-                
+
                 alert('Cadastro realizado com sucesso! Agora você pode entrar usando seu e-mail e senha na aba "Entrar".');
                 toggleAuth('login');
-                
+
                 // Limpar campos de cadastro
                 document.getElementById('signup-name').value = '';
                 document.getElementById('signup-email').value = '';
                 document.getElementById('signup-pass').value = '';
                 return;
-            } 
-            
-            if(mode === 'login') {
+            }
+
+            if (mode === 'login') {
                 const email = document.getElementById('login-email').value.trim().toLowerCase();
                 const pass = document.getElementById('login-pass').value.trim();
 
-                if(!email || !pass) return alert('Preencha seu e-mail e senha!');
+                if (!email || !pass) return alert('Preencha seu e-mail e senha!');
 
                 // Check credentials
                 const user = users.find(u => u.email === email && u.pass === pass);
-                
-                if(user) {
+
+                if (user) {
                     // Success
                     document.getElementById('user-display-name').textContent = user.name;
                     document.getElementById('auth-screen').style.display = 'none';
@@ -1379,9 +1503,9 @@
                 } else {
                     // Specific feedback
                     const existingUser = users.find(u => u.email === email);
-                    if(existingUser) {
+                    if (existingUser) {
                         alert('Senha incorreta! Por favor, tente novamente.');
-                    } else if(email.includes('jeferson') && !users.some(u => u.email.includes('jeferson'))) {
+                    } else if (email.includes('jeferson') && !users.some(u => u.email.includes('jeferson'))) {
                         alert('Olá Jeferson! Notei que você ainda não criou uma conta oficial. Por favor, use a aba "Cadastrar" para se registrar pela primeira vez.');
                     } else {
                         alert('Conta não encontrada com este e-mail. Por favor, crie uma conta na aba "Cadastrar" antes de entrar.');
@@ -1392,12 +1516,12 @@
 
         // Sample Data
         const notebooks = [
-            { 
-                id: 1, 
-                title: 'Derivadas e Integrais', 
-                subject: 'Cálculo', 
-                author: 'Beatriz Lima', 
-                stars: 5, 
+            {
+                id: 1,
+                title: 'Derivadas e Integrais',
+                subject: 'Cálculo',
+                author: 'Beatriz Lima',
+                stars: 5,
                 img: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800',
                 feedbacks: [
                     'Ótima caligrafia! Poderia adicionar mais exemplos de integração por partes.',
@@ -1405,12 +1529,12 @@
                     '💡 Recomendação: Use cores diferentes para destacar os teoremas.'
                 ]
             },
-            { 
-                id: 2, 
-                title: 'Revolução Industrial', 
-                subject: 'História', 
-                author: 'Marcos Vinícius', 
-                stars: 4, 
+            {
+                id: 2,
+                title: 'Revolução Industrial',
+                subject: 'História',
+                author: 'Marcos Vinícius',
+                stars: 4,
                 img: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&q=80&w=800',
                 feedbacks: [
                     'Muito completo o resumo sobre as máquinas térmicas.',
@@ -1422,147 +1546,147 @@
         // ===== KNOWLEDGE BASE =====
         const fcKB = {
             'Matemática': [
-                {q:'O que é uma equação do 2º grau?', a:'É uma equação na forma ax²+bx+c=0, com a≠0. Resolvida pela fórmula de Bhaskara: x=(-b±√Δ)/2a'},
-                {q:'O que é o MMC?', a:'Mínimo Múltiplo Comum: o menor número divisível por dois ou mais números dados. Ex: MMC(4,6)=12'},
-                {q:'Área do triângulo?', a:'A = (base × altura) / 2'},
-                {q:'O que é uma fração irredutível?', a:'É quando o numerador e denominador não têm divisor comum além do 1. Ex: 3/4 é irredutível.'},
-                {q:'Pitágoras: qual a fórmula?', a:'a² = b² + c², onde "a" é a hipotenusa (lado oposto ao ângulo reto).'},
-                {q:'O que é porcentagem?', a:'É uma fração de denominador 100. Ex: 25% = 25/100 = 0,25'},
-                {q:'O que é média aritmética?', a:'Soma de todos os valores dividida pela quantidade de valores. Ex: média de 4,6,8 = (4+6+8)/3 = 6'},
-                {q:'O que é função linear?', a:'f(x) = ax + b. Seu gráfico é uma reta. "a" é o coeficiente angular e "b" o linear.'}
+                { q: 'O que é uma equação do 2º grau?', a: 'É uma equação na forma ax²+bx+c=0, com a≠0. Resolvida pela fórmula de Bhaskara: x=(-b±√Δ)/2a' },
+                { q: 'O que é o MMC?', a: 'Mínimo Múltiplo Comum: o menor número divisível por dois ou mais números dados. Ex: MMC(4,6)=12' },
+                { q: 'Área do triângulo?', a: 'A = (base × altura) / 2' },
+                { q: 'O que é uma fração irredutível?', a: 'É quando o numerador e denominador não têm divisor comum além do 1. Ex: 3/4 é irredutível.' },
+                { q: 'Pitágoras: qual a fórmula?', a: 'a² = b² + c², onde "a" é a hipotenusa (lado oposto ao ângulo reto).' },
+                { q: 'O que é porcentagem?', a: 'É uma fração de denominador 100. Ex: 25% = 25/100 = 0,25' },
+                { q: 'O que é média aritmética?', a: 'Soma de todos os valores dividida pela quantidade de valores. Ex: média de 4,6,8 = (4+6+8)/3 = 6' },
+                { q: 'O que é função linear?', a: 'f(x) = ax + b. Seu gráfico é uma reta. "a" é o coeficiente angular e "b" o linear.' }
             ],
             'Física': [
-                {q:'1ª Lei de Newton?', a:'Inércia: todo corpo em repouso permanece em repouso, e em movimento permanece em movimento, a menos que uma força externa atue sobre ele.'},
-                {q:'2ª Lei de Newton?', a:'F = m × a (Força = massa × aceleração). A força resultante é proporcional à aceleração.'},
-                {q:'3ª Lei de Newton?', a:'Ação e Reação: para toda ação há uma reação de mesma intensidade, mesma direção e sentido oposto.'},
-                {q:'Fórmula da velocidade média?', a:'Vm = ΔS / Δt (variação do espaço dividida pela variação do tempo)'},
-                {q:'O que é energia cinética?', a:'Ec = m×v²/2 — energia que um corpo possui devido ao seu movimento.'},
-                {q:'Lei de Ohm?', a:'V = R × I (Tensão = Resistência × Corrente). Relaciona tensão, resistência e corrente elétrica.'},
-                {q:'O que é frequência de uma onda?', a:'É o número de oscilações por segundo, medida em Hertz (Hz).'}
+                { q: '1ª Lei de Newton?', a: 'Inércia: todo corpo em repouso permanece em repouso, e em movimento permanece em movimento, a menos que uma força externa atue sobre ele.' },
+                { q: '2ª Lei de Newton?', a: 'F = m × a (Força = massa × aceleração). A força resultante é proporcional à aceleração.' },
+                { q: '3ª Lei de Newton?', a: 'Ação e Reação: para toda ação há uma reação de mesma intensidade, mesma direção e sentido oposto.' },
+                { q: 'Fórmula da velocidade média?', a: 'Vm = ΔS / Δt (variação do espaço dividida pela variação do tempo)' },
+                { q: 'O que é energia cinética?', a: 'Ec = m×v²/2 — energia que um corpo possui devido ao seu movimento.' },
+                { q: 'Lei de Ohm?', a: 'V = R × I (Tensão = Resistência × Corrente). Relaciona tensão, resistência e corrente elétrica.' },
+                { q: 'O que é frequência de uma onda?', a: 'É o número de oscilações por segundo, medida em Hertz (Hz).' }
             ],
             'Química': [
-                {q:'O que é um átomo?', a:'É a menor partícula de um elemento químico. É composto por prótons e nêutrons (no núcleo) e elétrons (na eletrosfera).'},
-                {q:'O que é ligação iônica?', a:'Ocorre quando um metal transfere elétrons para um não-metal, formando íons (Na⁺ e Cl⁻ no sal de cozinha).'},
-                {q:'O que é ligação covalente?', a:'É o compartilhamento de elétrons entre dois não-metais. Ex: H₂O, CO₂.'},
-                {q:'O que é pH?', a:'Medida de acidez. pH < 7 = ácido, pH = 7 = neutro, pH > 7 = básico.'},
-                {q:'O que é massa molar?', a:'É a massa de 1 mol de uma substância, expressa em g/mol. Ex: massa molar da água (H₂O) ≈ 18 g/mol.'},
-                {q:'O que é reação de combustão?', a:'É a reação entre um combustível e oxigênio, liberando luz e calor. Ex: C + O₂ → CO₂'}
+                { q: 'O que é um átomo?', a: 'É a menor partícula de um elemento químico. É composto por prótons e nêutrons (no núcleo) e elétrons (na eletrosfera).' },
+                { q: 'O que é ligação iônica?', a: 'Ocorre quando um metal transfere elétrons para um não-metal, formando íons (Na⁺ e Cl⁻ no sal de cozinha).' },
+                { q: 'O que é ligação covalente?', a: 'É o compartilhamento de elétrons entre dois não-metais. Ex: H₂O, CO₂.' },
+                { q: 'O que é pH?', a: 'Medida de acidez. pH < 7 = ácido, pH = 7 = neutro, pH > 7 = básico.' },
+                { q: 'O que é massa molar?', a: 'É a massa de 1 mol de uma substância, expressa em g/mol. Ex: massa molar da água (H₂O) ≈ 18 g/mol.' },
+                { q: 'O que é reação de combustão?', a: 'É a reação entre um combustível e oxigênio, liberando luz e calor. Ex: C + O₂ → CO₂' }
             ],
             'Biologia': [
-                {q:'O que é célula procarionte?', a:'Célula sem núcleo organizado (sem membrana nuclear). Ex: bactérias e arqueas.'},
-                {q:'O que é fotossíntese?', a:'Processo pelo qual plantas usam luz solar, água e CO₂ para produzir glicose e oxigênio. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂'},
-                {q:'O que são cromossomos?', a:'São estruturas no núcleo celular que contêm o DNA. Humanos possuem 46 cromossomos (23 pares).'},
-                {q:'O que é DNA?', a:'Ácido Desoxirribonucleico — molécula em dupla hélice que contém as informações genéticas de um organismo.'},
-                {q:'O que é ecossistema?', a:'Conjunto de seres vivos (biocenose) e fatores abióticos (clima, solo, água) de uma região, interagindo entre si.'},
-                {q:'O que é mitose?', a:'Divisão celular que origina duas células-filhas geneticamente idênticas à célula-mãe. Usada para crescimento e regeneração.'}
+                { q: 'O que é célula procarionte?', a: 'Célula sem núcleo organizado (sem membrana nuclear). Ex: bactérias e arqueas.' },
+                { q: 'O que é fotossíntese?', a: 'Processo pelo qual plantas usam luz solar, água e CO₂ para produzir glicose e oxigênio. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
+                { q: 'O que são cromossomos?', a: 'São estruturas no núcleo celular que contêm o DNA. Humanos possuem 46 cromossomos (23 pares).' },
+                { q: 'O que é DNA?', a: 'Ácido Desoxirribonucleico — molécula em dupla hélice que contém as informações genéticas de um organismo.' },
+                { q: 'O que é ecossistema?', a: 'Conjunto de seres vivos (biocenose) e fatores abióticos (clima, solo, água) de uma região, interagindo entre si.' },
+                { q: 'O que é mitose?', a: 'Divisão celular que origina duas células-filhas geneticamente idênticas à célula-mãe. Usada para crescimento e regeneração.' }
             ],
             'Gramática da Língua Portuguesa': [
-                {q:'O que é sujeito?', a:'É o termo da oração sobre o qual o predicado faz uma declaração. Concorda com o verbo em número e pessoa.'},
-                {q:'Diferença entre "há" e "a"?', a:'"Há" é verbo haver (tempo passado ou existência). "A" é preposição ou artigo. Ex: "Há dois dias" vs "Daqui a dois dias".'},
-                {q:'O que é crase?', a:'É a fusão da preposição "a" com o artigo "a". Representada pelo acento grave (à). Ex: "Fui à escola".'},
-                {q:'O que é substantivo?', a:'Palavra que nomeia seres, objetos, lugares, sentimentos e ações. Ex: casa, amor, coragem, Rio de Janeiro.'},
-                {q:'O que é adjunto adnominal?', a:'Termo que se liga a um substantivo para caracterizá-lo. Pode ser adjetivo, artigo, pronome ou numeral.'},
-                {q:'O que é oração coordenada?', a:'Oração independente que se une a outra sem relação de subordinação. São ligadas por conjunções coordenativas.'}
+                { q: 'O que é sujeito?', a: 'É o termo da oração sobre o qual o predicado faz uma declaração. Concorda com o verbo em número e pessoa.' },
+                { q: 'Diferença entre "há" e "a"?', a: '"Há" é verbo haver (tempo passado ou existência). "A" é preposição ou artigo. Ex: "Há dois dias" vs "Daqui a dois dias".' },
+                { q: 'O que é crase?', a: 'É a fusão da preposição "a" com o artigo "a". Representada pelo acento grave (à). Ex: "Fui à escola".' },
+                { q: 'O que é substantivo?', a: 'Palavra que nomeia seres, objetos, lugares, sentimentos e ações. Ex: casa, amor, coragem, Rio de Janeiro.' },
+                { q: 'O que é adjunto adnominal?', a: 'Termo que se liga a um substantivo para caracterizá-lo. Pode ser adjetivo, artigo, pronome ou numeral.' },
+                { q: 'O que é oração coordenada?', a: 'Oração independente que se une a outra sem relação de subordinação. São ligadas por conjunções coordenativas.' }
             ],
             'Literatura Lusófona': [
-                {q:'Quem escreveu "Os Lusíadas"?', a:'Luís de Camões, obra épica publicada em 1572, narrando a viagem de Vasco da Gama à Índia.'},
-                {q:'O que é Trovadorismo?', a:'Primeira escola literária da língua portuguesa (séc. XII-XIV). Caracterizada por cantigas de amor, amigo e escárnio.'},
-                {q:'O que é Realismo literário?', a:'Movimento do séc. XIX que retratava a realidade social com objetividade, crítica e linguagem direta. Ex: Eça de Queirós.'},
-                {q:'O que é Modernismo em Portugal?', a:'Movimento iniciado em 1915 com a revista Orpheu. Fernando Pessoa é o maior nome, com seus heterônimos.'},
-                {q:'Quem é Fernando Pessoa?', a:'Poeta português (1888-1935), criador de heterônimos: Alberto Caeiro, Ricardo Reis e Álvaro de Campos, além do ortônimo.'}
+                { q: 'Quem escreveu "Os Lusíadas"?', a: 'Luís de Camões, obra épica publicada em 1572, narrando a viagem de Vasco da Gama à Índia.' },
+                { q: 'O que é Trovadorismo?', a: 'Primeira escola literária da língua portuguesa (séc. XII-XIV). Caracterizada por cantigas de amor, amigo e escárnio.' },
+                { q: 'O que é Realismo literário?', a: 'Movimento do séc. XIX que retratava a realidade social com objetividade, crítica e linguagem direta. Ex: Eça de Queirós.' },
+                { q: 'O que é Modernismo em Portugal?', a: 'Movimento iniciado em 1915 com a revista Orpheu. Fernando Pessoa é o maior nome, com seus heterônimos.' },
+                { q: 'Quem é Fernando Pessoa?', a: 'Poeta português (1888-1935), criador de heterônimos: Alberto Caeiro, Ricardo Reis e Álvaro de Campos, além do ortônimo.' }
             ],
             'Leitura e produção de textos': [
-                {q:'O que é coesão textual?', a:'É a ligação harmoniosa entre as partes do texto, usando conectivos, pronomes e sinônimos para evitar repetições.'},
-                {q:'O que é coerência textual?', a:'É a lógica e consistência das ideias no texto. Um texto coerente não apresenta contradições.'},
-                {q:'Quais são os tipos de texto?', a:'Narrativo, descritivo, dissertativo-argumentativo, injuntivo (instrucional) e expositivo.'},
-                {q:'O que é argumentação?', a:'Apresentação de razões (argumentos) para defender uma tese (ideia central) e convencer o leitor.'},
-                {q:'O que é parágrafo?', a:'Unidade de texto que desenvolve uma ideia central. Composto por: tópico frasal, desenvolvimento e conclusão.'}
+                { q: 'O que é coesão textual?', a: 'É a ligação harmoniosa entre as partes do texto, usando conectivos, pronomes e sinônimos para evitar repetições.' },
+                { q: 'O que é coerência textual?', a: 'É a lógica e consistência das ideias no texto. Um texto coerente não apresenta contradições.' },
+                { q: 'Quais são os tipos de texto?', a: 'Narrativo, descritivo, dissertativo-argumentativo, injuntivo (instrucional) e expositivo.' },
+                { q: 'O que é argumentação?', a: 'Apresentação de razões (argumentos) para defender uma tese (ideia central) e convencer o leitor.' },
+                { q: 'O que é parágrafo?', a: 'Unidade de texto que desenvolve uma ideia central. Composto por: tópico frasal, desenvolvimento e conclusão.' }
             ],
             'Geografia': [
-                {q:'O que é clima tropical?', a:'Clima quente e úmido com duas estações: chuvosa e seca. Predomina nas regiões próximas ao Equador.'},
-                {q:'O que é globalização?', a:'Processo de integração econômica, cultural e política entre países, impulsionado pelo avanço tecnológico e das comunicações.'},
-                {q:'Quais são as placas tectônicas?', a:'Grandes fragmentos da litosfera que se movem lentamente. Seu choque causa terremotos, vulcões e formação de montanhas.'},
-                {q:'O que é IDH?', a:'Índice de Desenvolvimento Humano — mede qualidade de vida combinando longevidade, educação e renda. Varia de 0 a 1.'},
-                {q:'O que é urbanização?', a:'Processo de crescimento das cidades e migração da população do campo para os centros urbanos.'}
+                { q: 'O que é clima tropical?', a: 'Clima quente e úmido com duas estações: chuvosa e seca. Predomina nas regiões próximas ao Equador.' },
+                { q: 'O que é globalização?', a: 'Processo de integração econômica, cultural e política entre países, impulsionado pelo avanço tecnológico e das comunicações.' },
+                { q: 'Quais são as placas tectônicas?', a: 'Grandes fragmentos da litosfera que se movem lentamente. Seu choque causa terremotos, vulcões e formação de montanhas.' },
+                { q: 'O que é IDH?', a: 'Índice de Desenvolvimento Humano — mede qualidade de vida combinando longevidade, educação e renda. Varia de 0 a 1.' },
+                { q: 'O que é urbanização?', a: 'Processo de crescimento das cidades e migração da população do campo para os centros urbanos.' }
             ],
             'Artes': [
-                {q:'O que é perspectiva na arte?', a:'Técnica para representar a profundidade e o espaço tridimensional em uma superfície plana, criando ilusão de distância.'},
-                {q:'O que é impressionismo?', a:'Movimento artístico do séc. XIX que captava impressões momentâneas com pinceladas soltas. Principal artista: Claude Monet.'},
-                {q:'O que é arte abstrata?', a:'Arte que não representa a realidade figurativamente, focando em formas, cores e linhas para expressar emoções e ideias.'},
-                {q:'O que é escultura?', a:'Arte tridimensional que molda, entalha ou modela materiais como argila, pedra, metal ou madeira.'}
+                { q: 'O que é perspectiva na arte?', a: 'Técnica para representar a profundidade e o espaço tridimensional em uma superfície plana, criando ilusão de distância.' },
+                { q: 'O que é impressionismo?', a: 'Movimento artístico do séc. XIX que captava impressões momentâneas com pinceladas soltas. Principal artista: Claude Monet.' },
+                { q: 'O que é arte abstrata?', a: 'Arte que não representa a realidade figurativamente, focando em formas, cores e linhas para expressar emoções e ideias.' },
+                { q: 'O que é escultura?', a: 'Arte tridimensional que molda, entalha ou modela materiais como argila, pedra, metal ou madeira.' }
             ],
             'Educação Física': [
-                {q:'O que é frequência cardíaca?', a:'Número de batimentos do coração por minuto. Em repouso: ~60-100 bpm. No exercício, pode chegar a 200 bpm.'},
-                {q:'O que são capacidades físicas?', a:'São: resistência, força, velocidade, flexibilidade e coordenação motora. Base para o desempenho esportivo.'},
-                {q:'O que é aquecimento?', a:'Preparação do corpo para o exercício, aumentando temperatura muscular e fluxo sanguíneo. Previne lesões.'},
-                {q:'O que é IMC?', a:'Índice de Massa Corporal = peso(kg) / altura²(m). Normal: 18,5 a 24,9.'}
+                { q: 'O que é frequência cardíaca?', a: 'Número de batimentos do coração por minuto. Em repouso: ~60-100 bpm. No exercício, pode chegar a 200 bpm.' },
+                { q: 'O que são capacidades físicas?', a: 'São: resistência, força, velocidade, flexibilidade e coordenação motora. Base para o desempenho esportivo.' },
+                { q: 'O que é aquecimento?', a: 'Preparação do corpo para o exercício, aumentando temperatura muscular e fluxo sanguíneo. Previne lesões.' },
+                { q: 'O que é IMC?', a: 'Índice de Massa Corporal = peso(kg) / altura²(m). Normal: 18,5 a 24,9.' }
             ],
             'Direito e Ética': [
-                {q:'O que é ética?', a:'Conjunto de princípios e valores morais que guiam o comportamento humano para o bem-estar individual e coletivo.'},
-                {q:'O que é cidadania?', a:'Conjunto de direitos e deveres de um indivíduo em relação ao Estado e à sociedade. Base da democracia.'},
-                {q:'O que é Constituição?', a:'Lei máxima de um país, que define os direitos e deveres dos cidadãos e a organização do Estado. "Carta Magna".'},
-                {q:'O que são direitos humanos?', a:'Direitos fundamentais e universais de todo ser humano, como vida, liberdade e dignidade, declarados pela ONU em 1948.'}
+                { q: 'O que é ética?', a: 'Conjunto de princípios e valores morais que guiam o comportamento humano para o bem-estar individual e coletivo.' },
+                { q: 'O que é cidadania?', a: 'Conjunto de direitos e deveres de um indivíduo em relação ao Estado e à sociedade. Base da democracia.' },
+                { q: 'O que é Constituição?', a: 'Lei máxima de um país, que define os direitos e deveres dos cidadãos e a organização do Estado. "Carta Magna".' },
+                { q: 'O que são direitos humanos?', a: 'Direitos fundamentais e universais de todo ser humano, como vida, liberdade e dignidade, declarados pela ONU em 1948.' }
             ],
             'Lógica de Programação': [
-                {q:'Como receber dados do usuário em Python?', a:'Com a função input(): nome = input("Digite seu nome: "). Sempre retorna uma string.'},
-                {q:'Como converter input para número em Python?', a:'Usando int() ou float(): idade = int(input("Sua idade: "))'},
-                {q:'Como fazer um if/else em Python?', a:'if condicao:\n    # código\nelse:\n    # código alternativo\nAtenção: Python usa indentação!'},
-                {q:'Como fazer um loop for em Python?', a:'for i in range(5):\n    print(i)\nImprime de 0 a 4.'},
-                {q:'Como criar uma função em Python?', a:'def saudacao(nome):\n    return "Olá, " + nome\nChamada: saudacao("Ana")'},
-                {q:'O que são listas em Python?', a:'minha_lista = [1, 2, 3]\nAcesso: minha_lista[0] → 1\nAdicionar: minha_lista.append(4)'}
+                { q: 'Como receber dados do usuário em Python?', a: 'Com a função input(): nome = input("Digite seu nome: "). Sempre retorna uma string.' },
+                { q: 'Como converter input para número em Python?', a: 'Usando int() ou float(): idade = int(input("Sua idade: "))' },
+                { q: 'Como fazer um if/else em Python?', a: 'if condicao:\n    # código\nelse:\n    # código alternativo\nAtenção: Python usa indentação!' },
+                { q: 'Como fazer um loop for em Python?', a: 'for i in range(5):\n    print(i)\nImprime de 0 a 4.' },
+                { q: 'Como criar uma função em Python?', a: 'def saudacao(nome):\n    return "Olá, " + nome\nChamada: saudacao("Ana")' },
+                { q: 'O que são listas em Python?', a: 'minha_lista = [1, 2, 3]\nAcesso: minha_lista[0] → 1\nAdicionar: minha_lista.append(4)' }
             ],
             'Linguagem de Programação': [
-                {q:'Como adicionar um botão no Windows Forms (C#)?', a:'No Visual Studio: abra o Designer → Toolbox → arraste Button para o Form → dê duplo clique para criar o evento Click.'},
-                {q:'Como mudar a cor de fundo em C#?', a:'this.BackColor = Color.DarkBlue; (no Load do Form) ou via Propriedades → BackColor no Designer.'},
-                {q:'Como mostrar uma mensagem em C#?', a:'MessageBox.Show("Texto da mensagem");'},
-                {q:'Como ler texto de um TextBox em C#?', a:'string texto = textBox1.Text;'},
-                {q:'Como criar uma variável em C#?', a:'int numero = 10;\nstring nome = "Ana";\nbool ativo = true;'},
-                {q:'O que é um evento Click em C#?', a:'É um método chamado automaticamente quando o usuário clica num controle. Ex: private void button1_Click(object sender, EventArgs e) { }'}
+                { q: 'Como adicionar um botão no Windows Forms (C#)?', a: 'No Visual Studio: abra o Designer → Toolbox → arraste Button para o Form → dê duplo clique para criar o evento Click.' },
+                { q: 'Como mudar a cor de fundo em C#?', a: 'this.BackColor = Color.DarkBlue; (no Load do Form) ou via Propriedades → BackColor no Designer.' },
+                { q: 'Como mostrar uma mensagem em C#?', a: 'MessageBox.Show("Texto da mensagem");' },
+                { q: 'Como ler texto de um TextBox em C#?', a: 'string texto = textBox1.Text;' },
+                { q: 'Como criar uma variável em C#?', a: 'int numero = 10;\nstring nome = "Ana";\nbool ativo = true;' },
+                { q: 'O que é um evento Click em C#?', a: 'É um método chamado automaticamente quando o usuário clica num controle. Ex: private void button1_Click(object sender, EventArgs e) { }' }
             ],
             'Manutenção e Suporte de Computadores': [
-                {q:'Função da memória RAM?', a:'Memória temporária de trabalho. Armazena dados dos programas em uso. Apagada ao desligar o PC.'},
-                {q:'HD vs SSD: qual a diferença?', a:'HD usa pratos magnéticos giratórios (lento, barato). SSD usa chips flash (rápido, silencioso, mais caro por GB).'},
-                {q:'O que faz a CPU?', a:'"Cérebro" do computador. Executa instruções e cálculos. Medida em GHz (velocidade) e número de núcleos.'},
-                {q:'O que é placa-mãe?', a:'Componente principal que conecta CPU, RAM, HD/SSD, GPU e demais periféricos via slots e barramentos.'},
-                {q:'O que é fonte de alimentação?', a:'Converte a corrente alternada da tomada (110/220V) em corrente contínua para os componentes internos do PC.'},
-                {q:'O que é BIOS/UEFI?', a:'Firmware que inicializa o hardware ao ligar o PC e carrega o sistema operacional. UEFI é a versão moderna da BIOS.'}
+                { q: 'Função da memória RAM?', a: 'Memória temporária de trabalho. Armazena dados dos programas em uso. Apagada ao desligar o PC.' },
+                { q: 'HD vs SSD: qual a diferença?', a: 'HD usa pratos magnéticos giratórios (lento, barato). SSD usa chips flash (rápido, silencioso, mais caro por GB).' },
+                { q: 'O que faz a CPU?', a: '"Cérebro" do computador. Executa instruções e cálculos. Medida em GHz (velocidade) e número de núcleos.' },
+                { q: 'O que é placa-mãe?', a: 'Componente principal que conecta CPU, RAM, HD/SSD, GPU e demais periféricos via slots e barramentos.' },
+                { q: 'O que é fonte de alimentação?', a: 'Converte a corrente alternada da tomada (110/220V) em corrente contínua para os componentes internos do PC.' },
+                { q: 'O que é BIOS/UEFI?', a: 'Firmware que inicializa o hardware ao ligar o PC e carrega o sistema operacional. UEFI é a versão moderna da BIOS.' }
             ],
             'Robótica': [
-                {q:'O que é Arduino?', a:'Plataforma de prototipagem eletrônica open-source com microcontrolador programável via C/C++ (IDE Arduino).'},
-                {q:'O que mede o Volt (V)?', a:'Tensão elétrica — a "pressão" que empurra os elétrons no circuito. Arduino usa 5V; pilha AA tem 1,5V.'},
-                {q:'O que mede o Ampere (A)?', a:'Corrente elétrica — o fluxo de elétrons por segundo. Um LED típico consome ~20mA (miliamperes).'},
-                {q:'O que mede o Ohm (Ω)?', a:'Resistência elétrica. Lei de Ohm: V = R × I (Tensão = Resistência × Corrente).'},
-                {q:'Como piscar um LED com Arduino?', a:'pinMode(13, OUTPUT); no setup(). No loop(): digitalWrite(13, HIGH); delay(1000); digitalWrite(13, LOW); delay(1000);'},
-                {q:'Para que serve um resistor?', a:'Limita a corrente elétrica no circuito, protegendo componentes. Ex: resistor de 220Ω protege um LED no Arduino.'}
+                { q: 'O que é Arduino?', a: 'Plataforma de prototipagem eletrônica open-source com microcontrolador programável via C/C++ (IDE Arduino).' },
+                { q: 'O que mede o Volt (V)?', a: 'Tensão elétrica — a "pressão" que empurra os elétrons no circuito. Arduino usa 5V; pilha AA tem 1,5V.' },
+                { q: 'O que mede o Ampere (A)?', a: 'Corrente elétrica — o fluxo de elétrons por segundo. Um LED típico consome ~20mA (miliamperes).' },
+                { q: 'O que mede o Ohm (Ω)?', a: 'Resistência elétrica. Lei de Ohm: V = R × I (Tensão = Resistência × Corrente).' },
+                { q: 'Como piscar um LED com Arduino?', a: 'pinMode(13, OUTPUT); no setup(). No loop(): digitalWrite(13, HIGH); delay(1000); digitalWrite(13, LOW); delay(1000);' },
+                { q: 'Para que serve um resistor?', a: 'Limita a corrente elétrica no circuito, protegendo componentes. Ex: resistor de 220Ω protege um LED no Arduino.' }
             ],
             'Sistemas Operacionais': [
-                {q:'O que é Scrum Master?', a:'Facilitador do time Scrum. Remove impedimentos, garante que o processo seja seguido e protege o time. Não é chefe.'},
-                {q:'O que é Product Owner?', a:'Responsável pelo produto. Define prioridades do Backlog e representa o cliente. Decide "o que" será feito.'},
-                {q:'O que é um Squad?', a:'Equipe autônoma e multidisciplinar (6-12 pessoas) focada numa área do produto. Conceito popularizado pelo Spotify.'},
-                {q:'O que é Sprint no Scrum?', a:'Ciclo de desenvolvimento com duração fixa (1-4 semanas) onde o time entrega um incremento funcional do produto.'},
-                {q:'O que é Product Backlog?', a:'Lista priorizada de funcionalidades e requisitos do produto, gerenciada pelo Product Owner.'},
-                {q:'O que é IA (Inteligência Artificial)?', a:'Área da computação que desenvolve sistemas capazes de simular raciocínio humano: aprendizado, decisão e reconhecimento.'}
+                { q: 'O que é Scrum Master?', a: 'Facilitador do time Scrum. Remove impedimentos, garante que o processo seja seguido e protege o time. Não é chefe.' },
+                { q: 'O que é Product Owner?', a: 'Responsável pelo produto. Define prioridades do Backlog e representa o cliente. Decide "o que" será feito.' },
+                { q: 'O que é um Squad?', a: 'Equipe autônoma e multidisciplinar (6-12 pessoas) focada numa área do produto. Conceito popularizado pelo Spotify.' },
+                { q: 'O que é Sprint no Scrum?', a: 'Ciclo de desenvolvimento com duração fixa (1-4 semanas) onde o time entrega um incremento funcional do produto.' },
+                { q: 'O que é Product Backlog?', a: 'Lista priorizada de funcionalidades e requisitos do produto, gerenciada pelo Product Owner.' },
+                { q: 'O que é IA (Inteligência Artificial)?', a: 'Área da computação que desenvolve sistemas capazes de simular raciocínio humano: aprendizado, decisão e reconhecimento.' }
             ],
             'Tecnologias Interativas': [
-                {q:'Qual a função do Microsoft Word?', a:'Processador de textos para criar, editar e formatar documentos como relatórios, cartas e trabalhos acadêmicos.'},
-                {q:'Atalho para negrito no Word?', a:'Ctrl + N (negrito), Ctrl + I (itálico), Ctrl + S (sublinhado).'},
-                {q:'Como salvar no Word?', a:'Ctrl + S (salvar), F12 (salvar como), Ctrl + Shift + S (salvar como com diálogo).'},
-                {q:'Como inserir tabela no Word?', a:'Aba Inserir → Tabela → arraste para escolher linhas e colunas, ou clique em "Inserir Tabela".'},
-                {q:'O que faz a aba "Referências" no Word?', a:'Permite inserir sumário automático, notas de rodapé, citações e bibliografias.'},
-                {q:'Como verificar ortografia no Word?', a:'Pressione F7 ou vá em Revisão → Ortografia e Gramática. Palavras erradas aparecem sublinhadas em vermelho.'}
+                { q: 'Qual a função do Microsoft Word?', a: 'Processador de textos para criar, editar e formatar documentos como relatórios, cartas e trabalhos acadêmicos.' },
+                { q: 'Atalho para negrito no Word?', a: 'Ctrl + N (negrito), Ctrl + I (itálico), Ctrl + S (sublinhado).' },
+                { q: 'Como salvar no Word?', a: 'Ctrl + S (salvar), F12 (salvar como), Ctrl + Shift + S (salvar como com diálogo).' },
+                { q: 'Como inserir tabela no Word?', a: 'Aba Inserir → Tabela → arraste para escolher linhas e colunas, ou clique em "Inserir Tabela".' },
+                { q: 'O que faz a aba "Referências" no Word?', a: 'Permite inserir sumário automático, notas de rodapé, citações e bibliografias.' },
+                { q: 'Como verificar ortografia no Word?', a: 'Pressione F7 ou vá em Revisão → Ortografia e Gramática. Palavras erradas aparecem sublinhadas em vermelho.' }
             ],
             'Web Design': [
-                {q:'Como escurecer imagem no Photoshop?', a:'Imagem → Ajustes → Brilho/Contraste (mova Brilho para negativo). Ou Curvas (Ctrl+M) e puxe a curva para baixo.'},
-                {q:'Como melhorar saturação no Photoshop?', a:'Imagem → Ajustes → Matiz/Saturação (Ctrl+U). Aumente o slider "Saturação" para cores mais vibrantes.'},
-                {q:'Como recortar no Photoshop?', a:'Ferramenta Corte (C) → arraste as alças → Enter para confirmar. Para recortar objeto: Seleção Rápida (W) + delete fundo.'},
-                {q:'O que são camadas (Layers)?', a:'Folhas transparentes sobrepostas. Cada elemento fica numa camada, permitindo edição independente. Painel: F7.'},
-                {q:'Como remover fundo no Photoshop?', a:'Janela → Propriedades → "Remover Fundo" (usa IA). Ou: Seleção → Assunto → Delete.'},
-                {q:'O que é resolução de imagem?', a:'Densidade de pixels por polegada (DPI). 72 DPI para web, 300 DPI para impressão de qualidade.'}
+                { q: 'Como escurecer imagem no Photoshop?', a: 'Imagem → Ajustes → Brilho/Contraste (mova Brilho para negativo). Ou Curvas (Ctrl+M) e puxe a curva para baixo.' },
+                { q: 'Como melhorar saturação no Photoshop?', a: 'Imagem → Ajustes → Matiz/Saturação (Ctrl+U). Aumente o slider "Saturação" para cores mais vibrantes.' },
+                { q: 'Como recortar no Photoshop?', a: 'Ferramenta Corte (C) → arraste as alças → Enter para confirmar. Para recortar objeto: Seleção Rápida (W) + delete fundo.' },
+                { q: 'O que são camadas (Layers)?', a: 'Folhas transparentes sobrepostas. Cada elemento fica numa camada, permitindo edição independente. Painel: F7.' },
+                { q: 'Como remover fundo no Photoshop?', a: 'Janela → Propriedades → "Remover Fundo" (usa IA). Ou: Seleção → Assunto → Delete.' },
+                { q: 'O que é resolução de imagem?', a: 'Densidade de pixels por polegada (DPI). 72 DPI para web, 300 DPI para impressão de qualidade.' }
             ],
             'Steam Maker': [
-                {q:'O que é pensamento computacional?', a:'Habilidade de resolver problemas usando lógica, decomposição, reconhecimento de padrões e abstração.'},
-                {q:'O que é Maker?', a:'Cultura de criar, modificar e compartilhar objetos e tecnologias usando eletrônica, impressão 3D e programação.'},
-                {q:'O que é impressão 3D?', a:'Tecnologia que constrói objetos camada por camada a partir de um modelo digital, usando materiais como PLA ou ABS.'}
+                { q: 'O que é pensamento computacional?', a: 'Habilidade de resolver problemas usando lógica, decomposição, reconhecimento de padrões e abstração.' },
+                { q: 'O que é Maker?', a: 'Cultura de criar, modificar e compartilhar objetos e tecnologias usando eletrônica, impressão 3D e programação.' },
+                { q: 'O que é impressão 3D?', a: 'Tecnologia que constrói objetos camada por camada a partir de um modelo digital, usando materiais como PLA ou ABS.' }
             ]
         };
 
@@ -1579,11 +1703,11 @@
             msgs.innerHTML = '';
             setTimeout(() => fcAIMessage('Olá! 👋 Sou o <strong>Assistente FECAD</strong>. Vou criar flashcards personalizados para você.<br><br>Quantos cards quer estudar hoje?', `
                 <div class="fc-num-grid">
-                    ${[3,5,8,10,15].map(n=>`<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+                    ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
                 </div>`), 400);
         }
 
-        function fcAIMessage(text, extra='') {
+        function fcAIMessage(text, extra = '') {
             const msgs = document.getElementById('fc-messages');
             const div = document.createElement('div');
             div.className = 'fc-bubble ai';
@@ -1617,12 +1741,12 @@
             fcState.step = 'ask_subject';
             fcUserMessage(n + ' flashcards');
             const all = Object.keys(fcKB);
-            const normal = ['Matemática','Física','Química','Biologia','Gramática da Língua Portuguesa','Literatura Lusófona','Leitura e produção de textos','Geografia','Artes','Educação Física','Direito e Ética'];
-            const tech = ['Lógica de Programação','Linguagem de Programação','Manutenção e Suporte de Computadores','Robótica','Sistemas Operacionais','Tecnologias Interativas','Web Design','Steam Maker'];
+            const normal = ['Matemática', 'Física', 'Química', 'Biologia', 'Gramática da Língua Portuguesa', 'Literatura Lusófona', 'Leitura e produção de textos', 'Geografia', 'Artes', 'Educação Física', 'Direito e Ética'];
+            const tech = ['Lógica de Programação', 'Linguagem de Programação', 'Manutenção e Suporte de Computadores', 'Robótica', 'Sistemas Operacionais', 'Tecnologias Interativas', 'Web Design', 'Steam Maker'];
             fcTyping(() => fcAIMessage(`Ótimo! ${n} cards. 📚 Agora escolha a <strong>matéria</strong>:<br><br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Regulares</strong>
-                <div class="fc-subject-grid">${normal.filter(s=>fcKB[s]).map(s=>`<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>
+                <div class="fc-subject-grid">${normal.filter(s => fcKB[s]).map(s => `<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>
                 <br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Técnicas</strong>
-                <div class="fc-subject-grid">${tech.filter(s=>fcKB[s]).map(s=>`<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>`));
+                <div class="fc-subject-grid">${tech.filter(s => fcKB[s]).map(s => `<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>`));
         }
 
         function fcPickSubject(subject) {
@@ -1642,7 +1766,12 @@
                 const j = Math.floor(Math.random() * (i + 1));
                 [pool[i], pool[j]] = [pool[j], pool[i]];
             }
-            fcState.cards = pool.slice(0, Math.min(fcState.count, pool.length));
+            fcState.cards = [];
+            if (pool.length > 0) {
+                for (let k = 0; k < fcState.count; k++) {
+                    fcState.cards.push(pool[k % pool.length]);
+                }
+            }
             fcRenderCards();
             fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards prontos!</strong> Clique em cada card para ver a resposta. Boa revisão! 🚀<br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
         }
@@ -1654,7 +1783,7 @@
             title.textContent = fcState.subject;
             badge.style.display = 'block';
             badge.textContent = fcState.cards.length + ' cards';
-            list.innerHTML = `<div class="flashcard-grid">${fcState.cards.map((c,i) => `
+            list.innerHTML = `<div class="flashcard-grid">${fcState.cards.map((c, i) => `
                 <div class="flashcard" id="fc-card-${i}" onclick="this.classList.toggle('flipped')">
                     <div class="flashcard-inner">
                         <div class="flashcard-front">${c.q}</div>
@@ -1680,24 +1809,24 @@
         }
 
         const rooms = [
-            'Leitura e produção de textos', 
-            'Artes', 
-            'Biologia', 
-            'Direito e Ética', 
-            'Educação Física', 
-            'Física', 
-            'Geografia', 
-            'Gramática da Língua Portuguesa', 
-            'Lógica de Programação', 
-            'Steam Maker', 
-            'Linguagem de Programação', 
-            'Literatura Lusófona', 
-            'Manutenção e Suporte de Computadores', 
-            'Matemática', 
-            'Química', 
-            'Robótica', 
+            'Leitura e produção de textos',
+            'Artes',
+            'Biologia',
+            'Direito e Ética',
+            'Educação Física',
+            'Física',
+            'Geografia',
+            'Gramática da Língua Portuguesa',
+            'Lógica de Programação',
+            'Steam Maker',
+            'Linguagem de Programação',
+            'Literatura Lusófona',
+            'Manutenção e Suporte de Computadores',
+            'Matemática',
+            'Química',
+            'Robótica',
             'Sistemas Operacionais',
-            'Tecnologias Interativas', 
+            'Tecnologias Interativas',
             'Web Design',
             'Dúvidas Gerais'
         ];
@@ -1705,12 +1834,12 @@
         // Render Functions
         function renderFeed(filter = "") {
             const feed = document.getElementById('notebook-feed');
-            const filtered = notebooks.filter(nb => 
-                nb.title.toLowerCase().includes(filter.toLowerCase()) || 
+            const filtered = notebooks.filter(nb =>
+                nb.title.toLowerCase().includes(filter.toLowerCase()) ||
                 nb.subject.toLowerCase().includes(filter.toLowerCase()) ||
                 nb.author.toLowerCase().includes(filter.toLowerCase())
             );
-            
+
             feed.innerHTML = filtered.map(nb => `
                 <div class="notebook-card" onclick="viewNotebook(${nb.id})">
                     <img src="${nb.img}" class="notebook-img" alt="Notebook">
@@ -1724,14 +1853,14 @@
                             <span>Por ${nb.author}</span>
                         </div>
                         <div class="notebook-meta">
-                            <div class="stars">${'★'.repeat(nb.stars)}${'☆'.repeat(5-nb.stars)}</div>
+                            <div class="stars">${'★'.repeat(nb.stars)}${'☆'.repeat(5 - nb.stars)}</div>
                             <div style="font-size: 12px; color: var(--accent);">Ver Feedbacks</div>
                         </div>
                     </div>
                 </div>
             `).join('');
-            
-            if(filtered.length === 0) {
+
+            if (filtered.length === 0) {
                 feed.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">Nenhum caderno encontrado para "${filter}"</div>`;
             }
         }
@@ -1741,7 +1870,7 @@
 
         function renderRooms(filter = "") {
             const list = document.getElementById('chat-rooms');
-            const filtered = rooms.filter(room => 
+            const filtered = rooms.filter(room =>
                 room.toLowerCase().includes(filter.toLowerCase())
             );
 
@@ -1752,7 +1881,7 @@
                 </div>
             `).join('');
 
-            if(filtered.length === 0) {
+            if (filtered.length === 0) {
                 list.innerHTML = `<div style="font-size: 12px; color: var(--text-dim); padding: 10px;">Nenhuma sala</div>`;
             }
         }
@@ -1760,27 +1889,27 @@
         // Search Logic
         function handleSearch() {
             const query = document.getElementById('global-search').value;
-            
+
             // Re-render relevant parts based on active page
             const activePage = document.querySelector('.page.active').id;
-            
-            if(activePage === 'page-explorar') renderFeed(query);
-            if(activePage === 'page-chat') renderRooms(query);
-            if(activePage === 'page-flashcards') renderFlashcards(query);
+
+            if (activePage === 'page-explorar') renderFeed(query);
+            if (activePage === 'page-chat') renderRooms(query);
+            if (activePage === 'page-flashcards') renderFlashcards(query);
         }
 
         // Logic
         function showPage(pageId, el) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
-            
+
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             el.classList.add('active');
 
-            if(pageId === 'explorar') renderFeed();
-            if(pageId === 'flashcards') renderFlashcards();
-            if(pageId === 'chat') renderRooms();
-            if(pageId === 'revisao') renderRevisao();
+            if (pageId === 'explorar') renderFeed();
+            if (pageId === 'flashcards') renderFlashcards();
+            if (pageId === 'chat') renderRooms();
+            if (pageId === 'revisao') renderRevisao();
         }
 
         function selectRoom(name, el) {
@@ -1811,26 +1940,57 @@
         function addNotebook() {
             const title = document.getElementById('up-title').value;
             const sub = document.getElementById('up-subject').value;
-            if(!title) return alert('Dê um título!');
-            
+            if (!title) return alert('Dê um título!');
+
+            let imgSrc = 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=800';
+            const preview = document.getElementById('up-preview');
+            if (preview && preview.src && preview.style.display !== 'none') {
+                imgSrc = preview.src;
+            }
+
             notebooks.unshift({
                 id: Date.now(),
                 title: title,
                 subject: sub,
                 author: 'Você',
                 stars: 5,
-                img: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=800',
+                img: imgSrc,
                 feedbacks: ['Aguardando recomendações...']
             });
-            
+
             renderFeed();
             closeModal('uploadModal');
+
+            if (preview) {
+                preview.style.display = 'none';
+                preview.src = '';
+                document.getElementById('up-text').style.display = 'block';
+                document.getElementById('up-file').value = '';
+            }
+            document.getElementById('up-title').value = '';
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const preview = document.getElementById('up-preview');
+                    const text = document.getElementById('up-text');
+                    if (preview && text) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                        text.style.display = 'none';
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
         }
 
         function sendMessage() {
             const input = document.getElementById('msgInput');
-            if(!input.value) return;
-            
+            if (!input.value) return;
+
             const message = document.createElement('div');
             message.className = 'message msg-sent';
             message.innerHTML = `
@@ -2165,4 +2325,5 @@ Para salvar como PDF: <strong>Arquivo → Salvar Como → Tipo: PDF</strong>.`
         renderFeed();
     </script>
 </body>
+
 </html>
