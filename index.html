@@ -2640,7 +2640,7 @@
             let userName = document.getElementById('user-display-name').textContent;
             if (!userName || userName === 'Visitante') userName = 'Você';
 
-            if (typeof socket !== 'undefined') {
+            if (typeof socket !== 'undefined' && socket.connected) {
                 socket.emit('send_message', {
                     subjectId: currentRoom,
                     userId: userName,
