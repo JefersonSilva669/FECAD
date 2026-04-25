@@ -1539,49 +1539,64 @@
         </div>
     </div>
 
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        // Setup Socket.io
-        const socket = io('http://localhost:3333');
-        const localChannel = new BroadcastChannel('fecad_chat_channel');
+        // ⚠️ COLE SUAS CHAVES DO FIREBASE AQUI ⚠️
+        // Crie um projeto em console.firebase.google.com, habilite o Realtime Database e copie as chaves:
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            databaseURL: "https://SEU_PROJETO.firebaseio.com",
+            projectId: "SEU_PROJETO",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "ID",
+            appId: "APP_ID"
+        };
         
-        socket.on('new_message', (data) => {
-            if (currentChatMode === 'chat' && currentRoom === data.subjectId) {
-                const message = document.createElement('div');
-                let userName = document.getElementById('user-display-name').textContent;
-                if (!userName || userName === 'Visitante') userName = 'Você';
-                
-                const isMe = data.userId === userName;
-                message.className = 'message ' + (isMe ? 'msg-sent' : 'msg-received');
-                message.innerHTML = `
-                    <div class="msg-user">${isMe ? 'Você' : data.userId}</div>
-                    ${data.content}
-                `;
-                document.getElementById('chat-box').appendChild(message);
-                document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
-            }
-        });
+        let db = null;
+        if (firebaseConfig.apiKey !== "SUA_API_KEY") {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+        }
 
-        // Sincronização offline entre guias (fallback)
-        localChannel.onmessage = (event) => {
-            const data = event.data;
-            if (data.type === 'new_message' && currentChatMode === 'chat' && currentRoom === data.subjectId) {
-                const message = document.createElement('div');
-                let userName = document.getElementById('user-display-name').textContent;
-                if (!userName || userName === 'Visitante') userName = 'Você';
-                
-                const isMe = data.userId === userName;
-                if (!isMe) { // Só renderiza se não for o mesmo usuário que enviou
-                    message.className = 'message msg-received';
+        let currentChatRef = null;
+
+        function listenToRoom(roomName) {
+            if (!db) return;
+            if (currentChatRef) currentChatRef.off('child_added'); // Remove listener anterior
+            
+            // Sanitiza o nome da sala (Firebase não aceita . # $ [ ])
+            const safeRoomName = roomName.replace(/[.#$\[\]]/g, '');
+            currentChatRef = db.ref('chats/' + safeRoomName);
+            
+            // Limpa o chat antes de carregar o histórico do Firebase
+            document.getElementById('chat-box').innerHTML = `
+                <div class="message msg-received">
+                    <div class="msg-user">Sistema</div>
+                    Conectado à sala de ${roomName}. Carregando histórico...
+                </div>
+            `;
+            
+            currentChatRef.on('child_added', (snapshot) => {
+                const data = snapshot.val();
+                if (currentChatMode === 'chat') {
+                    const message = document.createElement('div');
+                    let userName = document.getElementById('user-display-name').textContent;
+                    if (!userName || userName === 'Visitante') userName = 'Você';
+                    
+                    const isMe = data.userId === userName;
+                    message.className = 'message ' + (isMe ? 'msg-sent' : 'msg-received');
                     message.innerHTML = `
-                        <div class="msg-user">${data.userId}</div>
+                        <div class="msg-user">${isMe ? 'Você' : data.userId}</div>
                         ${data.content}
                     `;
                     document.getElementById('chat-box').appendChild(message);
                     document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
                 }
-            }
-        };
+            });
+        }
 
 
         // Auth Logic
@@ -2533,8 +2548,8 @@
             document.querySelectorAll('.room-item').forEach(r => r.classList.remove('active'));
             el.classList.add('active');
             
-            if (typeof socket !== 'undefined') {
-                socket.emit('join_subject_chat', name);
+            if (typeof listenToRoom === 'function') {
+                listenToRoom(name);
             }
             
             document.getElementById('chat-box').innerHTML = `
@@ -2663,14 +2678,15 @@
             let userName = document.getElementById('user-display-name').textContent;
             if (!userName || userName === 'Visitante') userName = 'Você';
 
-            if (typeof socket !== 'undefined' && socket.connected) {
-                socket.emit('send_message', {
-                    subjectId: currentRoom,
+            if (typeof db !== 'undefined' && db !== null) {
+                const safeRoomName = currentRoom.replace(/[.#$\[\]]/g, '');
+                db.ref('chats/' + safeRoomName).push({
                     userId: userName,
-                    content: input.value
+                    content: input.value,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
             } else {
-                // Fallback para mock local com BroadcastChannel
+                // Fallback para mock local
                 const message = document.createElement('div');
                 message.className = 'message msg-sent';
                 message.innerHTML = `
@@ -2680,14 +2696,12 @@
                 document.getElementById('chat-box').appendChild(message);
                 document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
                 
-                // Dispara o evento de Broadcast para as outras abas/janelas
-                if (typeof localChannel !== 'undefined') {
-                    localChannel.postMessage({
-                        type: 'new_message',
-                        subjectId: currentRoom,
-                        userId: userName,
-                        content: input.value
-                    });
+                if (typeof db !== 'undefined' && db === null) {
+                    const warning = document.createElement('div');
+                    warning.className = 'message msg-received';
+                    warning.innerHTML = `<div class="msg-user">Sistema</div>⚠️ Você não configurou as chaves do Firebase! A mensagem só aparece localmente e sumirá ao recarregar a página. Verifique o código fonte.`;
+                    document.getElementById('chat-box').appendChild(warning);
+                    document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
                 }
             }
 
