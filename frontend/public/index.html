@@ -1173,6 +1173,10 @@
                     <input type="password" id="login-pass" placeholder="••••••••">
                 </div>
                 <button class="btn-upload" style="width: 100%;" onclick="handleAuth('login')">Entrar na Conta</button>
+                <div style="text-align:center; margin-top:15px; font-size:12px; color:var(--text-dim);">
+                    Ou teste agora sem conta: <br>
+                    <span style="color:var(--primary-light); cursor:pointer; text-decoration:underline;" onclick="skipAuth()">Entrar como Visitante</span>
+                </div>
             </div>
 
             <div id="form-signup" style="display: none;">
@@ -1548,7 +1552,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyD2sV6vigwdiWvDpcrhoUmdcGSmVP7FkF0",
             authDomain: "fecad-60c72.firebaseapp.com",
-            databaseURL: "https://fecad-60c72-default-rtdb.firebaseio.com",
+            databaseURL: "https://fecad-60c72.firebaseio.com",
             projectId: "fecad-60c72",
             storageBucket: "fecad-60c72.firebasestorage.app",
             messagingSenderId: "165469617003",
@@ -1558,8 +1562,13 @@
         
         let db = null;
         if (firebaseConfig.apiKey !== "SUA_API_KEY") {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                console.log("Firebase conectado.");
+            } catch (e) {
+                console.error("Erro Firebase:", e);
+            }
         }
 
         let currentChatRef = null;
@@ -1607,6 +1616,13 @@
             document.getElementById('form-signup').style.display = isLogin ? 'none' : 'block';
             document.getElementById('tab-login').classList.toggle('active', isLogin);
             document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+        }
+
+        function skipAuth() {
+            document.getElementById('user-display-name').textContent = 'Visitante';
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            renderFeed();
         }
 
         function handleAuth(mode) {
@@ -2178,24 +2194,16 @@
             fcState.mode = mode;
             fcUserMessage(mode === 'flashcards' ? 'Flashcards de Revisão' : 'Lista de Exercícios');
             
-            if (mode === 'flashcards') {
-                fcState.step = 'ask_count';
-                fcTyping(() => fcAIMessage('Quantos cards quer estudar hoje?', `
-                    <div class="fc-num-grid">
-                        ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
-                    </div>`));
-            } else {
-                fcState.step = 'ask_document';
-                fcTyping(() => fcAIMessage('Anexe abaixo o <strong>arquivo da aula</strong> (PDF, DOCX, TXT) para eu extrair os conceitos:', `
-                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
-                        <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" accept=".txt,.pdf,.doc,.docx" />
-                        <label for="fc-file-input" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border: 2px dashed var(--border); border-radius:12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:all 0.2s;">
-                            <span style="font-size:24px; margin-bottom:8px;">📄</span>
-                            <span style="font-size:13px; color:var(--text-dim); text-align:center;" id="fc-file-label">Clique para anexar o arquivo da aula</span>
-                        </label>
-                        <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Analisar Arquivo</button>
-                    </div>`));
-            }
+            fcState.step = 'ask_document';
+            fcTyping(() => fcAIMessage(`Anexe abaixo o <strong>arquivo da aula</strong> (PDF, DOCX, TXT) para eu extrair os conceitos e gerar seus ${mode === 'flashcards' ? 'flashcards' : 'exercícios'}:`, `
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                    <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" accept=".txt,.pdf,.doc,.docx" />
+                    <label for="fc-file-input" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border: 2px dashed var(--border); border-radius:12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:all 0.2s;">
+                        <span style="font-size:24px; margin-bottom:8px;">📄</span>
+                        <span style="font-size:13px; color:var(--text-dim); text-align:center;" id="fc-file-label">Clique para selecionar o arquivo da aula</span>
+                    </label>
+                    <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Analisar Arquivo</button>
+                </div>`));
         }
 
         let fcSelectedFileName = "";
@@ -2216,13 +2224,21 @@
             
             fcUserMessage('Arquivo enviado: ' + fcSelectedFileName);
             
-            fcState.step = 'ask_difficulty';
-            fcTyping(() => fcAIMessage('Qual o <strong>Nível de Dificuldade</strong> desejado para as questões de vestibular?', `
-                <div class="fc-subject-grid" style="flex-direction: column;">
-                    <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="fcPickDifficulty('Facil')">🟢 Fácil (ETEC, CESA)</div>
-                    <div class="fc-subject-btn" style="border-color:#f59e0b; color:#f59e0b;" onclick="fcPickDifficulty('Medio')">🟡 Médio (ENEM, FUVEST)</div>
-                    <div class="fc-subject-btn" style="border-color:#ef4444; color:#ef4444;" onclick="fcPickDifficulty('Dificil')">🔴 Difícil (ITA, USP)</div>
-                </div>`));
+            if (fcState.mode === 'exercises') {
+                fcState.step = 'ask_difficulty';
+                fcTyping(() => fcAIMessage('Arquivo analisado com sucesso! Qual o <strong>Nível de Dificuldade</strong> desejado para as questões de vestibular?', `
+                    <div class="fc-subject-grid" style="flex-direction: column;">
+                        <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="fcPickDifficulty('Facil')">🟢 Fácil (ETEC, CESA)</div>
+                        <div class="fc-subject-btn" style="border-color:#f59e0b; color:#f59e0b;" onclick="fcPickDifficulty('Medio')">🟡 Médio (ENEM, FUVEST)</div>
+                        <div class="fc-subject-btn" style="border-color:#ef4444; color:#ef4444;" onclick="fcPickDifficulty('Dificil')">🔴 Difícil (ITA, USP)</div>
+                    </div>`));
+            } else {
+                fcState.step = 'ask_count';
+                fcTyping(() => fcAIMessage('Arquivo analisado com sucesso! Quantos cards quer estudar hoje?', `
+                    <div class="fc-num-grid">
+                        ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+                    </div>`));
+            }
         }
 
         function fcPickDifficulty(diff) {
