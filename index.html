@@ -1543,6 +1543,7 @@
     <script>
         // Setup Socket.io
         const socket = io('http://localhost:3333');
+        const localChannel = new BroadcastChannel('fecad_chat_channel');
         
         socket.on('new_message', (data) => {
             if (currentChatMode === 'chat' && currentRoom === data.subjectId) {
@@ -1560,6 +1561,28 @@
                 document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
             }
         });
+
+        // Sincronização offline entre guias (fallback)
+        localChannel.onmessage = (event) => {
+            const data = event.data;
+            if (data.type === 'new_message' && currentChatMode === 'chat' && currentRoom === data.subjectId) {
+                const message = document.createElement('div');
+                let userName = document.getElementById('user-display-name').textContent;
+                if (!userName || userName === 'Visitante') userName = 'Você';
+                
+                const isMe = data.userId === userName;
+                if (!isMe) { // Só renderiza se não for o mesmo usuário que enviou
+                    message.className = 'message msg-received';
+                    message.innerHTML = `
+                        <div class="msg-user">${data.userId}</div>
+                        ${data.content}
+                    `;
+                    document.getElementById('chat-box').appendChild(message);
+                    document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+                }
+            }
+        };
+
 
         // Auth Logic
         function toggleAuth(mode) {
@@ -2647,7 +2670,7 @@
                     content: input.value
                 });
             } else {
-                // Fallback para mock local
+                // Fallback para mock local com BroadcastChannel
                 const message = document.createElement('div');
                 message.className = 'message msg-sent';
                 message.innerHTML = `
@@ -2656,6 +2679,16 @@
                 `;
                 document.getElementById('chat-box').appendChild(message);
                 document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+                
+                // Dispara o evento de Broadcast para as outras abas/janelas
+                if (typeof localChannel !== 'undefined') {
+                    localChannel.postMessage({
+                        type: 'new_message',
+                        subjectId: currentRoom,
+                        userId: userName,
+                        content: input.value
+                    });
+                }
             }
 
             input.value = '';
