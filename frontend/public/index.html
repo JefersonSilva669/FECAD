@@ -1539,7 +1539,28 @@
         </div>
     </div>
 
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
+        // Setup Socket.io
+        const socket = io('http://localhost:3333');
+        
+        socket.on('new_message', (data) => {
+            if (currentChatMode === 'chat' && currentRoom === data.subjectId) {
+                const message = document.createElement('div');
+                let userName = document.getElementById('user-display-name').textContent;
+                if (!userName || userName === 'Visitante') userName = 'Você';
+                
+                const isMe = data.userId === userName;
+                message.className = 'message ' + (isMe ? 'msg-sent' : 'msg-received');
+                message.innerHTML = `
+                    <div class="msg-user">${isMe ? 'Você' : data.userId}</div>
+                    ${data.content}
+                `;
+                document.getElementById('chat-box').appendChild(message);
+                document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+            }
+        });
+
         // Auth Logic
         function toggleAuth(mode) {
             const isLogin = mode === 'login';
@@ -2026,20 +2047,140 @@
         })();
 
         // ===== AI FLASHCARD SYSTEM =====
-        let fcState = { step: 'idle', count: 5, subject: '', cards: [] };
+        let fcState = { step: 'idle', count: 5, subject: '', mode: 'flashcards', difficulty: '', docContext: '', cards: [] };
+
+        const vestibularKB = {
+            'Biologia': {
+                'Facil': [
+                    {q: '[ETEC] A organela responsável pela respiração celular é a:', a: 'Mitocôndria. É onde ocorre a produção de ATP.'},
+                    {q: '[CESA] Qual o nome do processo onde as plantas produzem seu alimento?', a: 'Fotossíntese. Utilizam luz solar, CO2 e água.'},
+                    {q: '[ETEC] Os seres autótrofos são aqueles que:', a: 'Produzem seu próprio alimento.'}
+                ],
+                'Medio': [
+                    {q: '[ENEM] Em um ecossistema, os produtores são representados por organismos:', a: 'Autotróficos, como plantas e algas, que sintetizam matéria orgânica.'},
+                    {q: '[FUVEST] A meiose é um processo de divisão celular que resulta em:', a: 'Quatro células haploides, fundamental para a reprodução sexuada.'},
+                    {q: '[ENEM] A vacina é uma forma de imunização:', a: 'Ativa e artificial.'}
+                ],
+                'Dificil': [
+                    {q: '[USP] Explique o papel da bomba de sódio e potássio na manutenção do potencial de repouso.', a: 'Transporte ativo que joga 3 Na+ para fora e 2 K+ para dentro, mantendo o interior negativo.'},
+                    {q: '[ITA] Como mutações no gene p53 afetam o ciclo celular?', a: 'O p53 é um supressor de tumor. Sua inativação impede a apoptose celular em caso de dano no DNA.'},
+                    {q: '[UNESP] Qual a função dos desmossomos no tecido epitelial?', a: 'Garantir adesão firme entre células adjacentes, conferindo resistência mecânica.'}
+                ]
+            },
+            'Física': {
+                'Facil': [
+                    {q: '[ETEC] Qual a fórmula da velocidade média?', a: 'Vm = ΔS / Δt'},
+                    {q: '[CESA] A unidade de força no SI é o:', a: 'Newton (N)'},
+                    {q: '[ETEC] Aceleração da gravidade na Terra é aproximadamente:', a: '9,8 m/s² (frequentemente arredondado para 10 m/s²).'}
+                ],
+                'Medio': [
+                    {q: '[ENEM] Um carro freia bruscamente. Pela 1ª Lei de Newton, os passageiros tendem a:', a: 'Continuar em movimento retilíneo uniforme (Inércia).'},
+                    {q: '[FUVEST] No efeito fotoelétrico, a energia cinética dos elétrons ejetados depende:', a: 'Da frequência da luz incidente, não da sua intensidade.'},
+                    {q: '[ENEM] Qual lei da termodinâmica afirma que a entropia do universo sempre aumenta?', a: 'A Segunda Lei da Termodinâmica.'}
+                ],
+                'Dificil': [
+                    {q: '[ITA] Um pêndulo simples tem período T. Se dobrarmos seu comprimento, qual o novo T?', a: 'T_novo = T * √2, pois T é proporcional à raiz do comprimento.'},
+                    {q: '[USP] Descreva as Leis de Kirchhoff para circuitos elétricos.', a: 'A lei dos nós (conservação da carga) e a lei das malhas (conservação da energia).'},
+                    {q: '[ITA] Qual o conceito de velocidade de escape e como ela se relaciona com buracos negros?', a: 'É a velocidade mínima para escapar da gravidade. Em buracos negros, a velocidade de escape é maior que a da luz (c).'}
+                ]
+            },
+            'Matemática': {
+                'Facil': [
+                    {q: '[ETEC] Qual a área de um triângulo de base 10 e altura 5?', a: '25 (Base x Altura / 2)'},
+                    {q: '[CESA] O dobro de 15% de 200 é:', a: '60. (15% de 200 = 30. Dobro = 60)'},
+                    {q: '[ETEC] Qual a raiz quadrada de 144?', a: '12.'}
+                ],
+                'Medio': [
+                    {q: '[ENEM] Em uma P.A., o 3º termo é 10 e a razão é 3. Qual o 1º termo?', a: '4. (a3 = a1 + 2r => 10 = a1 + 6)'},
+                    {q: '[FUVEST] Qual a soma das raízes da equação x² - 5x + 6 = 0?', a: '5. Pela relação de Girard (S = -b/a).'},
+                    {q: '[ENEM] Um produto custa R$ 100 e tem desconto de 20%. Qual o valor final?', a: 'R$ 80.'}
+                ],
+                'Dificil': [
+                    {q: '[ITA] Determine o volume de um tetraedro regular de aresta a.', a: '(a³√2)/12. Obtido pela altura do tetraedro h=a√(2/3).'},
+                    {q: '[USP] Encontre o módulo do número complexo z = 3 + 4i.', a: '5. |z| = √(3² + 4²) = √25 = 5.'},
+                    {q: '[ITA] O que diz o Teorema Fundamental do Cálculo?', a: 'A integração de uma função contínua é a operação inversa de sua diferenciação.'}
+                ]
+            },
+            'Gramática da Língua Portuguesa': {
+                'Facil': [
+                    {q: '[ETEC] Qual o plural de "cidadão"?', a: 'Cidadãos.'},
+                    {q: '[CESA] Na frase "Ele é rápido", qual a classe gramatical de "rápido"?', a: 'Adjetivo.'},
+                    {q: '[ETEC] Complete com a grafia correta: Exce___o', a: 'Exceção.'}
+                ],
+                'Medio': [
+                    {q: '[ENEM] Qual a função sintática do pronome relativo na oração "O livro que li"?', a: 'Objeto direto.'},
+                    {q: '[FUVEST] Identifique a figura de linguagem: "Chorou rios de lágrimas".', a: 'Hipérbole.'},
+                    {q: '[ENEM] Ocorre crase antes de verbos?', a: 'Não, pois verbos não admitem artigo feminino "a".'}
+                ],
+                'Dificil': [
+                    {q: '[ITA] Diferencie regência nominal de verbal.', a: 'A verbal estuda a relação entre verbo e seus complementos; a nominal, entre um nome (substantivo/adjetivo/advérbio) e seus complementos.'},
+                    {q: '[USP] O uso de próclise é obrigatório em:', a: 'Presença de palavras atrativas (negativas, advérbios, pronomes relativos, indefinidos).' },
+                    {q: '[FUVEST] Defina oração subordinada substantiva apositiva.', a: 'Funciona como aposto de um termo da oração principal, frequentemente após dois pontos.'}
+                ]
+            }
+        };
 
         function renderFlashcards() {
             fcInitChat();
         }
 
         function fcInitChat() {
-            fcState = { step: 'ask_count', count: 5, subject: '', cards: [] };
+            fcState = { step: 'ask_mode', count: 5, subject: '', mode: '', difficulty: '', docContext: '', cards: [] };
             const msgs = document.getElementById('fc-messages');
             msgs.innerHTML = '';
-            setTimeout(() => fcAIMessage('Olá! 👋 Sou o <strong>Assistente FECAD</strong>. Vou criar flashcards personalizados para você.<br><br>Quantos cards quer estudar hoje?', `
-                <div class="fc-num-grid">
-                    ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+            setTimeout(() => fcAIMessage('Olá! 👋 Sou o <strong>Assistente FECAD</strong>. O que você deseja criar hoje?', `
+                <div class="fc-subject-grid" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+                    <div class="fc-subject-btn" style="text-align:center; padding:12px;" onclick="fcPickMode('flashcards')">🃏 Flashcards de Revisão</div>
+                    <div class="fc-subject-btn" style="text-align:center; padding:12px; border-color:var(--secondary); color:var(--secondary);" onclick="fcPickMode('exercises')">📝 Lista de Exercícios (com Vestibulares)</div>
                 </div>`), 400);
+        }
+
+        function fcPickMode(mode) {
+            fcState.mode = mode;
+            fcUserMessage(mode === 'flashcards' ? 'Flashcards de Revisão' : 'Lista de Exercícios');
+            
+            if (mode === 'flashcards') {
+                fcState.step = 'ask_count';
+                fcTyping(() => fcAIMessage('Quantos cards quer estudar hoje?', `
+                    <div class="fc-num-grid">
+                        ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+                    </div>`));
+            } else {
+                fcState.step = 'ask_document';
+                fcTyping(() => fcAIMessage('Cole abaixo o <strong>material ou resumo da aula</strong> para eu extrair os conceitos:', `
+                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                        <textarea id="fc-doc-input" rows="4" style="width: 100%; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; padding: 10px; font-family: inherit; resize: vertical;" placeholder="Cole aqui o texto passado em sala de aula..."></textarea>
+                        <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Confirmar Material</button>
+                    </div>`));
+            }
+        }
+
+        function fcSubmitDocument() {
+            const doc = document.getElementById('fc-doc-input');
+            if (!doc || !doc.value.trim()) return alert('Cole algum texto!');
+            fcState.docContext = doc.value.trim();
+            doc.disabled = true;
+            fcUserMessage('Material enviado! (' + fcState.docContext.substring(0, 20) + '...)');
+            
+            fcState.step = 'ask_difficulty';
+            fcTyping(() => fcAIMessage('Qual o <strong>Nível de Dificuldade</strong> desejado para as questões de vestibular?', `
+                <div class="fc-subject-grid" style="flex-direction: column;">
+                    <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="fcPickDifficulty('Facil')">🟢 Fácil (ETEC, CESA)</div>
+                    <div class="fc-subject-btn" style="border-color:#f59e0b; color:#f59e0b;" onclick="fcPickDifficulty('Medio')">🟡 Médio (ENEM, FUVEST)</div>
+                    <div class="fc-subject-btn" style="border-color:#ef4444; color:#ef4444;" onclick="fcPickDifficulty('Dificil')">🔴 Difícil (ITA, USP)</div>
+                </div>`));
+        }
+
+        function fcPickDifficulty(diff) {
+            fcState.difficulty = diff;
+            const label = diff === 'Facil' ? 'Fácil' : diff === 'Medio' ? 'Médio' : 'Difícil';
+            fcUserMessage('Nível: ' + label);
+            
+            fcState.step = 'ask_count';
+            fcTyping(() => fcAIMessage('Quase lá! Quantos exercícios você quer na lista?', `
+                <div class="fc-num-grid">
+                    ${[3, 5, 8].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+                </div>`));
         }
 
         function fcAIMessage(text, extra = '') {
@@ -2074,14 +2215,20 @@
         function fcPickCount(n) {
             fcState.count = n;
             fcState.step = 'ask_subject';
-            fcUserMessage(n + ' flashcards');
-            const all = Object.keys(fcKB);
-            const normal = ['Matemática', 'Física', 'Química', 'Biologia', 'Gramática da Língua Portuguesa', 'Literatura Lusófona', 'Leitura e produção de textos', 'Geografia', 'Artes', 'Educação Física', 'Direito e Ética'];
+            fcUserMessage(n + (fcState.mode === 'exercises' ? ' questões' : ' flashcards'));
+            
+            let normal = ['Matemática', 'Física', 'Biologia', 'Gramática da Língua Portuguesa'];
+            if (fcState.mode === 'flashcards') {
+                normal = ['Matemática', 'Física', 'Química', 'Biologia', 'Gramática da Língua Portuguesa', 'Literatura Lusófona', 'Leitura e produção de textos', 'Geografia', 'Artes', 'Educação Física', 'Direito e Ética'];
+            }
             const tech = ['Lógica de Programação', 'Linguagem de Programação', 'Manutenção e Suporte de Computadores', 'Robótica', 'Sistemas Operacionais', 'Tecnologias Interativas', 'Web Design', 'Steam Maker'];
-            fcTyping(() => fcAIMessage(`Ótimo! ${n} cards. 📚 Agora escolha a <strong>matéria</strong>:<br><br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Regulares</strong>
-                <div class="fc-subject-grid">${normal.filter(s => fcKB[s]).map(s => `<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>
+            
+            let text = `Excelente! Serão ${n} ${fcState.mode === 'exercises' ? 'questões adaptadas para o vestibular' : 'cards'}. Agora escolha a <strong>matéria</strong>:`;
+            
+            fcTyping(() => fcAIMessage(text + `<br><br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Regulares</strong>
+                <div class="fc-subject-grid">${normal.map(s => `<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>
                 <br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Técnicas</strong>
-                <div class="fc-subject-grid">${tech.filter(s => fcKB[s]).map(s => `<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>`));
+                <div class="fc-subject-grid">${tech.map(s => `<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>`));
         }
 
         function fcPickSubject(subject) {
@@ -2089,14 +2236,19 @@
             fcState.step = 'generating';
             fcUserMessage(subject);
             fcTyping(() => {
-                fcAIMessage(`🎯 Gerando ${fcState.count} flashcards de <strong>${subject}</strong>...`);
-                setTimeout(() => fcGenerateCards(), 600);
+                fcAIMessage(`🎯 Gerando ${fcState.count} ${fcState.mode === 'exercises' ? 'exercícios' : 'flashcards'} de <strong>${subject}</strong>...`);
+                setTimeout(() => {
+                    if (fcState.mode === 'exercises') {
+                        fcGenerateExercises();
+                    } else {
+                        fcGenerateCards();
+                    }
+                }, 800);
             });
         }
 
         function fcGenerateCards() {
             const pool = [...(fcKB[fcState.subject] || [])];
-            // Shuffle
             for (let i = pool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -2113,27 +2265,63 @@
             }
             fcRenderCards();
             
-            let message = `✅ <strong>${fcState.cards.length} flashcards prontos!</strong> Clique em cada card para ver a resposta. Boa revisão! 🚀`;
-            if (fcState.count > maxAvailable) {
-                message = `⚠️ Encontrei apenas <strong>${maxAvailable}</strong> perguntas únicas para esta matéria, então limitei a geração para não haver repetições! Clique nos cards para estudar. 📚`;
-            }
+            let message = `✅ <strong>${fcState.cards.length} flashcards prontos!</strong> Clique em cada card para ver a resposta.`;
+            if (fcState.count > maxAvailable) message = `⚠️ Encontrei apenas ${maxAvailable} perguntas para esta matéria.`;
             
             fcAIMessage(message + `<br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
+        }
+
+        function getDynamicExercise(subject, difficulty, context) {
+            let pool = [];
+            if (vestibularKB[subject] && vestibularKB[subject][difficulty]) {
+                pool = [...vestibularKB[subject][difficulty]];
+            } else {
+                let inst = difficulty === 'Facil' ? '[ETEC]' : difficulty === 'Medio' ? '[ENEM]' : '[ITA]';
+                pool = [
+                    { q: `${inst} De acordo com o documento: Qual a principal ideia de "${context.substring(0, 15)}..."?`, a: 'A interpretação principal do texto base da aula.' },
+                    { q: `${inst} Baseado no material de ${subject}: Cite uma consequência do conceito abordado.`, a: 'O texto aponta reflexos diretos conforme discutido pelo professor.' },
+                    { q: `${inst} Qual o ponto focal abordado na aula sobre ${subject}?`, a: 'O mecanismo detalhado na documentação fornecida.' }
+                ];
+            }
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        function swapExercise(cardIndex) {
+            const newEx = getDynamicExercise(fcState.subject, fcState.difficulty, fcState.docContext);
+            fcState.cards[cardIndex] = newEx;
+            fcRenderCards();
+        }
+
+        function fcGenerateExercises() {
+            fcState.cards = [];
+            for (let i = 0; i < fcState.count; i++) {
+                fcState.cards.push(getDynamicExercise(fcState.subject, fcState.difficulty, fcState.docContext));
+            }
+            fcRenderCards();
+            
+            fcAIMessage(`✅ <strong>${fcState.count} exercícios criados!</strong><br>
+                Eles foram adaptados para o nível <strong>${fcState.difficulty}</strong>.<br><br>
+                <em style="font-size:12px; color:var(--text-dim);">Se o conteúdo de uma questão não foi dado em sala, clique em "Trocar Exercício" no card correspondente.</em>
+                <br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
         }
 
         function fcRenderCards() {
             const list = document.getElementById('flashcard-list');
             const badge = document.getElementById('fc-badge');
             const title = document.getElementById('fc-results-title');
-            title.textContent = fcState.subject;
+            title.textContent = fcState.subject + (fcState.mode === 'exercises' ? ' (Exercícios)' : '');
             badge.style.display = 'block';
-            badge.textContent = fcState.cards.length + ' cards';
+            badge.textContent = fcState.cards.length + (fcState.mode === 'exercises' ? ' questões' : ' cards');
+            
             list.innerHTML = `<div class="flashcard-grid">${fcState.cards.map((c, i) => `
-                <div class="flashcard" id="fc-card-${i}" onclick="this.classList.toggle('flipped')">
-                    <div class="flashcard-inner">
-                        <div class="flashcard-front">${c.q}</div>
-                        <div class="flashcard-back" style="font-size:13px;white-space:pre-wrap;">${c.a}</div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div class="flashcard" id="fc-card-${i}" onclick="this.classList.toggle('flipped')">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">${c.q}</div>
+                            <div class="flashcard-back" style="font-size:13px;white-space:pre-wrap;">${c.a}</div>
+                        </div>
                     </div>
+                    ${fcState.mode === 'exercises' ? `<button onclick="swapExercise(${i})" class="fc-subject-btn" style="align-self:center; width:100%; font-size:11px;">🔄 Conteúdo não dado (Trocar)</button>` : ''}
                 </div>`).join('')}</div>`;
         }
 
@@ -2150,6 +2338,12 @@
                 const match = Object.keys(fcKB).find(k => k.toLowerCase().includes(val.toLowerCase()));
                 if (match) fcPickSubject(match);
                 else fcAIMessage('Matéria não encontrada. Por favor, clique em uma das opções acima. 👆');
+            } else if (fcState.step === 'ask_mode') {
+                fcAIMessage('Por favor, clique em um dos botões acima para selecionar.');
+            } else if (fcState.step === 'ask_document') {
+                fcAIMessage('Por favor, cole o material na caixa de texto acima e clique no botão confirmar.');
+            } else if (fcState.step === 'ask_difficulty') {
+                fcAIMessage('Por favor, selecione um nível de dificuldade nos botões acima.');
             }
         }
 
@@ -2301,6 +2495,10 @@
             document.querySelectorAll('.room-item').forEach(r => r.classList.remove('active'));
             el.classList.add('active');
             
+            if (typeof socket !== 'undefined') {
+                socket.emit('join_subject_chat', name);
+            }
+            
             document.getElementById('chat-box').innerHTML = `
                 <div class="message msg-received">
                     <div class="msg-user">Sistema</div>
@@ -2422,17 +2620,30 @@
 
         function sendMessage() {
             const input = document.getElementById('msgInput');
-            if (!input.value) return;
+            if (!input.value || !currentRoom) return;
 
-            const message = document.createElement('div');
-            message.className = 'message msg-sent';
-            message.innerHTML = `
-                <div class="msg-user">Você</div>
-                ${input.value}
-            `;
-            document.getElementById('chat-box').appendChild(message);
+            let userName = document.getElementById('user-display-name').textContent;
+            if (!userName || userName === 'Visitante') userName = 'Você';
+
+            if (typeof socket !== 'undefined') {
+                socket.emit('send_message', {
+                    subjectId: currentRoom,
+                    userId: userName,
+                    content: input.value
+                });
+            } else {
+                // Fallback para mock local
+                const message = document.createElement('div');
+                message.className = 'message msg-sent';
+                message.innerHTML = `
+                    <div class="msg-user">Você</div>
+                    ${input.value}
+                `;
+                document.getElementById('chat-box').appendChild(message);
+                document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+            }
+
             input.value = '';
-            document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
