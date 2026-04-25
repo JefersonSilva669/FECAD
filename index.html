@@ -2147,20 +2147,35 @@
                     </div>`));
             } else {
                 fcState.step = 'ask_document';
-                fcTyping(() => fcAIMessage('Cole abaixo o <strong>material ou resumo da aula</strong> para eu extrair os conceitos:', `
+                fcTyping(() => fcAIMessage('Anexe abaixo o <strong>arquivo da aula</strong> (PDF, DOCX, TXT) para eu extrair os conceitos:', `
                     <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
-                        <textarea id="fc-doc-input" rows="4" style="width: 100%; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; padding: 10px; font-family: inherit; resize: vertical;" placeholder="Cole aqui o texto passado em sala de aula..."></textarea>
-                        <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Confirmar Material</button>
+                        <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" accept=".txt,.pdf,.doc,.docx" />
+                        <label for="fc-file-input" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border: 2px dashed var(--border); border-radius:12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:all 0.2s;">
+                            <span style="font-size:24px; margin-bottom:8px;">📄</span>
+                            <span style="font-size:13px; color:var(--text-dim); text-align:center;" id="fc-file-label">Clique para anexar o arquivo da aula</span>
+                        </label>
+                        <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Analisar Arquivo</button>
                     </div>`));
             }
         }
 
+        let fcSelectedFileName = "";
+
+        function fcHandleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                fcSelectedFileName = input.files[0].name;
+                document.getElementById('fc-file-label').innerHTML = `<span style="color:var(--primary-light)">${fcSelectedFileName}</span> selecionado`;
+            }
+        }
+
         function fcSubmitDocument() {
-            const doc = document.getElementById('fc-doc-input');
-            if (!doc || !doc.value.trim()) return alert('Cole algum texto!');
-            fcState.docContext = doc.value.trim();
-            doc.disabled = true;
-            fcUserMessage('Material enviado! (' + fcState.docContext.substring(0, 20) + '...)');
+            if (!fcSelectedFileName) return alert('Por favor, anexe um arquivo primeiro!');
+            fcState.docContext = "Conteúdo de: " + fcSelectedFileName;
+            
+            const fileInput = document.getElementById('fc-file-input');
+            if(fileInput) fileInput.disabled = true;
+            
+            fcUserMessage('Arquivo enviado: ' + fcSelectedFileName);
             
             fcState.step = 'ask_difficulty';
             fcTyping(() => fcAIMessage('Qual o <strong>Nível de Dificuldade</strong> desejado para as questões de vestibular?', `
