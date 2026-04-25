@@ -41,7 +41,8 @@
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Sidebar */
@@ -53,6 +54,11 @@
             flex-direction: column;
             padding: 30px 20px;
             z-index: 100;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
         }
 
         .logo {
@@ -142,9 +148,10 @@
         /* Main Content */
         .main-content {
             flex: 1;
-            overflow-y: auto;
+            margin-left: 280px;
             padding: 40px;
             background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%);
+            min-height: 100vh;
         }
 
         header {
@@ -914,15 +921,17 @@
             display: grid;
             grid-template-columns: 300px 1fr;
             gap: 28px;
-            height: calc(100vh - 180px);
+            min-height: calc(100vh - 180px);
+            align-items: start;
         }
 
         .revisao-subject-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            overflow-y: auto;
             padding-right: 8px;
+            position: sticky;
+            top: 40px;
         }
 
         .revisao-subject-list::-webkit-scrollbar {
@@ -1021,7 +1030,6 @@
 
         .panel-body {
             flex: 1;
-            overflow-y: auto;
             padding: 30px;
             display: flex;
             flex-direction: column;
@@ -1101,6 +1109,7 @@
             font-size: 13px;
             color: #a5f3fc;
             line-height: 1.6;
+            overflow-x: auto;
             white-space: pre;
         }
 
@@ -1270,7 +1279,13 @@
 
             <!-- CHAT PAGE -->
             <div id="page-chat" class="page">
-                <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Salas de Chat</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 style="font-size: 28px; font-family: 'Outfit'; margin: 0;">💬 Salas de Chat</h2>
+                    <div class="auth-tabs" style="margin: 0; width: 350px;">
+                        <div id="tab-chat-room" class="auth-tab active" onclick="toggleChatDisplay('chat')">Bate-papo</div>
+                        <div id="tab-chat-faq" class="auth-tab" onclick="toggleChatDisplay('faq')">Perguntas Frequentes</div>
+                    </div>
+                </div>
 
                 <div class="chat-container">
                     <div class="chat-sidebar" id="chat-rooms">
@@ -1281,15 +1296,27 @@
                             style="padding: 20px; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--primary-light);">
                             Selecione uma sala para começar
                         </div>
-                        <div class="chat-messages" id="chat-box">
-                            <div style="color: var(--text-dim); text-align: center; margin-top: 100px;">
-                                Bata um papo com outros estudantes sobre as matérias!
+                        
+                        <!-- CHAT VIEW -->
+                        <div id="chat-view-ui" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
+                            <div class="chat-messages" id="chat-box">
+                                <div style="color: var(--text-dim); text-align: center; margin-top: 100px;">
+                                    Bata um papo com outros estudantes sobre as matérias!
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" id="msgInput" placeholder="Sua pergunta ou dica...">
+                                <button class="btn-upload" style="margin-top: 0; padding: 0 25px;"
+                                    onclick="sendMessage()">Enviar</button>
                             </div>
                         </div>
-                        <div class="chat-input-area">
-                            <input type="text" id="msgInput" placeholder="Sua pergunta ou dica...">
-                            <button class="btn-upload" style="margin-top: 0; padding: 0 25px;"
-                                onclick="sendMessage()">Enviar</button>
+
+                        <!-- FAQ VIEW -->
+                        <div id="faq-view-ui" style="display: none; flex-direction: column; flex: 1; height: 100%; overflow-y: auto; padding: 20px;">
+                            <div style="color: var(--text-dim); text-align: center; margin-top: 40px;" id="faq-box-empty">
+                                Selecione uma matéria na barra lateral para ver as dúvidas frequentes (FAQ).
+                            </div>
+                            <div id="faq-box-content" style="display: flex; flex-direction: column; gap: 12px;"></div>
                         </div>
                     </div>
                 </div>
@@ -1350,6 +1377,70 @@
                         <div class="panel-empty">
                             <div class="empty-icon">🎯</div>
                             <p>Selecione uma matéria ao lado para ver os tópicos de revisão.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERFIL PAGE -->
+            <div id="page-perfil" class="page">
+                <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">👤 Meu Perfil</h2>
+                
+                <div style="display: grid; grid-template-columns: 320px 1fr; gap: 28px; min-height: calc(100vh - 180px);">
+                    <!-- Coluna Esquerda: Info e Avatar -->
+                    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px 30px; display: flex; flex-direction: column; align-items: center; text-align: center; height: fit-content;">
+                        <div style="width: 130px; height: 130px; border-radius: 50%; border: 3px solid var(--primary); background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 48px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);" id="profile-avatar-preview">
+                            <span style="font-weight: 800; color: white;">V</span>
+                        </div>
+                        <button class="btn-upload" style="padding: 12px 20px; font-size: 13px; margin-bottom: 24px; width: 100%; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: var(--primary-light); border: 1px solid var(--primary-light); box-shadow: none;" onclick="document.getElementById('profile-upload').click()">
+                            Alterar Imagem
+                        </button>
+                        <input type="file" id="profile-upload" style="display: none;" accept="image/*" onchange="updateProfileAvatar(event)">
+                        
+                        <h3 style="font-size: 22px; margin-bottom: 6px;" id="profile-name-display">Visitante</h3>
+                        <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 20px;" id="profile-email-display">Entre para salvar seus dados</p>
+                        
+                        <div style="background: rgba(16, 185, 129, 0.1); color: var(--accent); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2);">
+                            Premium Student
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita: Formulários -->
+                    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px; height: fit-content;">
+                        <h3 style="font-size: 20px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">Editar Informações Básicas</h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label>Nome Completo</label>
+                                <input type="text" id="profile-edit-name" placeholder="Como quer ser chamado?">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label>E-mail</label>
+                                <input type="email" id="profile-edit-email" placeholder="seu@email.com" disabled style="opacity: 0.6; cursor: not-allowed;">
+                                <small style="color: var(--text-dim); font-size: 11px; margin-top: 6px; display: block;">O e-mail não pode ser alterado após o cadastro.</small>
+                            </div>
+                        </div>
+
+                        <h3 style="font-size: 20px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-top: 40px;">Alterar Senha</h3>
+                        
+                        <div class="form-group" style="margin-bottom: 24px; max-width: 50%;">
+                            <label>Senha Atual</label>
+                            <input type="password" id="profile-current-pass" placeholder="••••••••">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label>Nova Senha</label>
+                                <input type="password" id="profile-new-pass" placeholder="••••••••">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label>Confirmar Nova Senha</label>
+                                <input type="password" id="profile-confirm-pass" placeholder="••••••••">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 16px; padding-top: 24px; border-top: 1px solid var(--border);">
+                            <button class="btn-upload" style="background: rgba(255,255,255,0.05); color: var(--text-main); padding: 14px 28px; font-size: 14px; box-shadow: none;" onclick="resetProfileForm()">Cancelar Restauração</button>
+                            <button class="btn-upload" style="padding: 14px 28px; font-size: 14px;" onclick="saveProfileChanges()">Salvar Alterações</button>
                         </div>
                     </div>
                 </div>
@@ -1526,7 +1617,7 @@
         }
 
         // Sample Data
-        const notebooks = [
+        let notebooks = JSON.parse(localStorage.getItem('fecad_notebooks')) || [
             {
                 id: 1,
                 title: 'Derivadas e Integrais',
@@ -1553,6 +1644,10 @@
                 ]
             }
         ];
+
+        function saveNotebooks() {
+            localStorage.setItem('fecad_notebooks', JSON.stringify(notebooks));
+        }
 
         // ===== KNOWLEDGE BASE =====
         const fcKB = {
@@ -1692,7 +1787,16 @@
                 { q: 'Como recortar no Photoshop?', a: 'Ferramenta Corte (C) → arraste as alças → Enter para confirmar. Para recortar objeto: Seleção Rápida (W) + delete fundo.' },
                 { q: 'O que são camadas (Layers)?', a: 'Folhas transparentes sobrepostas. Cada elemento fica numa camada, permitindo edição independente. Painel: F7.' },
                 { q: 'Como remover fundo no Photoshop?', a: 'Janela → Propriedades → "Remover Fundo" (usa IA). Ou: Seleção → Assunto → Delete.' },
-                { q: 'O que é resolução de imagem?', a: 'Densidade de pixels por polegada (DPI). 72 DPI para web, 300 DPI para impressão de qualidade.' }
+                { q: 'O que é resolução de imagem?', a: 'Densidade de pixels por polegada (DPI). 72 DPI para web, 300 DPI para impressão de qualidade.' },
+                { q: 'O que é a ferramenta Carimbo?', a: 'Ferramenta (S) usada para copiar e colar pixels de uma área da imagem para outra, ideal para remover manchas ou objetos indesejados.' },
+                { q: 'Como criar uma máscara de corte (Clipping Mask)?', a: 'Coloque a camada base embaixo, a foto/textura por cima. Segure Alt/Option e clique entre as duas camadas.' },
+                { q: 'O que são Smart Objects (Objetos Inteligentes)?', a: 'São camadas que preservam a imagem original intacta, permitindo redimensionamentos e filtros não-destrutivos.' },
+                { q: 'Como alterar rapidamente o tamanho do pincel (Brush)?', a: 'Use os atalhos de colchetes no teclado: [ para diminuir e ] para aumentar o tamanho do pincel.' },
+                { q: 'Diferença entre RGB e CMYK?', a: 'RGB (Luz) é padrão para telas virtuais e web. CMYK (Tinta) é o padrão usado para impressões físicas.' },
+                { q: 'O que é opacidade?', a: 'É o grau de transparência de uma camada ou objeto. 100% é totalmente sólido; 0% é totalmente transparente.' },
+                { q: 'Como exportar uma imagem para Web rapidamente no Photoshop?', a: 'Vá em Arquivo -> Exportar -> Salvar para Web (Legado) ou use o atalho Ctrl+Alt+Shift+S (Cmd+Opt+Shift+S no Mac).' },
+                { q: 'O que é o Formato PNG?', a: 'Um formato de imagem para web que suporta alta qualidade e fundos transparentes, sem perder qualidade em compressões.' },
+                { q: 'Como desfazer mais de uma ação no Photoshop?', a: 'Use o atalho Ctrl+Alt+Z (Photoshop antigo) ou apenas Ctrl+Z nas versões mais recentes para voltar múltiplos passos no histórico.' }
             ],
             'Steam Maker': [
                 { q: 'O que é pensamento computacional?', a: 'Habilidade de resolver problemas usando lógica, decomposição, reconhecimento de padrões e abstração.' },
@@ -1700,6 +1804,226 @@
                 { q: 'O que é impressão 3D?', a: 'Tecnologia que constrói objetos camada por camada a partir de um modelo digital, usando materiais como PLA ou ABS.' }
             ]
         };
+
+        // Script Extra para complementar todas as materias em 15 cards+
+        (() => {
+            fcKB['Matemática'].push(
+                { q: 'O que é um número primo?', a: 'Número maior que 1 que tem apenas dois divisores: 1 e ele mesmo.' },
+                { q: 'O que é uma progressão aritmética (PA)?', a: 'Sequência numérica em que cada termo é o anterior somado a uma constante.' },
+                { q: 'Qual a fórmula da soma dos termos de uma PA?', a: 'Sn = (a1 + an) * n / 2' },
+                { q: 'O que é uma progressão geométrica (PG)?', a: 'Sequência onde cada termo é o anterior multiplicado por constante.' },
+                { q: 'O que é um polinômio?', a: 'Expressão algébrica formada pela soma de monômios.' },
+                { q: 'Como calcular a área de um círculo?', a: 'A = π * r²' },
+                { q: 'O que é um ângulo obtuso?', a: 'Ângulo cuja medida é maior que 90° e menor que 180°.' },
+                { q: 'O que é a mediana na estatística?', a: 'Valor que divide conjunto de dados ordenados exatamente ao meio.' }
+            );
+            fcKB['Física'].push(
+                { q: 'O que é aceleração da gravidade?', a: 'Na Terra é aprox 9,8 m/s².' },
+                { q: 'Princípio de Arquimedes?', a: 'Empuxo: num fluido sofre força para cima igual ao peso do fluido deslocado.' },
+                { q: 'Primeira lei da termodinâmica?', a: 'Energia não pode ser criada nem destruída.' },
+                { q: 'Efeito Doppler?', a: 'Alteração da frequência percebida com movimento relativo da fonte.' },
+                { q: 'Velocidade da luz?', a: 'Aproximadamente 300.000 km/s.' },
+                { q: 'Circuito em série?', a: 'A corrente é a mesma em todos os componentes.' },
+                { q: 'Campo magnético?', a: 'Região onde cargas ou ímãs sofrem força magnética.' },
+                { q: 'Trabalho de força constante?', a: 'Trabalho = Força * deslocamento * cos(ângulo).' },
+                { q: 'Segunda Lei de Newton?', a: 'F = m * a (Força = massa * aceleração).' }
+            );
+            fcKB['Química'].push(
+                { q: 'Isótopo?', a: 'Átomos do mesmo elemento com diferentes massas (nêutrons diferentes).' },
+                { q: 'Mistura homogênea?', a: 'Apresenta uma única fase visual.' },
+                { q: 'Número de Avogadro?', a: '6,022 × 10²³ partículas num mol.' },
+                { q: 'Tabela periódica?', a: 'Elementos em ordem crescente de número atômico.' },
+                { q: 'Gás mais abundante na atmosfera?', a: 'Nitrogênio (N2), cerca de 78%.' },
+                { q: 'Oxidação?', a: 'Quando um átomo perde elétrons.' },
+                { q: 'Hidrocarbonetos?', a: 'Compostos de carbono e hidrogênio.' },
+                { q: 'Ponto de ebulição?', a: 'Temperatura da passagem líquido para gasoso onde pressões se igualam.' },
+                { q: 'Ácido de Arrhenius?', a: 'Libera H+ em solução.' },
+                { q: 'O que é uma ligação metálica?', a: 'Nuvem de elétrons livres entre cátions.' }
+            );
+            fcKB['Biologia'].push(
+                { q: 'Bases nitrogenadas do DNA?', a: 'A, T, C, G.' },
+                { q: 'Meiose?', a: 'Divisão que reduz à metade o número de cromossomos (gametas).' },
+                { q: 'Função da mitocôndria?', a: 'Respiração celular (ATP).' },
+                { q: 'Autótrofos?', a: 'Produzem próprio alimento.' },
+                { q: 'Função dos ribossomos?', a: 'Síntese de proteínas.' },
+                { q: 'Sistema nervoso central?', a: 'Encéfalo e medula espinhal.' },
+                { q: 'Anticorpos?', a: 'Proteínas neutralizadoras de antígenos.' },
+                { q: 'Simbiose?', a: 'Relação estreita de longo prazo entre duas espécies.' },
+                { q: 'Clorofila?', a: 'Pigmento verde para fotossíntese.' }
+            );
+            fcKB['Gramática da Língua Portuguesa'].push(
+                { q: 'Verbo transitivo direto?', a: 'Exige complemento sem preposição obrigatória.' },
+                { q: 'Conjunção adversativa?', a: 'Exprime oposição (ex: mas, porém).' },
+                { q: 'Pronome relativo?', a: 'Retoma termo anterior (ex: que, onde).' },
+                { q: 'Onde vs aonde', a: 'Onde: lugar fixo. Aonde: indica movimento.' },
+                { q: 'Pleonasmo?', a: 'Repetição de ideia (subir pra cima).' },
+                { q: 'Adjetivo?', a: 'Caracteriza substantivo.' },
+                { q: 'Parônimas?', a: 'Parecidas na grafia/pronúncia, significados diferentes.' },
+                { q: 'Predicativo do sujeito?', a: 'Característica do sujeito ligada por verbo de ligação.' },
+                { q: 'Sintaxe?', a: 'Estuda disposição e relações na frase.' },
+                { q: 'O que é oxítona?', a: 'Palavra com a última sílaba tônica.' }
+            );
+            fcKB['Literatura Lusófona'].push(
+                { q: 'Machado de Assis?', a: 'Fundador ABL, autor de Dom Casmurro.' },
+                { q: 'Romantismo no BR?', a: 'Indianismo, nacionalismo, idealização.' },
+                { q: 'Semana Arte 1922?', a: 'Início do Modernismo no Brasil.' },
+                { q: 'Vidas Secas?', a: 'Graciliano Ramos, regionalismo 1930.' },
+                { q: 'Os Lusíadas (Camoes)?', a: 'Exalta as conquistas navais portuguesas.' },
+                { q: 'Parnasianismo?', a: 'Arte pela arte, Olavo Bilac.' },
+                { q: 'Naturalismo?', a: 'Análise do homem biológico e social (O Cortiço).' },
+                { q: 'Clarice Lispector?', a: 'Modernista, fluxo de consciência.' },
+                { q: 'Quinhentismo?', a: 'Primeiros textos pós descobrimento (catequese e cartas).' },
+                { q: 'Arcadismo?', a: 'Séc XVIII, vida bucólica e fugere urbem.' }
+            );
+            fcKB['Leitura e produção de textos'].push(
+                { q: 'Dissertação argumentativa?', a: 'Defende ponto de vista com argumentos.' },
+                { q: 'Denotação x Conotação?', a: 'Literal vs Figurado.' },
+                { q: 'Intertextualidade?', a: 'Diálogo/referência entre textos.' },
+                { q: 'Conectivo?', a: 'Palavras que dão coesão (logo, porque).' },
+                { q: 'Figuras de linguagem?', a: 'Recursos para mais expressividade.' },
+                { q: 'Ambiguidade?', a: 'Dois ou mais sentidos.' },
+                { q: 'Tópico frasal?', a: 'Ideia central que abre parágrafos.' },
+                { q: 'Texto expositivo?', a: 'Objetivo de transmitir info pura.' },
+                { q: 'Polissemia?', a: 'Palavra ter múltiplos sentidos.' },
+                { q: 'Gêneros textuais?', a: 'Formatos sociais do texto (e-mail, receita).' }
+            );
+            fcKB['Geografia'].push(
+                { q: 'Cartografia?', a: 'Estudo/criação de mapas.' },
+                { q: 'Coordenadas Geográficas?', a: 'Latitudes e Longitudes.' },
+                { q: 'Assoreamento?', a: 'Acúmulo de areia no rio.' },
+                { q: 'Bioma?', a: 'Conjunto de ecossistemas.' },
+                { q: 'Meridiano de Greenwich?', a: 'Longitude 0°.' },
+                { q: 'Clima x Tempo?', a: 'Clima = padrão. Tempo = momento.' },
+                { q: 'Aquífero Guarani?', a: 'Bacia de água doce subterrânea América Sul.' },
+                { q: 'Gentrificação?', a: 'Revalorização cara de ambiente urbano.' },
+                { q: 'Hidrografia BR?', a: 'Rios extensos, poucos lagos.' },
+                { q: 'Latitude?', a: 'Distância à linha do equador.' }
+            );
+            fcKB['Artes'].push(
+                { q: 'Renascimento?', a: 'Valorização clássica (Séc XV).' },
+                { q: 'Mona Lisa?', a: 'Pintura de Da Vinci.' },
+                { q: 'Cubismo?', a: 'Formas geométricas, Picasso.' },
+                { q: 'Música erudita?', a: 'Clássica, sinfonias.' },
+                { q: 'Van Gogh?', a: 'Pós-impressionista (A Noite Estrelada).' },
+                { q: 'Pop Art?', a: 'Cultura massa (Warhol).' },
+                { q: 'Surrealismo?', a: 'Mundo onírico, Dalí.' },
+                { q: 'Cinema?', a: 'Sétima arte.' },
+                { q: 'Cores primárias pigmento (CMY)?', a: 'Ciano, Magenta, Amarelo.' },
+                { q: 'Aleijadinho?', a: 'Escultor Barroco.' },
+                { q: 'Fotografia?', a: 'Imagens geradas por exposição à luz.' }
+            );
+            fcKB['Educação Física'].push(
+                { q: 'Atividade aeróbica?', a: 'Usa oxigênio em exercício longo.' },
+                { q: 'Massa magra?', a: 'Peso subtraído gordura.' },
+                { q: 'Sedentarismo?', a: 'Falta de exercício.' },
+                { q: 'VO2 Max?', a: 'Captação max de Oxigênio.' },
+                { q: 'Jogos Olímpicos?', a: 'A cada 4 anos, origem Grécia.' },
+                { q: 'Alongamento?', a: 'Traz flexibilidade, previne lesões.' },
+                { q: 'Carboidratos?', a: 'Fonte de energia.' },
+                { q: 'Hipertrofia musculação?', a: 'Aumento tamanho músculo.' },
+                { q: 'Esportes Invasão?', a: 'Futebol, basquete, handebol.' },
+                { q: 'Coordenação motora fina?', a: 'Movimentos pequenos como escrever.' },
+                { q: 'Hidratação média dia?', a: '2 a 3 litros.' }
+            );
+            fcKB['Direito e Ética'].push(
+                { q: 'Estado Democrático Direito?', a: 'Governo do povo, submisso à lei.' },
+                { q: 'Maria da Penha?', a: 'Punição à violência doméstica.' },
+                { q: 'Direitos civis?', a: 'Liberdade, igualdade, defesa.' },
+                { q: 'Plágio?', a: 'Apropriar ideias de outrem ilegalmente.' },
+                { q: 'Bioética?', a: 'Ética na medicina e biologia.' },
+                { q: 'Presunção inocência?', a: 'Inocente até prova/julgamento finalizado.' },
+                { q: 'Três Poderes BR?', a: 'Exec, Legis, Judic.' },
+                { q: 'Compliance?', a: 'Estar conforme nas normas corporativas.' },
+                { q: 'Código Defesa Consumidor?', a: 'CDC, rege relações consumo BR.' },
+                { q: 'Ética vs Moral?', a: 'Ética é estudo da moral (regras).' },
+                { q: 'Cyberbullying?', a: 'Violência por tela.' }
+            );
+            fcKB['Lógica de Programação'].push(
+                { q: 'Algoritmo?', a: 'Passo a passo finito de resolução de problema.' },
+                { q: 'Erro Sintaxe?', a: 'Quando regras de codificação são desrespeitadas.' },
+                { q: 'Depurar/Debug?', a: 'Achar bugs/erros.' },
+                { q: 'Matriz/Array?', a: 'Cadeia de dados indexáveis.' },
+                { q: 'String?', a: 'Texto na prog.' },
+                { q: 'Switch?', a: 'Estrutura seletiva para muitos casos.' },
+                { q: 'Loop infinito?', a: 'Problema quando laço não encontra condição de saída.' },
+                { q: 'Comentários da Lang?', a: 'Explicam o código.' },
+                { q: 'Constante?', a: 'Dado imutável.' },
+                { q: 'Inteiro (int)?', a: 'Número sem vírgula.' }
+            );
+            fcKB['Linguagem de Programação'].push(
+                { q: 'Prog Orientada Obj (POO)?', a: 'Classes e objetos.' },
+                { q: 'Instanciar classe?', a: 'Cria objeto na memória.' },
+                { q: 'Herança?', a: 'Filha recebe atributos mãe.' },
+                { q: 'int vs float vs double?', a: 'Int: sem decimal. Float/double: Decimais.' },
+                { q: 'Ponto-E-Virgula?', a: 'Fim de instrução.' },
+                { q: 'Compilar?', a: 'Converter fonte p/ máquina.' },
+                { q: 'Encapsulamento?', a: 'Esconder detalhes via private/public.' },
+                { q: 'using / import?', a: 'Trazer funções externas.' },
+                { q: 'return em void?', a: 'Para funções que devolvem dado de volta.' },
+                { q: 'Framework?', a: 'Bases prontas de código facilitadoras.' }
+            );
+            fcKB['Manutenção e Suporte de Computadores'].push(
+                { q: 'Ver memória Win?', a: 'Ctrl+Shift+Esc Gerenciador.' },
+                { q: 'Pasta térmica?', a: 'Dissipar calor no cooler.' },
+                { q: 'Overclock?', a: 'Superação max Hz original.' },
+                { q: 'Cabo SATA?', a: 'Liga dados do HD/SSD placa mãe.' },
+                { q: 'Pilha CR2032 placa?', a: 'Grava Bios e relógio CMOS.' },
+                { q: 'Formatar?', a: 'Refazer OS e apagar disco limpo.' },
+                { q: 'Vídeo onboard?', a: 'Chip dentro CPU, partilha RAM.' },
+                { q: 'SSD M.2 NVME?', a: 'SSD direto na p-mãe super veloz.' },
+                { q: 'COMANDO PING?', a: 'Confere rede e lentidão ao IP destino.' },
+                { q: 'Fonte (PSU)?', a: 'Alimentação.' },
+                { q: 'Drivers?', a: 'Softwares que ensinam placa a ler equipamento USB e Placa vídeo.' }
+            );
+            fcKB['Robótica'].push(
+                { q: 'Servomotor?', a: 'Motor de giro com posições graus exatas.' },
+                { q: 'Sensor Ultrassônico?', a: 'Identidade por eco batend no som de Morcego.' },
+                { q: 'Potenciômetro?', a: 'Botão girante variador Resistência.' },
+                { q: 'Protoboard?', a: 'Placa furos pro projeto elétr.' },
+                { q: 'PWM em pino?', a: 'Faz digital modular parecendo analógico (brilho led suave).' },
+                { q: 'Motor DC?', a: 'Motor escovado de rotação constante.' },
+                { q: 'I2C/Wire.h?', a: 'Biblioteca do SDA SLC painel Led display.' },
+                { q: 'GND?', a: 'Terra, referência V=0.' },
+                { q: 'IDE?', a: 'Local para programar (C/C++).' },
+                { q: 'VCC?', a: 'Alimentação da voltagem positiva (5v etc).' }
+            );
+            fcKB['Sistemas Operacionais'].push(
+                { q: 'O que o OS faz?', a: 'Base do software pra controlar máquina.' },
+                { q: 'Kernel?', a: 'O núcleo primário que lida com o hardware.' },
+                { q: 'Linux mascote?', a: 'Tux.' },
+                { q: 'Agendamentos Cron Linux?', a: 'Cron via crontab p/ processos diários rodar s/ dono.' },
+                { q: 'BSOD Windows?', a: 'A gloriosa tela azul.' },
+                { q: '/etc/?', a: 'Pasta confs UNIX.' },
+                { q: 'Desfragmentação?', a: 'Junta as peças do HD que ficaram quebradas espalhadas.' },
+                { q: 'CMD no Windows?', a: 'Shell DOS.' },
+                { q: 'Ifconfig / ipconfig?', a: 'Endereço IPs local.' }
+            );
+            fcKB['Tecnologias Interativas'].push(
+                { q: 'Docs links?', a: 'Livre acesso, compartilhar.' },
+                { q: 'Excel SOMA?', a: 'Soma(A1:A5).' },
+                { q: 'Slide mestre PPT?', a: 'Layout modelo invisível do topo base para replicar em tudo auto.' },
+                { q: 'PROCV no EXCEL?', a: 'O mágico procurador Vertical.' },
+                { q: 'PPT to MPe4?', a: 'Expostar Criar Vídeos do Slide com as aulas faladas.' },
+                { q: 'Word crash check?', a: 'Auto-recuperação arquivos docs.' },
+                { q: 'Atalho Moeda?', a: 'Ctrl shift $ no pc excel.' },
+                { q: 'Gerador Gráfico?', a: 'Seleciona + INSERIR -> Guia Graf.' },
+                { q: 'Justificar atalho Word?', a: 'Ctrl J.' }
+            );
+            fcKB['Steam Maker'].push(
+                { q: 'Eletrônica e maker?', a: 'Dar vida aos papelões recicls.' },
+                { q: 'Gambiarras diy válidas?', a: 'Sim, fita crepe, tesoura, criatividade.' },
+                { q: 'Corte a Laser Acrílico?', a: 'Fácil, veloz, vetor.' },
+                { q: 'FDM Printer 3D?', a: 'Péla Extrusor quente fio plástico camada 1a1.' },
+                { q: 'STEAM sigla?', a: 'Science Tech Eng Art Math.' },
+                { q: 'Scratch?', a: 'Gato Laranja dev Crianças do MIT, block based.' },
+                { q: 'Aula maker exige DEV C#?', a: 'Não, baterias solares de LED tb valem.' },
+                { q: 'Tinkercad usa local?', a: 'WEB APP para arduinos e 3D simples.' },
+                { q: 'ABS filament 3D?', a: 'Cheiroso ruim mas robusto calor sol forte mecânico.' },
+                { q: 'Lego Spike?', a: 'Motor e Hub via Lego de encaixes fáceis Maker.' },
+                { q: 'STEAM A e M = ?', a: 'Artes e Matemática.' },
+                { q: 'Rasperry PI Maker?', a: 'MiniLinux placa verde poderosa para AI cam makers.' }
+            );
+        })();
 
         // ===== AI FLASHCARD SYSTEM =====
         let fcState = { step: 'idle', count: 5, subject: '', cards: [] };
@@ -1778,13 +2102,23 @@
                 [pool[i], pool[j]] = [pool[j], pool[i]];
             }
             fcState.cards = [];
-            if (pool.length > 0) {
-                for (let k = 0; k < fcState.count; k++) {
-                    fcState.cards.push(pool[k % pool.length]);
+            
+            const maxAvailable = pool.length;
+            const targetCount = Math.min(fcState.count, maxAvailable);
+
+            if (maxAvailable > 0) {
+                for (let k = 0; k < targetCount; k++) {
+                    fcState.cards.push(pool[k]);
                 }
             }
             fcRenderCards();
-            fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards prontos!</strong> Clique em cada card para ver a resposta. Boa revisão! 🚀<br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
+            
+            let message = `✅ <strong>${fcState.cards.length} flashcards prontos!</strong> Clique em cada card para ver a resposta. Boa revisão! 🚀`;
+            if (fcState.count > maxAvailable) {
+                message = `⚠️ Encontrei apenas <strong>${maxAvailable}</strong> perguntas únicas para esta matéria, então limitei a geração para não haver repetições! Clique nos cards para estudar. 📚`;
+            }
+            
+            fcAIMessage(message + `<br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
         }
 
         function fcRenderCards() {
@@ -1923,16 +2257,58 @@
             if (pageId === 'revisao') renderRevisao();
         }
 
+        let currentChatMode = 'chat';
+        let currentRoom = null;
+
+        function toggleChatDisplay(mode) {
+            currentChatMode = mode;
+            document.getElementById('tab-chat-room').classList.toggle('active', mode === 'chat');
+            document.getElementById('tab-chat-faq').classList.toggle('active', mode === 'faq');
+            
+            document.getElementById('chat-view-ui').style.display = mode === 'chat' ? 'flex' : 'none';
+            document.getElementById('faq-view-ui').style.display = mode === 'faq' ? 'flex' : 'none';
+            
+            if (currentRoom) renderCurrentRoomContext();
+        }
+
+        function renderCurrentRoomContext() {
+            if (!currentRoom) return;
+            if (currentChatMode === 'chat') {
+                document.getElementById('chat-header').innerHTML = 'Conversando em: <span style="color:white;">' + currentRoom + '</span>';
+            } else {
+                document.getElementById('chat-header').innerHTML = 'Perguntas Frequentes de: <span style="color:white;">' + currentRoom + '</span>';
+                const kb = fcKB[currentRoom] || [];
+                const faqHTML = kb.map(q => `
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 15px;">
+                        <h4 style="font-size: 15px; margin-bottom: 8px; color: var(--primary-light);">Q: ${q.q}</h4>
+                        <p style="font-size: 13.5px; color: var(--text-dim); line-height: 1.5;">${q.a}</p>
+                    </div>
+                `).join('');
+                
+                if (kb.length > 0) {
+                    document.getElementById('faq-box-empty').style.display = 'none';
+                    document.getElementById('faq-box-content').innerHTML = faqHTML;
+                } else {
+                    document.getElementById('faq-box-empty').style.display = 'block';
+                    document.getElementById('faq-box-empty').innerText = 'Nenhuma pergunta frequente registrada para esta sala ainda.';
+                    document.getElementById('faq-box-content').innerHTML = '';
+                }
+            }
+        }
+
         function selectRoom(name, el) {
+            currentRoom = name;
             document.querySelectorAll('.room-item').forEach(r => r.classList.remove('active'));
             el.classList.add('active');
-            document.getElementById('chat-header').textContent = 'Conversando em: ' + name;
+            
             document.getElementById('chat-box').innerHTML = `
                 <div class="message msg-received">
                     <div class="msg-user">Sistema</div>
                     Bem-vindo à sala de ${name}! Pergunte qualquer coisa.
                 </div>
             `;
+            
+            renderCurrentRoomContext();
         }
 
         let currentViewNotebookId = null;
@@ -1959,6 +2335,7 @@
             const nb = notebooks.find(n => n.id === currentViewNotebookId);
             if (nb) {
                 nb.stars = rating;
+                saveNotebooks();
                 renderInteractiveStars(nb.stars);
                 renderFeed();
             }
@@ -1972,6 +2349,7 @@
             const nb = notebooks.find(n => n.id === currentViewNotebookId);
             if (nb) {
                 nb.feedbacks.push(val);
+                saveNotebooks();
                 renderViewFeedbacks(nb);
                 input.value = '';
             }
@@ -1999,16 +2377,20 @@
                 imgSrc = preview.src;
             }
 
+            let authorName = document.getElementById('user-display-name').textContent;
+            if (!authorName || authorName === 'Visitante') authorName = 'Você';
+
             notebooks.unshift({
                 id: Date.now(),
                 title: title,
                 subject: sub,
-                author: 'Você',
+                author: authorName,
                 stars: 5,
                 img: imgSrc,
                 feedbacks: ['Aguardando recomendações...']
             });
 
+            saveNotebooks();
             renderFeed();
             closeModal('uploadModal');
 
@@ -2371,6 +2753,59 @@ Para salvar como PDF: <strong>Arquivo → Salvar Como → Tipo: PDF</strong>.`
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // ==== PROFILE LOGIC ====
+        function updateProfileAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('profile-avatar-preview');
+                    preview.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+                    preview.style.border = '3px solid var(--primary)';
+                    
+                    const topAvatar = document.querySelector('.author-avatar');
+                    if (topAvatar) {
+                        topAvatar.style.backgroundImage = `url(${e.target.result})`;
+                        topAvatar.style.backgroundSize = 'cover';
+                        topAvatar.style.backgroundPosition = 'center';
+                        topAvatar.style.border = '2px solid var(--primary)';
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function saveProfileChanges() {
+            const name = document.getElementById('profile-edit-name').value.trim();
+            const newPass = document.getElementById('profile-new-pass').value;
+            const confirmPass = document.getElementById('profile-confirm-pass').value;
+            
+            if (newPass && newPass !== confirmPass) {
+                alert('A nova senha e a confirmação não coincidem.');
+                return;
+            }
+            
+            if (name) {
+                document.getElementById('profile-name-display').textContent = name;
+                document.getElementById('user-display-name').textContent = name;
+                alert('Eita! ' + name + ', suas configurações foram salvas com sucesso!');
+            } else {
+                alert('Configurações salvas com sucesso!');
+            }
+            
+            // clear passwords
+            document.getElementById('profile-current-pass').value = '';
+            document.getElementById('profile-new-pass').value = '';
+            document.getElementById('profile-confirm-pass').value = '';
+        }
+
+        function resetProfileForm() {
+            document.getElementById('profile-edit-name').value = '';
+            document.getElementById('profile-current-pass').value = '';
+            document.getElementById('profile-new-pass').value = '';
+            document.getElementById('profile-confirm-pass').value = '';
+        }
 
         // Init
         renderFeed();
