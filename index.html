@@ -1143,6 +1143,49 @@
             max-width: 280px;
             line-height: 1.6;
         }
+
+        /* Sala do Estudante */
+        .sala-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        .sala-btn {
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.25s ease;
+            color: #fff;
+            opacity: 0.65;
+            transform: scale(0.95);
+        }
+        .sala-btn:hover {
+            opacity: 0.9;
+            transform: scale(1);
+        }
+        .sala-btn.active {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-color: #fff;
+        }
+        .sala-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 
@@ -1289,6 +1332,10 @@
                         <div id="tab-chat-room" class="auth-tab active" onclick="toggleChatDisplay('chat')">Bate-papo</div>
                         <div id="tab-chat-faq" class="auth-tab" onclick="toggleChatDisplay('faq')">Perguntas Frequentes</div>
                     </div>
+                </div>
+
+                <div class="sala-selector" id="sala-selector">
+                    <span style="color:var(--text-dim); font-size:13px; display:flex; align-items:center; margin-right:8px;">🏫 Sua Sala:</span>
                 </div>
 
                 <div class="chat-container">
@@ -2484,6 +2531,45 @@
 
 
 
+        // Salas do Estudante (A-I) com cores únicas
+        const salaColors = {
+            'A': '#e74c3c',
+            'B': '#e67e22',
+            'C': '#f1c40f',
+            'D': '#2ecc71',
+            'E': '#1abc9c',
+            'F': '#3498db',
+            'G': '#9b59b6',
+            'H': '#e91e63',
+            'I': '#00bcd4'
+        };
+        let currentSala = localStorage.getItem('fecad_sala') || null;
+
+        function renderSalas() {
+            const container = document.getElementById('sala-selector');
+            let html = '<span style="color:var(--text-dim); font-size:13px; display:flex; align-items:center; margin-right:8px;">🏫 Sua Sala:</span>';
+            Object.entries(salaColors).forEach(([letra, cor]) => {
+                const isActive = currentSala === letra;
+                html += `<div class="sala-btn ${isActive ? 'active' : ''}" style="background:${cor};" onclick="pickSala('${letra}')">
+                    Sala ${letra}
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function pickSala(letra) {
+            currentSala = letra;
+            localStorage.setItem('fecad_sala', letra);
+            renderSalas();
+            // Atualiza o header do chat com a cor da sala
+            const header = document.getElementById('chat-header');
+            if (header && currentRoom) {
+                header.style.borderLeftColor = salaColors[letra];
+                header.style.borderLeftWidth = '4px';
+                header.style.borderLeftStyle = 'solid';
+            }
+        }
+
         function renderRooms(filter = "") {
             const list = document.getElementById('chat-rooms');
             const filtered = rooms.filter(room =>
@@ -2571,6 +2657,16 @@
             currentRoom = name;
             document.querySelectorAll('.room-item').forEach(r => r.classList.remove('active'));
             el.classList.add('active');
+
+            // Atualiza header com badge da sala
+            const header = document.getElementById('chat-header');
+            const salaBadge = currentSala ? `<span class="sala-badge" style="background:${salaColors[currentSala]}">Sala ${currentSala}</span>` : '';
+            header.innerHTML = name + ' ' + salaBadge;
+            if (currentSala) {
+                header.style.borderLeftColor = salaColors[currentSala];
+                header.style.borderLeftWidth = '4px';
+                header.style.borderLeftStyle = 'solid';
+            }
             
             if (typeof listenToRoom === 'function') {
                 listenToRoom(name);
@@ -3106,6 +3202,7 @@ Para salvar como PDF: <strong>Arquivo → Salvar Como → Tipo: PDF</strong>.`
 
         // Init
         renderFeed();
+        renderSalas();
     </script>
 </body>
 
