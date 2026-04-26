@@ -92,19 +92,103 @@
         .hamburger.active span:nth-child(2) { opacity: 0; }
         .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+        /* --- HOME HERO (ESTILO CRICUT) --- */
+        .page-home-layout {
+            margin: -30px; /* Compensa o padding do main-content */
+            padding-bottom: 50px;
+        }
+
+        .home-hero {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 80px 30px 100px;
+            text-align: center;
+            color: white;
+            position: relative;
+            z-index: 1;
+            /* Curva na parte inferior */
+            clip-path: ellipse(150% 100% at 50% 0%);
+        }
+
+        .home-hero h1 {
+            font-size: 38px;
+            font-weight: 800;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+        }
+
+        .home-hero-search {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 40px;
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .home-hero-search input {
+            flex: 1;
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 16px;
+            color: #1e293b;
+        }
+
+        /* --- PILLS ROW --- */
+        .home-pills {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: -30px; /* Sobe um pouco para sobrepor o fundo curvo */
+            position: relative;
+            z-index: 2;
+            flex-wrap: wrap;
+        }
+
+        .home-pill {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 12px 24px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: var(--text-main);
+        }
+
+        .home-pill:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-light);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
         /* --- HOME PAGE GRID --- */
         .home-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 25px;
-            margin-top: 40px;
+            margin-top: 50px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0 30px;
         }
 
         .home-card {
+            width: 300px;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 24px;
-            padding: 40px;
+            padding: 40px 30px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
@@ -1456,11 +1540,18 @@
                     <input type="email" id="signup-email" placeholder="seu@email.com">
                 </div>
                 <div class="form-group">
-                    <label>Materia de Interesse</label>
-                    <select>
-                        <option>Exatas</option>
-                        <option>Humanas</option>
-                        <option>Biológicas</option>
+                    <label>Sua Sala</label>
+                    <select id="signup-sala">
+                        <option value="">Selecione sua sala...</option>
+                        <option value="A">Sala A</option>
+                        <option value="B">Sala B</option>
+                        <option value="C">Sala C</option>
+                        <option value="D">Sala D</option>
+                        <option value="E">Sala E</option>
+                        <option value="F">Sala F</option>
+                        <option value="G">Sala G</option>
+                        <option value="H">Sala H</option>
+                        <option value="I">Sala I</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -1505,9 +1596,9 @@
             <div class="user-profile">
                 <div style="text-align: right;">
                     <div id="user-display-name" style="font-weight: 600; font-size: 14px;">Carregando...</div>
-                    <div style="font-size: 11px; color: #10b981;">Premium Student</div>
+                    <div id="user-badge" style="font-size: 11px; color: #10b981; margin-top: 3px; padding: 2px 8px; border-radius: 10px; display: inline-block; background: rgba(16, 185, 129, 0.1);">Visitante</div>
                 </div>
-                <div class="author-avatar"></div>
+                <div id="user-avatar" class="author-avatar" style="display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:18px;">V</div>
             </div>
         </div>
 
@@ -1548,26 +1639,62 @@
             </nav>
 
             <main class="main-content">
-                <!-- TELA INICIAL (NOVA) -->
-                <div id="page-home" class="page active" style="text-align: center; padding-top: 50px;">
-                    <h1 style="font-size: 42px; font-weight: 800; margin-bottom: 10px;">Olá, <span id="welcome-name">Estudante</span>! 👋</h1>
-                    <p style="color: var(--text-dim); font-size: 18px;">O que você gostaria de ver primeiro hoje?</p>
+                <!-- TELA INICIAL (NOVA REFERÊNCIA) -->
+                <div id="page-home" class="page active">
+                    <div class="page-home-layout">
+                        <!-- Hero verde com a curva -->
+                        <div class="home-hero">
+                            <h1>Olá <span id="welcome-name">Estudante</span>, o que você gostaria de estudar?</h1>
+                            
+                            <div class="home-hero-search">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                                </svg>
+                                <input type="text" placeholder="Digite o que você está procurando (ex: Biologia, Resumos)...">
+                            </div>
+                        </div>
 
-                    <div class="home-grid">
-                        <div class="home-card" onclick="showPage('explorar', document.getElementById('nav-explorar'))">
-                            <i>📚</i>
-                            <h3>Explorar Cadernos</h3>
-                            <p>Veja os melhores resumos compartilhados pelos seus colegas.</p>
+                        <!-- Pills no meio (Opções rápidas) -->
+                        <div class="home-pills">
+                            <div class="home-pill" onclick="showPage('explorar', document.getElementById('nav-explorar'))">
+                                <i>📚</i> Explorar Resumos
+                            </div>
+                            <div class="home-pill" onclick="showPage('chat', document.getElementById('nav-chat'))">
+                                <i>💬</i> Salas de Estudo
+                            </div>
+                            <div class="home-pill" onclick="showPage('flashcards', document.getElementById('nav-flashcards'))">
+                                <i>🃏</i> Flashcards Mágicos
+                            </div>
+                            <div class="home-pill" onclick="showPage('perfil', document.getElementById('nav-perfil'))">
+                                <i>👤</i> Meu Perfil
+                            </div>
                         </div>
-                        <div class="home-card" onclick="showPage('chat', document.getElementById('nav-chat'))">
-                            <i>💬</i>
-                            <h3>Salas de Chat</h3>
-                            <p>Tire dúvidas e converse com estudantes da sua matéria.</p>
-                        </div>
-                        <div class="home-card" onclick="showPage('flashcards', document.getElementById('nav-flashcards'))">
-                            <i>🃏</i>
-                            <h3>Flashcards com IA</h3>
-                            <p>Crie cartões de estudo automáticos a partir dos seus arquivos.</p>
+
+                        <!-- Os Blocos (Cards) centralizados -->
+                        <div style="max-width: 1200px; margin: 50px auto 0; padding: 0 30px;">
+                            <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Destaques para você</h2>
+                            <div class="home-grid">
+                                <div class="home-card" style="width: 250px;">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">📐</div>
+                                    <h3>Exatas</h3>
+                                    <p>Matemática e Física</p>
+                                </div>
+                                <div class="home-card" style="width: 250px;">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">🧬</div>
+                                    <h3>Biológicas</h3>
+                                    <p>Ciências da Natureza</p>
+                                </div>
+                                <div class="home-card" style="width: 250px;">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">🎭</div>
+                                    <h3>Humanas</h3>
+                                    <p>História e Sociedade</p>
+                                </div>
+                                <div class="home-card" style="width: 250px;">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">💻</div>
+                                    <h3>Técnico</h3>
+                                    <p>Programação e TI</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1820,10 +1947,29 @@
             document.getElementById('tab-signup').classList.toggle('active', !isLogin);
         }
 
+        const roomColors = {
+            "A": "#ef4444", "B": "#f97316", "C": "#eab308", 
+            "D": "#22c55e", "E": "#06b6d4", "F": "#3b82f6", 
+            "G": "#8b5cf6", "H": "#d946ef", "I": "#f43f5e",
+            "Visitante": "#10b981", "Admin": "#ec4899"
+        };
+
+        function applyUserColor(sala, name) {
+            const color = roomColors[sala] || roomColors["Visitante"];
+            document.getElementById('user-badge').textContent = sala ? `Sala ${sala}` : 'Premium Student';
+            document.getElementById('user-badge').style.color = color;
+            document.getElementById('user-badge').style.background = color + '22'; // 22 is hex for low opacity
+            
+            const avatar = document.getElementById('user-avatar');
+            avatar.style.background = `linear-gradient(135deg, ${color}, #1e293b)`;
+            avatar.textContent = name.charAt(0).toUpperCase();
+        }
+
         function skipAuth() {
             const name = 'Visitante';
             document.getElementById('user-display-name').textContent = name;
             document.getElementById('welcome-name').textContent = name;
+            applyUserColor('Visitante', name);
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
             showPage('home');
@@ -1841,19 +1987,24 @@
                 const name = document.getElementById('signup-name').value;
                 const email = document.getElementById('signup-email').value.toLowerCase();
                 const pass = document.getElementById('signup-pass').value;
-                if (!name || !email || !pass) return alert('Preencha tudo!');
-                users.push({ name, email, pass });
+                const sala = document.getElementById('signup-sala').value;
+                
+                if (!name || !email || !pass || !sala) return alert('Preencha todos os campos, incluindo a sua Sala!');
+                
+                users.push({ name, email, pass, sala });
                 localStorage.setItem('fecad_users', JSON.stringify(users));
-                alert('Cadastrado! Faça login.');
+                alert('Cadastrado com sucesso! Faça o login.');
                 toggleAuth('login');
             } else {
                 const email = document.getElementById('login-email').value.toLowerCase();
                 const pass = document.getElementById('login-pass').value;
                 let user = users.find(u => u.email === email && u.pass === pass);
-                if (!user && (email === 'admin' || email.includes('jeferson'))) user = { name: 'Jeferson Silva', email };
+                if (!user && (email === 'admin' || email.includes('jeferson'))) user = { name: 'Jeferson Silva', email, sala: 'Admin' };
                 if (user) {
                     document.getElementById('user-display-name').textContent = user.name;
                     document.getElementById('welcome-name').textContent = user.name.split(' ')[0];
+                    applyUserColor(user.sala, user.name);
+                    
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('main-app').style.display = 'flex';
                     showPage('home');
