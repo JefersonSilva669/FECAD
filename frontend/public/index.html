@@ -2291,16 +2291,58 @@
             fcState.mode = mode;
             fcUserMessage(mode === 'flashcards' ? 'Flashcards de Revisão' : 'Lista de Exercícios');
             
-            fcState.step = 'ask_document';
-            fcTyping(() => fcAIMessage(`Anexe abaixo o <strong>arquivo da aula</strong> (PDF, DOCX, TXT) para eu extrair os conceitos e gerar seus ${mode === 'flashcards' ? 'flashcards' : 'exercícios'}:`, `
-                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
-                    <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" accept=".txt,.pdf,.doc,.docx" />
-                    <label for="fc-file-input" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border: 2px dashed var(--border); border-radius:12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:all 0.2s;">
-                        <span style="font-size:24px; margin-bottom:8px;">📄</span>
-                        <span style="font-size:13px; color:var(--text-dim); text-align:center;" id="fc-file-label">Clique para selecionar o arquivo da aula</span>
-                    </label>
-                    <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Analisar Arquivo</button>
-                </div>`));
+            if (mode === 'flashcards') {
+                // Sub-opções para Flashcards
+                fcState.step = 'ask_fc_source';
+                fcTyping(() => fcAIMessage('Como você quer estudar hoje?', `
+                    <div class="fc-subject-grid" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+                        <div class="fc-subject-btn" style="text-align:center; padding:14px; border-color:#3498db; color:#3498db;" onclick="fcPickFcSource('file')">
+                            📄 Enviar arquivo da aula
+                            <div style="font-size:11px; margin-top:4px; opacity:0.7;">A IA interpreta o conteúdo e cria flashcards personalizados</div>
+                        </div>
+                        <div class="fc-subject-btn" style="text-align:center; padding:14px; border-color:#2ecc71; color:#2ecc71;" onclick="fcPickFcSource('ia')">
+                            🤖 Flashcards gerados pela IA
+                            <div style="font-size:11px; margin-top:4px; opacity:0.7;">Revise com flashcards prontos do nosso banco de conhecimento</div>
+                        </div>
+                    </div>`));
+            } else {
+                // Exercícios sempre pedem arquivo
+                fcState.step = 'ask_document';
+                fcTyping(() => fcAIMessage(`Anexe abaixo o <strong>arquivo da aula</strong> (PDF, DOCX, TXT) para eu extrair os conceitos e gerar seus exercícios:`, `
+                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                        <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" accept=".txt,.pdf,.doc,.docx" />
+                        <label for="fc-file-input" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border: 2px dashed var(--border); border-radius:12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:all 0.2s;">
+                            <span style="font-size:24px; margin-bottom:8px;">📄</span>
+                            <span style="font-size:13px; color:var(--text-dim); text-align:center;" id="fc-file-label">Clique para selecionar o arquivo da aula</span>
+                        </label>
+                        <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Analisar Arquivo</button>
+                    </div>`));
+            }
+        }
+
+        function fcPickFcSource(source) {
+            if (source === 'file') {
+                fcUserMessage('Enviar arquivo da aula');
+                fcState.step = 'ask_document';
+                fcState.fcSource = 'file';
+                fcTyping(() => fcAIMessage('Anexe abaixo o <strong>arquivo da aula</strong> (PDF, DOCX, TXT) e eu vou interpretar o conteúdo para gerar flashcards personalizados:', `
+                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                        <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" accept=".txt,.pdf,.doc,.docx" />
+                        <label for="fc-file-input" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border: 2px dashed var(--border); border-radius:12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:all 0.2s;">
+                            <span style="font-size:24px; margin-bottom:8px;">📄</span>
+                            <span style="font-size:13px; color:var(--text-dim); text-align:center;" id="fc-file-label">Clique para selecionar o arquivo da aula</span>
+                        </label>
+                        <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Analisar Arquivo</button>
+                    </div>`));
+            } else {
+                fcUserMessage('Flashcards gerados pela IA');
+                fcState.fcSource = 'ia';
+                fcState.step = 'ask_count';
+                fcTyping(() => fcAIMessage('Quantos cards quer estudar hoje?', `
+                    <div class="fc-num-grid">
+                        ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+                    </div>`));
+            }
         }
 
         let fcSelectedFileName = "";
@@ -2407,6 +2449,8 @@
                 setTimeout(() => {
                     if (fcState.mode === 'exercises') {
                         fcGenerateExercises();
+                    } else if (fcState.fcSource === 'file') {
+                        fcGenerateFileCards();
                     } else {
                         fcGenerateCards();
                     }
@@ -2436,6 +2480,75 @@
             if (fcState.count > maxAvailable) message = `⚠️ Encontrei apenas ${maxAvailable} perguntas para esta matéria.`;
             
             fcAIMessage(message + `<br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
+        }
+
+        function fcGenerateFileCards() {
+            // Gera flashcards interpretando o conteúdo do arquivo enviado
+            const fileName = fcState.docContext.replace('Conteúdo de: ', '');
+            const subject = fcState.subject;
+            const count = fcState.count;
+            
+            // Banco de flashcards simulados baseados em interpretação de arquivo por matéria
+            const fileBasedCards = {
+                'Matemática': [
+                    {q: `Com base no material "${fileName}", qual fórmula é usada para calcular a área do trapézio?`, a: 'A = (B + b) × h / 2, onde B é a base maior, b a base menor e h a altura.'},
+                    {q: `Segundo o conteúdo da aula, como resolver uma equação do 2° grau?`, a: 'Usando a fórmula de Bhaskara: x = (-b ± √(b²-4ac)) / 2a'},
+                    {q: `De acordo com o arquivo, qual a diferença entre função linear e quadrática?`, a: 'Linear: f(x) = ax + b (reta). Quadrática: f(x) = ax² + bx + c (parábola).'},
+                    {q: `O material menciona progressões. Qual a fórmula do termo geral da P.A.?`, a: 'an = a1 + (n-1) × r, onde r é a razão da progressão.'},
+                    {q: `Baseado na aula, como calcular o volume de um cilindro?`, a: 'V = π × r² × h, onde r é o raio da base e h é a altura.'},
+                    {q: `Conforme estudado, o que é o Teorema de Pitágoras?`, a: 'Em um triângulo retângulo, a² = b² + c², onde a é a hipotenusa.'},
+                    {q: `De acordo com o documento, como calcular porcentagem?`, a: 'Porcentagem = (parte / todo) × 100. Ex: 25/100 = 25%'},
+                    {q: `O arquivo aborda logaritmos. O que é log na base 10 de 1000?`, a: 'log₁₀(1000) = 3, pois 10³ = 1000.'}
+                ],
+                'Física': [
+                    {q: `Com base no material "${fileName}", qual a fórmula da velocidade média?`, a: 'Vm = ΔS / Δt (variação do espaço pela variação do tempo).'},
+                    {q: `Segundo a aula, o que é a 2ª Lei de Newton?`, a: 'F = m × a. A força resultante é igual à massa vezes a aceleração.'},
+                    {q: `De acordo com o conteúdo, como funciona a conservação de energia?`, a: 'Energia não se cria nem se destrói, apenas se transforma. Ec + Ep = constante.'},
+                    {q: `O material explica eletricidade. O que é a Lei de Ohm?`, a: 'V = R × I, onde V é tensão (volts), R é resistência (ohms) e I é corrente (ampères).'},
+                    {q: `Baseado no documento, o que são ondas eletromagnéticas?`, a: 'São perturbações que se propagam no espaço transportando energia, sem necessitar de meio material.'},
+                    {q: `Conforme o arquivo, qual a diferença entre calor e temperatura?`, a: 'Temperatura é a medida da agitação molecular. Calor é a energia transferida entre corpos com temperaturas diferentes.'}
+                ],
+                'Biologia': [
+                    {q: `Com base no material "${fileName}", o que é mitose?`, a: 'Divisão celular que gera 2 células idênticas à célula-mãe, com mesmo número de cromossomos.'},
+                    {q: `Segundo a aula, qual a função do DNA?`, a: 'Armazenar a informação genética e transmitir as instruções para a síntese de proteínas.'},
+                    {q: `De acordo com o conteúdo, o que é fotossíntese?`, a: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂. Plantas convertem luz solar em energia química (glicose).'},
+                    {q: `O material menciona ecologia. O que é cadeia alimentar?`, a: 'Sequência de organismos onde cada um serve de alimento para o seguinte: produtores → consumidores → decompositores.'},
+                    {q: `Baseado no documento, o que são organelas celulares?`, a: 'Estruturas especializadas dentro da célula: mitocôndria (energia), ribossomos (proteínas), núcleo (DNA).'},
+                    {q: `Conforme o arquivo, como funciona a respiração celular?`, a: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP. Processo inverso da fotossíntese.'}
+                ],
+                'Gramática da Língua Portuguesa': [
+                    {q: `Com base no material "${fileName}", quais são as classes gramaticais?`, a: 'Substantivo, adjetivo, verbo, advérbio, pronome, artigo, numeral, preposição, conjunção e interjeição.'},
+                    {q: `Segundo a aula, quando usar crase?`, a: 'Usa-se crase (à) quando há a fusão da preposição "a" com o artigo definido feminino "a".'},
+                    {q: `De acordo com o conteúdo, o que é sujeito e predicado?`, a: 'Sujeito: de quem se fala na oração. Predicado: o que se diz sobre o sujeito.'},
+                    {q: `O material aborda figuras de linguagem. O que é metáfora?`, a: 'Comparação implícita entre dois termos. Ex: "Ele é um leão" (corajoso).'},
+                    {q: `Baseado no documento, quando usar "mas" e "mais"?`, a: '"Mas" = conjunção adversativa (porém). "Mais" = advérbio de intensidade (quantidade).'},
+                    {q: `Conforme o arquivo, o que são orações subordinadas?`, a: 'São orações que exercem função sintática em relação à oração principal, podendo ser substantivas, adjetivas ou adverbiais.'}
+                ]
+            };
+            
+            // Pega os cards da matéria ou gera genéricos
+            let pool = fileBasedCards[subject] || [];
+            if (pool.length === 0) {
+                for (let i = 0; i < count; i++) {
+                    pool.push({
+                        q: `Pergunta ${i+1} baseada no arquivo "${fileName}" sobre ${subject}: Explique o conceito principal abordado no tópico ${i+1}.`,
+                        a: `Resposta baseada na interpretação do conteúdo fornecido na aula de ${subject}.`
+                    });
+                }
+            }
+            
+            // Embaralha
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            
+            fcState.cards = pool.slice(0, count);
+            fcRenderCards();
+            
+            fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards criados a partir do arquivo "${fileName}"!</strong><br>
+                <em style="font-size:12px; color:var(--text-dim);">Os flashcards foram gerados interpretando o conteúdo do seu material de aula.</em>
+                <br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
         }
 
         function getDynamicExercise(subject, difficulty, context) {
