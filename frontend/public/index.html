@@ -1093,6 +1093,90 @@
             border-top: 1px solid var(--border);
         }
 
+        /* --- FLASHCARDS PREMIUM --- */
+        .fc-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+            perspective: 1000px;
+        }
+
+        .fc-card {
+            height: 200px;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fc-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .fc-card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .fc-card-front {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            backdrop-filter: blur(10px);
+        }
+
+        .fc-card-back {
+            background: linear-gradient(135deg, var(--primary-light), #2980b9);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .fc-card-q {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: #f8fafc;
+        }
+
+        .fc-card-a {
+            font-size: 15px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .fc-card-hint {
+            margin-top: 15px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .fc-card-subject-tag {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
         .topic-answer.visible {
             display: block;
             animation: fadeIn 0.2s ease;
@@ -1429,13 +1513,13 @@
                     </div>
 
                     <!-- RIGHT: Generated Flashcards -->
-                    <div class="fc-results-panel">
+                    <div class="fc-results-panel" id="flashcards-view">
                         <div class="fc-results-header">
                             <h3 id="fc-results-title">Seus Flashcards</h3>
                             <div id="fc-badge" class="fc-badge" style="display:none;"></div>
                         </div>
                         <div class="fc-cards-container">
-                            <div id="flashcard-list">
+                            <div class="fc-container" id="flashcard-list">
                                 <div class="fc-empty">
                                     <div class="fc-empty-icon">✨</div>
                                     <p>Converse com a IA ao lado para gerar seus flashcards personalizados!</p>
@@ -1628,69 +1712,46 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script>
-        // ⚠️ COLE SUAS CHAVES DO FIREBASE AQUI ⚠️
-        // Crie um projeto em console.firebase.google.com, habilite o Realtime Database e copie as chaves:
         const firebaseConfig = {
             apiKey: "AIzaSyD2sV6vigwdiWvDpcrhoUmdcGSmVP7FkF0",
             authDomain: "fecad-60c72.firebaseapp.com",
             databaseURL: "https://fecad-60c72-default-rtdb.firebaseio.com",
             projectId: "fecad-60c72",
-            storageBucket: "fecad-60c72.firebasestorage.app",
-            messagingSenderId: "165469617003",
-            appId: "1:165469617003:web:cb5c6c815d4b3a710faa2e",
-            measurementId: "G-RSNLPVMMNN"
+            storageBucket: "fecad-60c72.firebasestorage.app"
         };
         
         let db = null;
-        if (firebaseConfig.apiKey !== "SUA_API_KEY") {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.database();
-                console.log("Firebase conectado.");
-            } catch (e) {
-                console.error("Erro Firebase:", e);
-            }
-        }
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+        } catch (e) { console.error("Erro Firebase:", e); }
 
         let currentChatRef = null;
 
         function listenToRoom(roomName) {
             if (!db) return;
-            if (currentChatRef) currentChatRef.off('child_added'); // Remove listener anterior
-            
-            // Sanitiza o nome da sala (Firebase não aceita . # $ [ ])
+            if (currentChatRef) currentChatRef.off('child_added');
             const safeRoomName = roomName.replace(/[.#$\[\]]/g, '');
             currentChatRef = db.ref('chats/' + safeRoomName);
             
-            // Limpa o chat antes de carregar o histórico do Firebase
-            document.getElementById('chat-box').innerHTML = `
-                <div class="message msg-received">
-                    <div class="msg-user">Sistema</div>
-                    Conectado à sala de ${roomName}. Carregando histórico...
-                </div>
-            `;
+            document.getElementById('chat-box').innerHTML = `<div class="message msg-received"><div class="msg-user">Sistema</div>Conectado à sala de ${roomName}.</div>`;
             
             currentChatRef.on('child_added', (snapshot) => {
                 const data = snapshot.val();
-                if (currentChatMode === 'chat') {
+                if (typeof currentChatMode !== 'undefined' && currentChatMode === 'chat') {
                     const message = document.createElement('div');
                     let userName = document.getElementById('user-display-name').textContent;
                     if (!userName || userName === 'Visitante') userName = 'Você';
-                    
                     const isMe = data.userId === userName;
                     message.className = 'message ' + (isMe ? 'msg-sent' : 'msg-received');
-                    message.innerHTML = `
-                        <div class="msg-user">${isMe ? 'Você' : data.userId}</div>
-                        ${data.content}
-                    `;
+                    message.innerHTML = `<div class="msg-user">${isMe ? 'Você' : data.userId}</div>${data.content}`;
                     document.getElementById('chat-box').appendChild(message);
                     document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
                 }
             });
         }
 
-
-        // Auth Logic
+        // --- AUTH LOGIC ---
         function toggleAuth(mode) {
             const isLogin = mode === 'login';
             document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
@@ -1708,1379 +1769,272 @@
 
         function togglePass(inputId, btn) {
             const input = document.getElementById(inputId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                btn.textContent = '👁️';
-            }
+            input.type = input.type === 'password' ? 'text' : 'password';
+            btn.textContent = input.type === 'password' ? '👁️' : '🙈';
         }
 
         function handleAuth(mode) {
-            let users = [];
-            try {
-                users = JSON.parse(localStorage.getItem('fecad_users') || '[]');
-            } catch (e) {
-                console.error("Erro ao ler usuários:", e);
-                users = [];
-            }
-
+            let users = JSON.parse(localStorage.getItem('fecad_users') || '[]');
             if (mode === 'signup') {
-                const name = document.getElementById('signup-name').value.trim();
-                const email = document.getElementById('signup-email').value.trim().toLowerCase();
-                const pass = document.getElementById('signup-pass').value.trim();
-
-                if (!name || !email || !pass) return alert('Por favor, preencha todos os campos do cadastro!');
-
-                // Check if user already exists
-                if (users.some(u => u.email === email)) {
-                    alert('Este e-mail já está cadastrado. Tente fazer login na aba ao lado.');
-                    toggleAuth('login');
-                    return;
-                }
-
-                // Register user
-                const newUser = { name, email, pass };
-                users.push(newUser);
+                const name = document.getElementById('signup-name').value;
+                const email = document.getElementById('signup-email').value.toLowerCase();
+                const pass = document.getElementById('signup-pass').value;
+                if (!name || !email || !pass) return alert('Preencha tudo!');
+                users.push({ name, email, pass });
                 localStorage.setItem('fecad_users', JSON.stringify(users));
-
-                alert('Cadastro realizado com sucesso! Agora você pode entrar usando seu e-mail e senha na aba "Entrar".');
+                alert('Cadastrado! Faça login.');
                 toggleAuth('login');
-
-                // Limpar campos de cadastro
-                document.getElementById('signup-name').value = '';
-                document.getElementById('signup-email').value = '';
-                document.getElementById('signup-pass').value = '';
-                return;
-            }
-
-            if (mode === 'login') {
-                const emailInput = document.getElementById('login-email');
-                const passInput = document.getElementById('login-pass');
-                
-                if (!emailInput || !passInput) return console.error('Campos de login não encontrados');
-                
-                const email = emailInput.value.trim().toLowerCase();
-                const pass = passInput.value.trim();
-
-                if (!email || !pass) return alert('Preencha seu e-mail e senha!');
-
-                // Check credentials
+            } else {
+                const email = document.getElementById('login-email').value.toLowerCase();
+                const pass = document.getElementById('login-pass').value;
                 let user = users.find(u => u.email === email && u.pass === pass);
-
-                // Atalho de Entrada para o Jeferson (Desbugando a entrada rápida)
-                if (!user && (email.includes('jeferson') || email === 'admin' || email === 'teste')) {
-                    user = { name: (email.includes('jeferson') ? 'Jeferson Silva' : 'Admin'), email: email };
-                }
-
+                if (!user && (email === 'admin' || email.includes('jeferson'))) user = { name: 'Jeferson Silva', email };
                 if (user) {
-                    console.log("Login bem-sucedido:", user.name);
                     document.getElementById('user-display-name').textContent = user.name;
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('main-app').style.display = 'flex';
-                    if (typeof renderFeed === 'function') renderFeed();
-                } else {
-                    const existingUser = users.find(u => u.email === email);
-                    if (existingUser) {
-                        alert('Senha incorreta! Por favor, tente novamente.');
-                    } else {
-                        alert('Conta não encontrada. Use a aba "Cadastrar" ao lado ou entre como Visitante.');
-                    }
-                }
+                    renderFeed();
+                } else alert('Dados incorretos!');
             }
         }
 
-        // Sample Data
-        let notebooks = JSON.parse(localStorage.getItem('fecad_notebooks')) || [
-            {
-                id: 1,
-                title: 'Derivadas e Integrais',
-                subject: 'Cálculo',
-                author: 'Beatriz Lima',
-                stars: 5,
-                img: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800',
-                feedbacks: [
-                    'Ótima caligrafia! Poderia adicionar mais exemplos de integração por partes.',
-                    'Ajudou muito no resumo para a prova de amanhã!',
-                    '💡 Recomendação: Use cores diferentes para destacar os teoremas.'
-                ]
-            },
-            {
-                id: 2,
-                title: 'Revolução Industrial',
-                subject: 'História',
-                author: 'Marcos Vinícius',
-                stars: 4,
-                img: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&q=80&w=800',
-                feedbacks: [
-                    'Muito completo o resumo sobre as máquinas térmicas.',
-                    'Faltou citar os impactos sociais na Inglaterra do século XVIII.'
-                ]
-            }
-        ];
-
-        function saveNotebooks() {
-            localStorage.setItem('fecad_notebooks', JSON.stringify(notebooks));
-        }
-
-        // ===== KNOWLEDGE BASE =====
-        const fcKB = {
-            'Matemática': [
-                { q: 'O que é uma equação do 2º grau?', a: 'É uma equação na forma ax²+bx+c=0, com a≠0. Resolvida pela fórmula de Bhaskara: x=(-b±√Δ)/2a' },
-                { q: 'O que é o MMC?', a: 'Mínimo Múltiplo Comum: o menor número divisível por dois ou mais números dados. Ex: MMC(4,6)=12' },
-                { q: 'Área do triângulo?', a: 'A = (base × altura) / 2' },
-                { q: 'O que é uma fração irredutível?', a: 'É quando o numerador e denominador não têm divisor comum além do 1. Ex: 3/4 é irredutível.' },
-                { q: 'Pitágoras: qual a fórmula?', a: 'a² = b² + c², onde "a" é a hipotenusa (lado oposto ao ângulo reto).' },
-                { q: 'O que é porcentagem?', a: 'É uma fração de denominador 100. Ex: 25% = 25/100 = 0,25' },
-                { q: 'O que é média aritmética?', a: 'Soma de todos os valores dividida pela quantidade de valores. Ex: média de 4,6,8 = (4+6+8)/3 = 6' },
-                { q: 'O que é função linear?', a: 'f(x) = ax + b. Seu gráfico é uma reta. "a" é o coeficiente angular e "b" o linear.' }
-            ],
-            'Física': [
-                { q: '1ª Lei de Newton?', a: 'Inércia: todo corpo em repouso permanece em repouso, e em movimento permanece em movimento, a menos que uma força externa atue sobre ele.' },
-                { q: '2ª Lei de Newton?', a: 'F = m × a (Força = massa × aceleração). A força resultante é proporcional à aceleração.' },
-                { q: '3ª Lei de Newton?', a: 'Ação e Reação: para toda ação há uma reação de mesma intensidade, mesma direção e sentido oposto.' },
-                { q: 'Fórmula da velocidade média?', a: 'Vm = ΔS / Δt (variação do espaço dividida pela variação do tempo)' },
-                { q: 'O que é energia cinética?', a: 'Ec = m×v²/2 — energia que um corpo possui devido ao seu movimento.' },
-                { q: 'Lei de Ohm?', a: 'V = R × I (Tensão = Resistência × Corrente). Relaciona tensão, resistência e corrente elétrica.' },
-                { q: 'O que é frequência de uma onda?', a: 'É o número de oscilações por segundo, medida em Hertz (Hz).' }
-            ],
-            'Química': [
-                { q: 'O que é um átomo?', a: 'É a menor partícula de um elemento químico. É composto por prótons e nêutrons (no núcleo) e elétrons (na eletrosfera).' },
-                { q: 'O que é ligação iônica?', a: 'Ocorre quando um metal transfere elétrons para um não-metal, formando íons (Na⁺ e Cl⁻ no sal de cozinha).' },
-                { q: 'O que é ligação covalente?', a: 'É o compartilhamento de elétrons entre dois não-metais. Ex: H₂O, CO₂.' },
-                { q: 'O que é pH?', a: 'Medida de acidez. pH < 7 = ácido, pH = 7 = neutro, pH > 7 = básico.' },
-                { q: 'O que é massa molar?', a: 'É a massa de 1 mol de uma substância, expressa em g/mol. Ex: massa molar da água (H₂O) ≈ 18 g/mol.' },
-                { q: 'O que é reação de combustão?', a: 'É a reação entre um combustível e oxigênio, liberando luz e calor. Ex: C + O₂ → CO₂' }
-            ],
-            'Biologia': [
-                { q: 'O que é célula procarionte?', a: 'Célula sem núcleo organizado (sem membrana nuclear). Ex: bactérias e arqueas.' },
-                { q: 'O que é fotossíntese?', a: 'Processo pelo qual plantas usam luz solar, água e CO₂ para produzir glicose e oxigênio. 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
-                { q: 'O que são cromossomos?', a: 'São estruturas no núcleo celular que contêm o DNA. Humanos possuem 46 cromossomos (23 pares).' },
-                { q: 'O que é DNA?', a: 'Ácido Desoxirribonucleico — molécula em dupla hélice que contém as informações genéticas de um organismo.' },
-                { q: 'O que é ecossistema?', a: 'Conjunto de seres vivos (biocenose) e fatores abióticos (clima, solo, água) de uma região, interagindo entre si.' },
-                { q: 'O que é mitose?', a: 'Divisão celular que origina duas células-filhas geneticamente idênticas à célula-mãe. Usada para crescimento e regeneração.' }
-            ],
-            'Gramática da Língua Portuguesa': [
-                { q: 'O que é sujeito?', a: 'É o termo da oração sobre o qual o predicado faz uma declaração. Concorda com o verbo em número e pessoa.' },
-                { q: 'Diferença entre "há" e "a"?', a: '"Há" é verbo haver (tempo passado ou existência). "A" é preposição ou artigo. Ex: "Há dois dias" vs "Daqui a dois dias".' },
-                { q: 'O que é crase?', a: 'É a fusão da preposição "a" com o artigo "a". Representada pelo acento grave (à). Ex: "Fui à escola".' },
-                { q: 'O que é substantivo?', a: 'Palavra que nomeia seres, objetos, lugares, sentimentos e ações. Ex: casa, amor, coragem, Rio de Janeiro.' },
-                { q: 'O que é adjunto adnominal?', a: 'Termo que se liga a um substantivo para caracterizá-lo. Pode ser adjetivo, artigo, pronome ou numeral.' },
-                { q: 'O que é oração coordenada?', a: 'Oração independente que se une a outra sem relação de subordinação. São ligadas por conjunções coordenativas.' }
-            ],
-            'Literatura Lusófona': [
-                { q: 'Quem escreveu "Os Lusíadas"?', a: 'Luís de Camões, obra épica publicada em 1572, narrando a viagem de Vasco da Gama à Índia.' },
-                { q: 'O que é Trovadorismo?', a: 'Primeira escola literária da língua portuguesa (séc. XII-XIV). Caracterizada por cantigas de amor, amigo e escárnio.' },
-                { q: 'O que é Realismo literário?', a: 'Movimento do séc. XIX que retratava a realidade social com objetividade, crítica e linguagem direta. Ex: Eça de Queirós.' },
-                { q: 'O que é Modernismo em Portugal?', a: 'Movimento iniciado em 1915 com a revista Orpheu. Fernando Pessoa é o maior nome, com seus heterônimos.' },
-                { q: 'Quem é Fernando Pessoa?', a: 'Poeta português (1888-1935), criador de heterônimos: Alberto Caeiro, Ricardo Reis e Álvaro de Campos, além do ortônimo.' }
-            ],
-            'Leitura e produção de textos': [
-                { q: 'O que é coesão textual?', a: 'É a ligação harmoniosa entre as partes do texto, usando conectivos, pronomes e sinônimos para evitar repetições.' },
-                { q: 'O que é coerência textual?', a: 'É a lógica e consistência das ideias no texto. Um texto coerente não apresenta contradições.' },
-                { q: 'Quais são os tipos de texto?', a: 'Narrativo, descritivo, dissertativo-argumentativo, injuntivo (instrucional) e expositivo.' },
-                { q: 'O que é argumentação?', a: 'Apresentação de razões (argumentos) para defender uma tese (ideia central) e convencer o leitor.' },
-                { q: 'O que é parágrafo?', a: 'Unidade de texto que desenvolve uma ideia central. Composto por: tópico frasal, desenvolvimento e conclusão.' }
-            ],
-            'Geografia': [
-                { q: 'O que é clima tropical?', a: 'Clima quente e úmido com duas estações: chuvosa e seca. Predomina nas regiões próximas ao Equador.' },
-                { q: 'O que é globalização?', a: 'Processo de integração econômica, cultural e política entre países, impulsionado pelo avanço tecnológico e das comunicações.' },
-                { q: 'Quais são as placas tectônicas?', a: 'Grandes fragmentos da litosfera que se movem lentamente. Seu choque causa terremotos, vulcões e formação de montanhas.' },
-                { q: 'O que é IDH?', a: 'Índice de Desenvolvimento Humano — mede qualidade de vida combinando longevidade, educação e renda. Varia de 0 a 1.' },
-                { q: 'O que é urbanização?', a: 'Processo de crescimento das cidades e migração da população do campo para os centros urbanos.' }
-            ],
-            'Artes': [
-                { q: 'O que é perspectiva na arte?', a: 'Técnica para representar a profundidade e o espaço tridimensional em uma superfície plana, criando ilusão de distância.' },
-                { q: 'O que é impressionismo?', a: 'Movimento artístico do séc. XIX que captava impressões momentâneas com pinceladas soltas. Principal artista: Claude Monet.' },
-                { q: 'O que é arte abstrata?', a: 'Arte que não representa a realidade figurativamente, focando em formas, cores e linhas para expressar emoções e ideias.' },
-                { q: 'O que é escultura?', a: 'Arte tridimensional que molda, entalha ou modela materiais como argila, pedra, metal ou madeira.' }
-            ],
-            'Educação Física': [
-                { q: 'O que é frequência cardíaca?', a: 'Número de batimentos do coração por minuto. Em repouso: ~60-100 bpm. No exercício, pode chegar a 200 bpm.' },
-                { q: 'O que são capacidades físicas?', a: 'São: resistência, força, velocidade, flexibilidade e coordenação motora. Base para o desempenho esportivo.' },
-                { q: 'O que é aquecimento?', a: 'Preparação do corpo para o exercício, aumentando temperatura muscular e fluxo sanguíneo. Previne lesões.' },
-                { q: 'O que é IMC?', a: 'Índice de Massa Corporal = peso(kg) / altura²(m). Normal: 18,5 a 24,9.' }
-            ],
-            'Direito e Ética': [
-                { q: 'O que é ética?', a: 'Conjunto de princípios e valores morais que guiam o comportamento humano para o bem-estar individual e coletivo.' },
-                { q: 'O que é cidadania?', a: 'Conjunto de direitos e deveres de um indivíduo em relação ao Estado e à sociedade. Base da democracia.' },
-                { q: 'O que é Constituição?', a: 'Lei máxima de um país, que define os direitos e deveres dos cidadãos e a organização do Estado. "Carta Magna".' },
-                { q: 'O que são direitos humanos?', a: 'Direitos fundamentais e universais de todo ser humano, como vida, liberdade e dignidade, declarados pela ONU em 1948.' }
-            ],
-            'Lógica de Programação': [
-                { q: 'Como receber dados do usuário em Python?', a: 'Com a função input(): nome = input("Digite seu nome: "). Sempre retorna uma string.' },
-                { q: 'Como converter input para número em Python?', a: 'Usando int() ou float(): idade = int(input("Sua idade: "))' },
-                { q: 'Como fazer um if/else em Python?', a: 'if condicao:\n    # código\nelse:\n    # código alternativo\nAtenção: Python usa indentação!' },
-                { q: 'Como fazer um loop for em Python?', a: 'for i in range(5):\n    print(i)\nImprime de 0 a 4.' },
-                { q: 'Como criar uma função em Python?', a: 'def saudacao(nome):\n    return "Olá, " + nome\nChamada: saudacao("Ana")' },
-                { q: 'O que são listas em Python?', a: 'minha_lista = [1, 2, 3]\nAcesso: minha_lista[0] → 1\nAdicionar: minha_lista.append(4)' }
-            ],
-            'Linguagem de Programação': [
-                { q: 'Como adicionar um botão no Windows Forms (C#)?', a: 'No Visual Studio: abra o Designer → Toolbox → arraste Button para o Form → dê duplo clique para criar o evento Click.' },
-                { q: 'Como mudar a cor de fundo em C#?', a: 'this.BackColor = Color.DarkBlue; (no Load do Form) ou via Propriedades → BackColor no Designer.' },
-                { q: 'Como mostrar uma mensagem em C#?', a: 'MessageBox.Show("Texto da mensagem");' },
-                { q: 'Como ler texto de um TextBox em C#?', a: 'string texto = textBox1.Text;' },
-                { q: 'Como criar uma variável em C#?', a: 'int numero = 10;\nstring nome = "Ana";\nbool ativo = true;' },
-                { q: 'O que é um evento Click em C#?', a: 'É um método chamado automaticamente quando o usuário clica num controle. Ex: private void button1_Click(object sender, EventArgs e) { }' }
-            ],
-            'Manutenção e Suporte de Computadores': [
-                { q: 'Função da memória RAM?', a: 'Memória temporária de trabalho. Armazena dados dos programas em uso. Apagada ao desligar o PC.' },
-                { q: 'HD vs SSD: qual a diferença?', a: 'HD usa pratos magnéticos giratórios (lento, barato). SSD usa chips flash (rápido, silencioso, mais caro por GB).' },
-                { q: 'O que faz a CPU?', a: '"Cérebro" do computador. Executa instruções e cálculos. Medida em GHz (velocidade) e número de núcleos.' },
-                { q: 'O que é placa-mãe?', a: 'Componente principal que conecta CPU, RAM, HD/SSD, GPU e demais periféricos via slots e barramentos.' },
-                { q: 'O que é fonte de alimentação?', a: 'Converte a corrente alternada da tomada (110/220V) em corrente contínua para os componentes internos do PC.' },
-                { q: 'O que é BIOS/UEFI?', a: 'Firmware que inicializa o hardware ao ligar o PC e carrega o sistema operacional. UEFI é a versão moderna da BIOS.' }
-            ],
-            'Robótica': [
-                { q: 'O que é Arduino?', a: 'Plataforma de prototipagem eletrônica open-source com microcontrolador programável via C/C++ (IDE Arduino).' },
-                { q: 'O que mede o Volt (V)?', a: 'Tensão elétrica — a "pressão" que empurra os elétrons no circuito. Arduino usa 5V; pilha AA tem 1,5V.' },
-                { q: 'O que mede o Ampere (A)?', a: 'Corrente elétrica — o fluxo de elétrons por segundo. Um LED típico consome ~20mA (miliamperes).' },
-                { q: 'O que mede o Ohm (Ω)?', a: 'Resistência elétrica. Lei de Ohm: V = R × I (Tensão = Resistência × Corrente).' },
-                { q: 'Como piscar um LED com Arduino?', a: 'pinMode(13, OUTPUT); no setup(). No loop(): digitalWrite(13, HIGH); delay(1000); digitalWrite(13, LOW); delay(1000);' },
-                { q: 'Para que serve um resistor?', a: 'Limita a corrente elétrica no circuito, protegendo componentes. Ex: resistor de 220Ω protege um LED no Arduino.' }
-            ],
-            'Sistemas Operacionais': [
-                { q: 'O que é Scrum Master?', a: 'Facilitador do time Scrum. Remove impedimentos, garante que o processo seja seguido e protege o time. Não é chefe.' },
-                { q: 'O que é Product Owner?', a: 'Responsável pelo produto. Define prioridades do Backlog e representa o cliente. Decide "o que" será feito.' },
-                { q: 'O que é um Squad?', a: 'Equipe autônoma e multidisciplinar (6-12 pessoas) focada numa área do produto. Conceito popularizado pelo Spotify.' },
-                { q: 'O que é Sprint no Scrum?', a: 'Ciclo de desenvolvimento com duração fixa (1-4 semanas) onde o time entrega um incremento funcional do produto.' },
-                { q: 'O que é Product Backlog?', a: 'Lista priorizada de funcionalidades e requisitos do produto, gerenciada pelo Product Owner.' },
-                { q: 'O que é IA (Inteligência Artificial)?', a: 'Área da computação que desenvolve sistemas capazes de simular raciocínio humano: aprendizado, decisão e reconhecimento.' }
-            ],
-            'Tecnologias Interativas': [
-                { q: 'Qual a função do Microsoft Word?', a: 'Processador de textos para criar, editar e formatar documentos como relatórios, cartas e trabalhos acadêmicos.' },
-                { q: 'Atalho para negrito no Word?', a: 'Ctrl + N (negrito), Ctrl + I (itálico), Ctrl + S (sublinhado).' },
-                { q: 'Como salvar no Word?', a: 'Ctrl + S (salvar), F12 (salvar como), Ctrl + Shift + S (salvar como com diálogo).' },
-                { q: 'Como inserir tabela no Word?', a: 'Aba Inserir → Tabela → arraste para escolher linhas e colunas, ou clique em "Inserir Tabela".' },
-                { q: 'O que faz a aba "Referências" no Word?', a: 'Permite inserir sumário automático, notas de rodapé, citações e bibliografias.' },
-                { q: 'Como verificar ortografia no Word?', a: 'Pressione F7 ou vá em Revisão → Ortografia e Gramática. Palavras erradas aparecem sublinhadas em vermelho.' }
-            ],
-            'Web Design': [
-                { q: 'Como escurecer imagem no Photoshop?', a: 'Imagem → Ajustes → Brilho/Contraste (mova Brilho para negativo). Ou Curvas (Ctrl+M) e puxe a curva para baixo.' },
-                { q: 'Como melhorar saturação no Photoshop?', a: 'Imagem → Ajustes → Matiz/Saturação (Ctrl+U). Aumente o slider "Saturação" para cores mais vibrantes.' },
-                { q: 'Como recortar no Photoshop?', a: 'Ferramenta Corte (C) → arraste as alças → Enter para confirmar. Para recortar objeto: Seleção Rápida (W) + delete fundo.' },
-                { q: 'O que são camadas (Layers)?', a: 'Folhas transparentes sobrepostas. Cada elemento fica numa camada, permitindo edição independente. Painel: F7.' },
-                { q: 'Como remover fundo no Photoshop?', a: 'Janela → Propriedades → "Remover Fundo" (usa IA). Ou: Seleção → Assunto → Delete.' },
-                { q: 'O que é resolução de imagem?', a: 'Densidade de pixels por polegada (DPI). 72 DPI para web, 300 DPI para impressão de qualidade.' },
-                { q: 'O que é a ferramenta Carimbo?', a: 'Ferramenta (S) usada para copiar e colar pixels de uma área da imagem para outra, ideal para remover manchas ou objetos indesejados.' },
-                { q: 'Como criar uma máscara de corte (Clipping Mask)?', a: 'Coloque a camada base embaixo, a foto/textura por cima. Segure Alt/Option e clique entre as duas camadas.' },
-                { q: 'O que são Smart Objects (Objetos Inteligentes)?', a: 'São camadas que preservam a imagem original intacta, permitindo redimensionamentos e filtros não-destrutivos.' },
-                { q: 'Como alterar rapidamente o tamanho do pincel (Brush)?', a: 'Use os atalhos de colchetes no teclado: [ para diminuir e ] para aumentar o tamanho do pincel.' },
-                { q: 'Diferença entre RGB e CMYK?', a: 'RGB (Luz) é padrão para telas virtuais e web. CMYK (Tinta) é o padrão usado para impressões físicas.' },
-                { q: 'O que é opacidade?', a: 'É o grau de transparência de uma camada ou objeto. 100% é totalmente sólido; 0% é totalmente transparente.' },
-                { q: 'Como exportar uma imagem para Web rapidamente no Photoshop?', a: 'Vá em Arquivo -> Exportar -> Salvar para Web (Legado) ou use o atalho Ctrl+Alt+Shift+S (Cmd+Opt+Shift+S no Mac).' },
-                { q: 'O que é o Formato PNG?', a: 'Um formato de imagem para web que suporta alta qualidade e fundos transparentes, sem perder qualidade em compressões.' },
-                { q: 'Como desfazer mais de uma ação no Photoshop?', a: 'Use o atalho Ctrl+Alt+Z (Photoshop antigo) ou apenas Ctrl+Z nas versões mais recentes para voltar múltiplos passos no histórico.' }
-            ],
-            'Steam Maker': [
-                { q: 'O que é pensamento computacional?', a: 'Habilidade de resolver problemas usando lógica, decomposição, reconhecimento de padrões e abstração.' },
-                { q: 'O que é Maker?', a: 'Cultura de criar, modificar e compartilhar objetos e tecnologias usando eletrônica, impressão 3D e programação.' },
-                { q: 'O que é impressão 3D?', a: 'Tecnologia que constrói objetos camada por camada a partir de um modelo digital, usando materiais como PLA ou ABS.' }
-            ]
-        };
-
-        // Script Extra para complementar todas as materias em 15 cards+
-        (() => {
-            fcKB['Matemática'].push(
-                { q: 'O que é um número primo?', a: 'Número maior que 1 que tem apenas dois divisores: 1 e ele mesmo.' },
-                { q: 'O que é uma progressão aritmética (PA)?', a: 'Sequência numérica em que cada termo é o anterior somado a uma constante.' },
-                { q: 'Qual a fórmula da soma dos termos de uma PA?', a: 'Sn = (a1 + an) * n / 2' },
-                { q: 'O que é uma progressão geométrica (PG)?', a: 'Sequência onde cada termo é o anterior multiplicado por constante.' },
-                { q: 'O que é um polinômio?', a: 'Expressão algébrica formada pela soma de monômios.' },
-                { q: 'Como calcular a área de um círculo?', a: 'A = π * r²' },
-                { q: 'O que é um ângulo obtuso?', a: 'Ângulo cuja medida é maior que 90° e menor que 180°.' },
-                { q: 'O que é a mediana na estatística?', a: 'Valor que divide conjunto de dados ordenados exatamente ao meio.' }
-            );
-            fcKB['Física'].push(
-                { q: 'O que é aceleração da gravidade?', a: 'Na Terra é aprox 9,8 m/s².' },
-                { q: 'Princípio de Arquimedes?', a: 'Empuxo: num fluido sofre força para cima igual ao peso do fluido deslocado.' },
-                { q: 'Primeira lei da termodinâmica?', a: 'Energia não pode ser criada nem destruída.' },
-                { q: 'Efeito Doppler?', a: 'Alteração da frequência percebida com movimento relativo da fonte.' },
-                { q: 'Velocidade da luz?', a: 'Aproximadamente 300.000 km/s.' },
-                { q: 'Circuito em série?', a: 'A corrente é a mesma em todos os componentes.' },
-                { q: 'Campo magnético?', a: 'Região onde cargas ou ímãs sofrem força magnética.' },
-                { q: 'Trabalho de força constante?', a: 'Trabalho = Força * deslocamento * cos(ângulo).' },
-                { q: 'Segunda Lei de Newton?', a: 'F = m * a (Força = massa * aceleração).' }
-            );
-            fcKB['Química'].push(
-                { q: 'Isótopo?', a: 'Átomos do mesmo elemento com diferentes massas (nêutrons diferentes).' },
-                { q: 'Mistura homogênea?', a: 'Apresenta uma única fase visual.' },
-                { q: 'Número de Avogadro?', a: '6,022 × 10²³ partículas num mol.' },
-                { q: 'Tabela periódica?', a: 'Elementos em ordem crescente de número atômico.' },
-                { q: 'Gás mais abundante na atmosfera?', a: 'Nitrogênio (N2), cerca de 78%.' },
-                { q: 'Oxidação?', a: 'Quando um átomo perde elétrons.' },
-                { q: 'Hidrocarbonetos?', a: 'Compostos de carbono e hidrogênio.' },
-                { q: 'Ponto de ebulição?', a: 'Temperatura da passagem líquido para gasoso onde pressões se igualam.' },
-                { q: 'Ácido de Arrhenius?', a: 'Libera H+ em solução.' },
-                { q: 'O que é uma ligação metálica?', a: 'Nuvem de elétrons livres entre cátions.' }
-            );
-            fcKB['Biologia'].push(
-                { q: 'Bases nitrogenadas do DNA?', a: 'A, T, C, G.' },
-                { q: 'Meiose?', a: 'Divisão que reduz à metade o número de cromossomos (gametas).' },
-                { q: 'Função da mitocôndria?', a: 'Respiração celular (ATP).' },
-                { q: 'Autótrofos?', a: 'Produzem próprio alimento.' },
-                { q: 'Função dos ribossomos?', a: 'Síntese de proteínas.' },
-                { q: 'Sistema nervoso central?', a: 'Encéfalo e medula espinhal.' },
-                { q: 'Anticorpos?', a: 'Proteínas neutralizadoras de antígenos.' },
-                { q: 'Simbiose?', a: 'Relação estreita de longo prazo entre duas espécies.' },
-                { q: 'Clorofila?', a: 'Pigmento verde para fotossíntese.' }
-            );
-            fcKB['Gramática da Língua Portuguesa'].push(
-                { q: 'Verbo transitivo direto?', a: 'Exige complemento sem preposição obrigatória.' },
-                { q: 'Conjunção adversativa?', a: 'Exprime oposição (ex: mas, porém).' },
-                { q: 'Pronome relativo?', a: 'Retoma termo anterior (ex: que, onde).' },
-                { q: 'Onde vs aonde', a: 'Onde: lugar fixo. Aonde: indica movimento.' },
-                { q: 'Pleonasmo?', a: 'Repetição de ideia (subir pra cima).' },
-                { q: 'Adjetivo?', a: 'Caracteriza substantivo.' },
-                { q: 'Parônimas?', a: 'Parecidas na grafia/pronúncia, significados diferentes.' },
-                { q: 'Predicativo do sujeito?', a: 'Característica do sujeito ligada por verbo de ligação.' },
-                { q: 'Sintaxe?', a: 'Estuda disposição e relações na frase.' },
-                { q: 'O que é oxítona?', a: 'Palavra com a última sílaba tônica.' }
-            );
-            fcKB['Literatura Lusófona'].push(
-                { q: 'Machado de Assis?', a: 'Fundador ABL, autor de Dom Casmurro.' },
-                { q: 'Romantismo no BR?', a: 'Indianismo, nacionalismo, idealização.' },
-                { q: 'Semana Arte 1922?', a: 'Início do Modernismo no Brasil.' },
-                { q: 'Vidas Secas?', a: 'Graciliano Ramos, regionalismo 1930.' },
-                { q: 'Os Lusíadas (Camoes)?', a: 'Exalta as conquistas navais portuguesas.' },
-                { q: 'Parnasianismo?', a: 'Arte pela arte, Olavo Bilac.' },
-                { q: 'Naturalismo?', a: 'Análise do homem biológico e social (O Cortiço).' },
-                { q: 'Clarice Lispector?', a: 'Modernista, fluxo de consciência.' },
-                { q: 'Quinhentismo?', a: 'Primeiros textos pós descobrimento (catequese e cartas).' },
-                { q: 'Arcadismo?', a: 'Séc XVIII, vida bucólica e fugere urbem.' }
-            );
-            fcKB['Leitura e produção de textos'].push(
-                { q: 'Dissertação argumentativa?', a: 'Defende ponto de vista com argumentos.' },
-                { q: 'Denotação x Conotação?', a: 'Literal vs Figurado.' },
-                { q: 'Intertextualidade?', a: 'Diálogo/referência entre textos.' },
-                { q: 'Conectivo?', a: 'Palavras que dão coesão (logo, porque).' },
-                { q: 'Figuras de linguagem?', a: 'Recursos para mais expressividade.' },
-                { q: 'Ambiguidade?', a: 'Dois ou mais sentidos.' },
-                { q: 'Tópico frasal?', a: 'Ideia central que abre parágrafos.' },
-                { q: 'Texto expositivo?', a: 'Objetivo de transmitir info pura.' },
-                { q: 'Polissemia?', a: 'Palavra ter múltiplos sentidos.' },
-                { q: 'Gêneros textuais?', a: 'Formatos sociais do texto (e-mail, receita).' }
-            );
-            fcKB['Geografia'].push(
-                { q: 'Cartografia?', a: 'Estudo/criação de mapas.' },
-                { q: 'Coordenadas Geográficas?', a: 'Latitudes e Longitudes.' },
-                { q: 'Assoreamento?', a: 'Acúmulo de areia no rio.' },
-                { q: 'Bioma?', a: 'Conjunto de ecossistemas.' },
-                { q: 'Meridiano de Greenwich?', a: 'Longitude 0°.' },
-                { q: 'Clima x Tempo?', a: 'Clima = padrão. Tempo = momento.' },
-                { q: 'Aquífero Guarani?', a: 'Bacia de água doce subterrânea América Sul.' },
-                { q: 'Gentrificação?', a: 'Revalorização cara de ambiente urbano.' },
-                { q: 'Hidrografia BR?', a: 'Rios extensos, poucos lagos.' },
-                { q: 'Latitude?', a: 'Distância à linha do equador.' }
-            );
-            fcKB['Artes'].push(
-                { q: 'Renascimento?', a: 'Valorização clássica (Séc XV).' },
-                { q: 'Mona Lisa?', a: 'Pintura de Da Vinci.' },
-                { q: 'Cubismo?', a: 'Formas geométricas, Picasso.' },
-                { q: 'Música erudita?', a: 'Clássica, sinfonias.' },
-                { q: 'Van Gogh?', a: 'Pós-impressionista (A Noite Estrelada).' },
-                { q: 'Pop Art?', a: 'Cultura massa (Warhol).' },
-                { q: 'Surrealismo?', a: 'Mundo onírico, Dalí.' },
-                { q: 'Cinema?', a: 'Sétima arte.' },
-                { q: 'Cores primárias pigmento (CMY)?', a: 'Ciano, Magenta, Amarelo.' },
-                { q: 'Aleijadinho?', a: 'Escultor Barroco.' },
-                { q: 'Fotografia?', a: 'Imagens geradas por exposição à luz.' }
-            );
-            fcKB['Educação Física'].push(
-                { q: 'Atividade aeróbica?', a: 'Usa oxigênio em exercício longo.' },
-                { q: 'Massa magra?', a: 'Peso subtraído gordura.' },
-                { q: 'Sedentarismo?', a: 'Falta de exercício.' },
-                { q: 'VO2 Max?', a: 'Captação max de Oxigênio.' },
-                { q: 'Jogos Olímpicos?', a: 'A cada 4 anos, origem Grécia.' },
-                { q: 'Alongamento?', a: 'Traz flexibilidade, previne lesões.' },
-                { q: 'Carboidratos?', a: 'Fonte de energia.' },
-                { q: 'Hipertrofia musculação?', a: 'Aumento tamanho músculo.' },
-                { q: 'Esportes Invasão?', a: 'Futebol, basquete, handebol.' },
-                { q: 'Coordenação motora fina?', a: 'Movimentos pequenos como escrever.' },
-                { q: 'Hidratação média dia?', a: '2 a 3 litros.' }
-            );
-            fcKB['Direito e Ética'].push(
-                { q: 'Estado Democrático Direito?', a: 'Governo do povo, submisso à lei.' },
-                { q: 'Maria da Penha?', a: 'Punição à violência doméstica.' },
-                { q: 'Direitos civis?', a: 'Liberdade, igualdade, defesa.' },
-                { q: 'Plágio?', a: 'Apropriar ideias de outrem ilegalmente.' },
-                { q: 'Bioética?', a: 'Ética na medicina e biologia.' },
-                { q: 'Presunção inocência?', a: 'Inocente até prova/julgamento finalizado.' },
-                { q: 'Três Poderes BR?', a: 'Exec, Legis, Judic.' },
-                { q: 'Compliance?', a: 'Estar conforme nas normas corporativas.' },
-                { q: 'Código Defesa Consumidor?', a: 'CDC, rege relações consumo BR.' },
-                { q: 'Ética vs Moral?', a: 'Ética é estudo da moral (regras).' },
-                { q: 'Cyberbullying?', a: 'Violência por tela.' }
-            );
-            fcKB['Lógica de Programação'].push(
-                { q: 'Algoritmo?', a: 'Passo a passo finito de resolução de problema.' },
-                { q: 'Erro Sintaxe?', a: 'Quando regras de codificação são desrespeitadas.' },
-                { q: 'Depurar/Debug?', a: 'Achar bugs/erros.' },
-                { q: 'Matriz/Array?', a: 'Cadeia de dados indexáveis.' },
-                { q: 'String?', a: 'Texto na prog.' },
-                { q: 'Switch?', a: 'Estrutura seletiva para muitos casos.' },
-                { q: 'Loop infinito?', a: 'Problema quando laço não encontra condição de saída.' },
-                { q: 'Comentários da Lang?', a: 'Explicam o código.' },
-                { q: 'Constante?', a: 'Dado imutável.' },
-                { q: 'Inteiro (int)?', a: 'Número sem vírgula.' }
-            );
-            fcKB['Linguagem de Programação'].push(
-                { q: 'Prog Orientada Obj (POO)?', a: 'Classes e objetos.' },
-                { q: 'Instanciar classe?', a: 'Cria objeto na memória.' },
-                { q: 'Herança?', a: 'Filha recebe atributos mãe.' },
-                { q: 'int vs float vs double?', a: 'Int: sem decimal. Float/double: Decimais.' },
-                { q: 'Ponto-E-Virgula?', a: 'Fim de instrução.' },
-                { q: 'Compilar?', a: 'Converter fonte p/ máquina.' },
-                { q: 'Encapsulamento?', a: 'Esconder detalhes via private/public.' },
-                { q: 'using / import?', a: 'Trazer funções externas.' },
-                { q: 'return em void?', a: 'Para funções que devolvem dado de volta.' },
-                { q: 'Framework?', a: 'Bases prontas de código facilitadoras.' }
-            );
-            fcKB['Manutenção e Suporte de Computadores'].push(
-                { q: 'Ver memória Win?', a: 'Ctrl+Shift+Esc Gerenciador.' },
-                { q: 'Pasta térmica?', a: 'Dissipar calor no cooler.' },
-                { q: 'Overclock?', a: 'Superação max Hz original.' },
-                { q: 'Cabo SATA?', a: 'Liga dados do HD/SSD placa mãe.' },
-                { q: 'Pilha CR2032 placa?', a: 'Grava Bios e relógio CMOS.' },
-                { q: 'Formatar?', a: 'Refazer OS e apagar disco limpo.' },
-                { q: 'Vídeo onboard?', a: 'Chip dentro CPU, partilha RAM.' },
-                { q: 'SSD M.2 NVME?', a: 'SSD direto na p-mãe super veloz.' },
-                { q: 'COMANDO PING?', a: 'Confere rede e lentidão ao IP destino.' },
-                { q: 'Fonte (PSU)?', a: 'Alimentação.' },
-                { q: 'Drivers?', a: 'Softwares que ensinam placa a ler equipamento USB e Placa vídeo.' }
-            );
-            fcKB['Robótica'].push(
-                { q: 'Servomotor?', a: 'Motor de giro com posições graus exatas.' },
-                { q: 'Sensor Ultrassônico?', a: 'Identidade por eco batend no som de Morcego.' },
-                { q: 'Potenciômetro?', a: 'Botão girante variador Resistência.' },
-                { q: 'Protoboard?', a: 'Placa furos pro projeto elétr.' },
-                { q: 'PWM em pino?', a: 'Faz digital modular parecendo analógico (brilho led suave).' },
-                { q: 'Motor DC?', a: 'Motor escovado de rotação constante.' },
-                { q: 'I2C/Wire.h?', a: 'Biblioteca do SDA SLC painel Led display.' },
-                { q: 'GND?', a: 'Terra, referência V=0.' },
-                { q: 'IDE?', a: 'Local para programar (C/C++).' },
-                { q: 'VCC?', a: 'Alimentação da voltagem positiva (5v etc).' }
-            );
-            fcKB['Sistemas Operacionais'].push(
-                { q: 'O que o OS faz?', a: 'Base do software pra controlar máquina.' },
-                { q: 'Kernel?', a: 'O núcleo primário que lida com o hardware.' },
-                { q: 'Linux mascote?', a: 'Tux.' },
-                { q: 'Agendamentos Cron Linux?', a: 'Cron via crontab p/ processos diários rodar s/ dono.' },
-                { q: 'BSOD Windows?', a: 'A gloriosa tela azul.' },
-                { q: '/etc/?', a: 'Pasta confs UNIX.' },
-                { q: 'Desfragmentação?', a: 'Junta as peças do HD que ficaram quebradas espalhadas.' },
-                { q: 'CMD no Windows?', a: 'Shell DOS.' },
-                { q: 'Ifconfig / ipconfig?', a: 'Endereço IPs local.' }
-            );
-            fcKB['Tecnologias Interativas'].push(
-                { q: 'Docs links?', a: 'Livre acesso, compartilhar.' },
-                { q: 'Excel SOMA?', a: 'Soma(A1:A5).' },
-                { q: 'Slide mestre PPT?', a: 'Layout modelo invisível do topo base para replicar em tudo auto.' },
-                { q: 'PROCV no EXCEL?', a: 'O mágico procurador Vertical.' },
-                { q: 'PPT to MPe4?', a: 'Expostar Criar Vídeos do Slide com as aulas faladas.' },
-                { q: 'Word crash check?', a: 'Auto-recuperação arquivos docs.' },
-                { q: 'Atalho Moeda?', a: 'Ctrl shift $ no pc excel.' },
-                { q: 'Gerador Gráfico?', a: 'Seleciona + INSERIR -> Guia Graf.' },
-                { q: 'Justificar atalho Word?', a: 'Ctrl J.' }
-            );
-            fcKB['Steam Maker'].push(
-                { q: 'Eletrônica e maker?', a: 'Dar vida aos papelões recicls.' },
-                { q: 'Gambiarras diy válidas?', a: 'Sim, fita crepe, tesoura, criatividade.' },
-                { q: 'Corte a Laser Acrílico?', a: 'Fácil, veloz, vetor.' },
-                { q: 'FDM Printer 3D?', a: 'Péla Extrusor quente fio plástico camada 1a1.' },
-                { q: 'STEAM sigla?', a: 'Science Tech Eng Art Math.' },
-                { q: 'Scratch?', a: 'Gato Laranja dev Crianças do MIT, block based.' },
-                { q: 'Aula maker exige DEV C#?', a: 'Não, baterias solares de LED tb valem.' },
-                { q: 'Tinkercad usa local?', a: 'WEB APP para arduinos e 3D simples.' },
-                { q: 'ABS filament 3D?', a: 'Cheiroso ruim mas robusto calor sol forte mecânico.' },
-                { q: 'Lego Spike?', a: 'Motor e Hub via Lego de encaixes fáceis Maker.' },
-                { q: 'STEAM A e M = ?', a: 'Artes e Matemática.' },
-                { q: 'Rasperry PI Maker?', a: 'MiniLinux placa verde poderosa para AI cam makers.' }
-            );
-        })();
-
-        // ===== AI FLASHCARD SYSTEM =====
-        let fcState = { step: 'idle', count: 5, subject: '', mode: 'flashcards', difficulty: '', docContext: '', cards: [] };
-
-        const vestibularKB = {
-            'Biologia': {
-                'Facil': [
-                    {q: '[ETEC] A organela responsável pela respiração celular é a:', a: 'Mitocôndria. É onde ocorre a produção de ATP.'},
-                    {q: '[CESA] Qual o nome do processo onde as plantas produzem seu alimento?', a: 'Fotossíntese. Utilizam luz solar, CO2 e água.'},
-                    {q: '[ETEC] Os seres autótrofos são aqueles que:', a: 'Produzem seu próprio alimento.'}
-                ],
-                'Medio': [
-                    {q: '[ENEM] Em um ecossistema, os produtores são representados por organismos:', a: 'Autotróficos, como plantas e algas, que sintetizam matéria orgânica.'},
-                    {q: '[FUVEST] A meiose é um processo de divisão celular que resulta em:', a: 'Quatro células haploides, fundamental para a reprodução sexuada.'},
-                    {q: '[ENEM] A vacina é uma forma de imunização:', a: 'Ativa e artificial.'}
-                ],
-                'Dificil': [
-                    {q: '[USP] Explique o papel da bomba de sódio e potássio na manutenção do potencial de repouso.', a: 'Transporte ativo que joga 3 Na+ para fora e 2 K+ para dentro, mantendo o interior negativo.'},
-                    {q: '[ITA] Como mutações no gene p53 afetam o ciclo celular?', a: 'O p53 é um supressor de tumor. Sua inativação impede a apoptose celular em caso de dano no DNA.'},
-                    {q: '[UNESP] Qual a função dos desmossomos no tecido epitelial?', a: 'Garantir adesão firme entre células adjacentes, conferindo resistência mecânica.'}
-                ]
-            },
-            'Física': {
-                'Facil': [
-                    {q: '[ETEC] Qual a fórmula da velocidade média?', a: 'Vm = ΔS / Δt'},
-                    {q: '[CESA] A unidade de força no SI é o:', a: 'Newton (N)'},
-                    {q: '[ETEC] Aceleração da gravidade na Terra é aproximadamente:', a: '9,8 m/s² (frequentemente arredondado para 10 m/s²).'}
-                ],
-                'Medio': [
-                    {q: '[ENEM] Um carro freia bruscamente. Pela 1ª Lei de Newton, os passageiros tendem a:', a: 'Continuar em movimento retilíneo uniforme (Inércia).'},
-                    {q: '[FUVEST] No efeito fotoelétrico, a energia cinética dos elétrons ejetados depende:', a: 'Da frequência da luz incidente, não da sua intensidade.'},
-                    {q: '[ENEM] Qual lei da termodinâmica afirma que a entropia do universo sempre aumenta?', a: 'A Segunda Lei da Termodinâmica.'}
-                ],
-                'Dificil': [
-                    {q: '[ITA] Um pêndulo simples tem período T. Se dobrarmos seu comprimento, qual o novo T?', a: 'T_novo = T * √2, pois T é proporcional à raiz do comprimento.'},
-                    {q: '[USP] Descreva as Leis de Kirchhoff para circuitos elétricos.', a: 'A lei dos nós (conservação da carga) e a lei das malhas (conservação da energia).'},
-                    {q: '[ITA] Qual o conceito de velocidade de escape e como ela se relaciona com buracos negros?', a: 'É a velocidade mínima para escapar da gravidade. Em buracos negros, a velocidade de escape é maior que a da luz (c).'}
-                ]
-            },
-            'Matemática': {
-                'Facil': [
-                    {q: '[ETEC] Qual a área de um triângulo de base 10 e altura 5?', a: '25 (Base x Altura / 2)'},
-                    {q: '[CESA] O dobro de 15% de 200 é:', a: '60. (15% de 200 = 30. Dobro = 60)'},
-                    {q: '[ETEC] Qual a raiz quadrada de 144?', a: '12.'}
-                ],
-                'Medio': [
-                    {q: '[ENEM] Em uma P.A., o 3º termo é 10 e a razão é 3. Qual o 1º termo?', a: '4. (a3 = a1 + 2r => 10 = a1 + 6)'},
-                    {q: '[FUVEST] Qual a soma das raízes da equação x² - 5x + 6 = 0?', a: '5. Pela relação de Girard (S = -b/a).'},
-                    {q: '[ENEM] Um produto custa R$ 100 e tem desconto de 20%. Qual o valor final?', a: 'R$ 80.'}
-                ],
-                'Dificil': [
-                    {q: '[ITA] Determine o volume de um tetraedro regular de aresta a.', a: '(a³√2)/12. Obtido pela altura do tetraedro h=a√(2/3).'},
-                    {q: '[USP] Encontre o módulo do número complexo z = 3 + 4i.', a: '5. |z| = √(3² + 4²) = √25 = 5.'},
-                    {q: '[ITA] O que diz o Teorema Fundamental do Cálculo?', a: 'A integração de uma função contínua é a operação inversa de sua diferenciação.'}
-                ]
-            },
-            'Gramática da Língua Portuguesa': {
-                'Facil': [
-                    {q: '[ETEC] Qual o plural de "cidadão"?', a: 'Cidadãos.'},
-                    {q: '[CESA] Na frase "Ele é rápido", qual a classe gramatical de "rápido"?', a: 'Adjetivo.'},
-                    {q: '[ETEC] Complete com a grafia correta: Exce___o', a: 'Exceção.'}
-                ],
-                'Medio': [
-                    {q: '[ENEM] Qual a função sintática do pronome relativo na oração "O livro que li"?', a: 'Objeto direto.'},
-                    {q: '[FUVEST] Identifique a figura de linguagem: "Chorou rios de lágrimas".', a: 'Hipérbole.'},
-                    {q: '[ENEM] Ocorre crase antes de verbos?', a: 'Não, pois verbos não admitem artigo feminino "a".'}
-                ],
-                'Dificil': [
-                    {q: '[ITA] Diferencie regência nominal de verbal.', a: 'A verbal estuda a relação entre verbo e seus complementos; a nominal, entre um nome (substantivo/adjetivo/advérbio) e seus complementos.'},
-                    {q: '[USP] O uso de próclise é obrigatório em:', a: 'Presença de palavras atrativas (negativas, advérbios, pronomes relativos, indefinidos).' },
-                    {q: '[FUVEST] Defina oração subordinada substantiva apositiva.', a: 'Funciona como aposto de um termo da oração principal, frequentemente após dois pontos.'}
-                ]
-            }
-        };
-
-        function renderFlashcards() {
-            fcInitChat();
-        }
+        // --- FLASHCARDS AI SYSTEM ---
+        let fcState = { step: 'idle', count: 5, subject: '', mode: '', docContext: '', cards: [] };
+        let fcSelectedFile = null, fcSelectedFileName = "", fcExtractedText = "";
 
         function fcInitChat() {
-            fcState = { step: 'ask_mode', count: 5, subject: '', mode: '', difficulty: '', docContext: '', cards: [] };
-            const msgs = document.getElementById('fc-messages');
-            msgs.innerHTML = '';
-            setTimeout(() => fcAIMessage('Olá! 👋 Sou o <strong>Assistente FECAD</strong>. O que você deseja criar hoje?', `
-                <div class="fc-subject-grid" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
-                    <div class="fc-subject-btn" style="text-align:center; padding:12px;" onclick="fcPickMode('flashcards')">🃏 Flashcards de Revisão</div>
-                    <div class="fc-subject-btn" style="text-align:center; padding:12px; border-color:var(--secondary); color:var(--secondary);" onclick="fcPickMode('exercises')">📝 Lista de Exercícios (com Vestibulares)</div>
-                </div>`), 400);
+            fcState = { step: 'ask_mode', count: 5, subject: '', mode: '', docContext: '', cards: [] };
+            document.getElementById('fc-messages').innerHTML = '';
+            fcAIMessage('Olá! 👋 Sou o <strong>Assistente FECAD</strong>. O que você deseja criar hoje?', `
+                <div class="fc-subject-grid" style="flex-direction:column; gap:8px;">
+                    <div class="fc-subject-btn" onclick="fcPickMode('flashcards')">🃏 Flashcards de Revisão</div>
+                    <div class="fc-subject-btn" style="border-color:var(--secondary); color:var(--secondary);" onclick="fcPickMode('exercises')">📝 Lista de Exercícios</div>
+                </div>`);
         }
 
         function fcPickMode(mode) {
             fcState.mode = mode;
-            fcUserMessage(mode === 'flashcards' ? 'Flashcards de Revisão' : 'Lista de Exercícios');
-            
-            if (mode === 'flashcards') {
-                // Sub-opções para Flashcards
-                fcState.step = 'ask_fc_source';
-                fcTyping(() => fcAIMessage('Como você quer estudar hoje?', `
-                    <div class="fc-subject-grid" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
-                        <div class="fc-subject-btn" style="text-align:center; padding:14px; border-color:#3498db; color:#3498db;" onclick="fcPickFcSource('file')">
-                            📄 Enviar arquivo da aula
-                            <div style="font-size:11px; margin-top:4px; opacity:0.7;">A IA interpreta o conteúdo e cria flashcards personalizados</div>
-                        </div>
-                        <div class="fc-subject-btn" style="text-align:center; padding:14px; border-color:#2ecc71; color:#2ecc71;" onclick="fcPickFcSource('ia')">
-                            🤖 Flashcards gerados pela IA
-                            <div style="font-size:11px; margin-top:4px; opacity:0.7;">Revise com flashcards prontos do nosso banco de conhecimento</div>
-                        </div>
-                    </div>`));
-            } else {
-                // Exercícios sempre pedem arquivo
-                fcState.step = 'ask_document';
-                fcTyping(() => fcAIMessage(`Anexe abaixo o <strong>arquivo da aula</strong> (PDF, DOCX, TXT) para eu extrair os conceitos e gerar seus exercícios:`, `
-                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
-                        <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" accept=".txt,.pdf,.doc,.docx" />
-                        <label for="fc-file-input" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border: 2px dashed var(--border); border-radius:12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:all 0.2s;">
-                            <span style="font-size:24px; margin-bottom:8px;">📄</span>
-                            <span style="font-size:13px; color:var(--text-dim); text-align:center;" id="fc-file-label">Clique para selecionar o arquivo da aula</span>
-                        </label>
-                        <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Analisar Arquivo</button>
-                    </div>`));
-            }
+            fcUserMessage(mode === 'flashcards' ? 'Flashcards' : 'Exercícios');
+            fcState.step = 'ask_document';
+            fcAIMessage('Anexe o <strong>arquivo da aula</strong> (PDF, DOCX, TXT):', `
+                <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+                    <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" />
+                    <label for="fc-file-input" style="padding:20px; border:2px dashed var(--border); border-radius:12px; cursor:pointer; text-align:center;" id="fc-file-label">Clique para selecionar</label>
+                    <button onclick="fcSubmitDocument()" class="btn-upload">Analisar Arquivo</button>
+                </div>`);
         }
-
-        function fcPickFcSource(source) {
-            if (source === 'file') {
-                fcUserMessage('Enviar arquivo da aula');
-                fcState.step = 'ask_document';
-                fcState.fcSource = 'file';
-                fcTyping(() => fcAIMessage('Anexe abaixo o <strong>arquivo da aula</strong> (PDF, DOCX, TXT) e eu vou interpretar o conteúdo para gerar flashcards personalizados:', `
-                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
-                        <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" accept=".txt,.pdf,.doc,.docx" />
-                        <label for="fc-file-input" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border: 2px dashed var(--border); border-radius:12px; cursor:pointer; background:rgba(0,0,0,0.2); transition:all 0.2s;">
-                            <span style="font-size:24px; margin-bottom:8px;">📄</span>
-                            <span style="font-size:13px; color:var(--text-dim); text-align:center;" id="fc-file-label">Clique para selecionar o arquivo da aula</span>
-                        </label>
-                        <button onclick="fcSubmitDocument()" class="btn-upload" style="padding: 10px; font-size: 14px;">Analisar Arquivo</button>
-                    </div>`));
-            } else {
-                fcUserMessage('Flashcards gerados pela IA');
-                fcState.fcSource = 'ia';
-                fcState.step = 'ask_count';
-                fcTyping(() => fcAIMessage('Quantos cards quer estudar hoje?', `
-                    <div class="fc-num-grid">
-                        ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
-                    </div>`));
-            }
-        }
-
-        let fcSelectedFileName = "";
-        let fcSelectedFile = null;
-        let fcExtractedText = "";
 
         function fcHandleFileSelect(input) {
-            if (input.files && input.files[0]) {
+            if (input.files[0]) {
                 fcSelectedFile = input.files[0];
                 fcSelectedFileName = input.files[0].name;
                 document.getElementById('fc-file-label').innerHTML = `<span style="color:var(--primary-light)">${fcSelectedFileName}</span> selecionado`;
             }
         }
 
+        async function fcSubmitDocument() {
+            if (!fcSelectedFile) return alert('Anexe o arquivo!');
+            fcUserMessage('Arquivo: ' + fcSelectedFileName);
+            fcTyping(async () => {
+                fcAIMessage('📖 Lendo e analisando o conteúdo...');
+                fcExtractedText = await fcReadFileContent(fcSelectedFile);
+                fcAIMessage('✅ Arquivo analisado! Quantos itens você quer?', `
+                    <div class="fc-num-grid">
+                        ${[3, 5, 8, 10].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+                    </div>`);
+                fcState.step = 'ask_count';
+            });
+        }
+
         async function fcReadFileContent(file) {
             const name = file.name.toLowerCase();
-            
-            if (name.endsWith('.txt')) {
-                return await file.text();
-            } else if (name.endsWith('.pdf')) {
-                try {
-                    const arrayBuffer = await file.arrayBuffer();
-                    if (typeof pdfjsLib !== 'undefined') {
-                        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
-                        let fullText = '';
-                        for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
-                            const page = await pdf.getPage(i);
-                            const content = await page.getTextContent();
-                            fullText += content.items.map(item => item.str).join(' ') + '\n';
-                        }
-                        return fullText;
-                    }
-                } catch(e) { console.error('Erro ao ler PDF:', e); }
-                return '';
-            } else if (name.endsWith('.docx') || name.endsWith('.doc')) {
-                try {
-                    const arrayBuffer = await file.arrayBuffer();
-                    if (typeof mammoth !== 'undefined') {
-                        const result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
-                        return result.value;
-                    }
-                } catch(e) { console.error('Erro ao ler DOCX:', e); }
-                return '';
+            if (name.endsWith('.txt')) return await file.text();
+            if (name.endsWith('.pdf')) {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                let text = '';
+                for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map(item => item.str).join(' ') + '\n';
+                }
+                return text;
+            }
+            if (name.endsWith('.docx')) {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({arrayBuffer});
+                return result.value;
             }
             return '';
         }
 
-        function fcExtractSentences(text) {
-            const sentences = text
-                .replace(/\r\n/g, '\n')
-                .replace(/\n+/g, '. ')
-                .split(/[.!?;]+/)
-                .map(s => s.trim())
-                .filter(s => {
-                    if (s.length < 20) return false;
-                    // Ignora padrões comuns de exercícios
-                    if (s.match(/^(Questão|Questao|Exercício|Exercicio|Ex\.|Q\.|[0-9]+[\.\)\-\s])/i)) return false;
-                    if (s.match(/^[a-e][\)\-\.\s]/i)) return false; 
-                    return true;
-                });
-            return sentences;
+        function fcPickCount(n) {
+            fcState.count = n;
+            fcUserMessage(n + ' itens');
+            fcTyping(() => {
+                fcAIMessage(`🎯 Gerando seu material personalizado...`);
+                setTimeout(() => {
+                    const sentences = fcExtractedText.split(/[.!?\n]+/).filter(s => s.trim().length > 25);
+                    fcState.cards = fcGenerateQAFromText(sentences, n);
+                    fcRenderCards();
+                    fcAIMessage('✅ <strong>Pronto!</strong> Use os cartões ao lado para estudar.', `
+                        <div class="fc-subject-grid">
+                            <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="fcSaveToFirebase()">💾 Salvar no Site</div>
+                            <div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div>
+                        </div>`);
+                }, 1000);
+            });
         }
 
         function fcGenerateQAFromText(sentences, count) {
             const cards = [];
-            const templates = [
-                (s) => ({q: `O que o material explica sobre: "${s.substring(0, 75)}..."?`, a: `Conceito: ${s}`}),
-                (s) => ({q: `Com base na aula, explique o ponto: "${s.substring(0, 65)}..."`, a: `Explicação: ${s}`}),
-                (s) => ({q: `Defina o tema abordado neste trecho: "${s.substring(0, 60)}..."`, a: `Definição: ${s}`}),
-                (s) => ({q: `Qual a importância de entender que: "${s.substring(0, 70)}..."?`, a: `Importância: ${s}`}),
-                (s) => ({q: `Resuma o conceito teórico de: "${s.substring(0, 55)}..."`, a: `Resumo: ${s}`}),
+            const text = sentences.join(' ').toLowerCase();
+            const topicMaps = [
+                { key: "Química", words: ["tabela", "átomo", "pauling", "eletrônica", "valência", "família", "período", "ligação", "mol", "subnível"] },
+                { key: "Biologia", words: ["célula", "dna", "mitocôndria", "genética", "reprodução", "ecologia"] },
+                { key: "Física", words: ["força", "newton", "velocidade", "aceleração", "energia", "óptica"] }
             ];
-            
-            const shuffled = [...sentences];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            
+            const detected = topicMaps.find(m => m.words.some(w => text.includes(w))) || { key: "CONCEITO" };
+            sentences = sentences.filter(s => !s.match(/^(OBS|Página|Fig|Nota)/i)).slice(0, 30);
             for (let i = 0; i < count; i++) {
-                const sentenceIdx = i % (shuffled.length || 1);
-                const templateIdx = i % templates.length;
-                const text = shuffled[sentenceIdx] || "Conceito fundamental da matéria abordada.";
-                cards.push(templates[templateIdx](text));
+                const s = sentences[i % sentences.length] || "Importante conceito da aula.";
+                let q = `Qual o ponto principal sobre "${s.substring(0, 40)}..."?`;
+                let a = s;
+                if (s.toLowerCase().includes('família')) q = "Qual a característica das famílias mencionadas neste trecho?";
+                if (s.toLowerCase().includes('período')) q = "O que determina o período de um elemento segundo o texto?";
+                if (s.toLowerCase().includes('energia')) q = "Qual a parte mais energética ou a relação de energia abordada?";
+                if (s.toLowerCase().includes('determina')) q = "O que é determinado pelo processo descrito no material?";
+                if (s.toLowerCase().includes('diagrama')) q = "Qual a importância deste diagrama para o conteúdo da aula?";
+                cards.push({ q, a, tag: detected.key });
             }
             return cards;
         }
 
-        async function fcSubmitDocument() {
-            if (!fcSelectedFileName) return alert('Por favor, anexe um arquivo primeiro!');
-            
-            const fileInput = document.getElementById('fc-file-input');
-            if(fileInput) fileInput.disabled = true;
-            
-            fcUserMessage('Arquivo enviado: ' + fcSelectedFileName);
-            
-            // Se for flashcard por arquivo, lê o conteúdo real
-            if (fcState.mode === 'flashcards' && fcState.fcSource === 'file') {
-                fcTyping(async () => {
-                    fcAIMessage('📖 Analisando o conteúdo do arquivo...');
-                    
-                    try {
-                        fcExtractedText = await fcReadFileContent(fcSelectedFile);
-                        const sentences = fcExtractSentences(fcExtractedText);
-                        const preview = fcExtractedText.substring(0, 150).replace(/</g, '&lt;');
-                        
-                        setTimeout(() => {
-                            fcAIMessage(`✅ <strong>Arquivo analisado com sucesso!</strong><br>
-                                <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; margin:8px 0; font-size:12px; color:var(--text-dim); max-height:80px; overflow:hidden;">
-                                    "${preview}..."
-                                </div>
-                                <span style="font-size:12px;">📊 Encontrei <strong>${sentences.length}</strong> conceitos no documento.</span><br><br>
-                                Quantos flashcards você quer gerar a partir deste conteúdo?`, `
-                                <div class="fc-num-grid">
-                                    ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
-                                </div>`);
-                            fcState.step = 'ask_count';
-                        }, 1200);
-                    } catch(e) {
-                        fcAIMessage('⚠️ Não consegui ler o arquivo. Tente salvar como .txt e enviar novamente.');
-                    }
-                });
-                return;
-            }
-            
-            // Fluxo normal para exercícios
-            fcState.docContext = "Conteúdo de: " + fcSelectedFileName;
-            if (fcState.mode === 'exercises') {
-                fcState.step = 'ask_difficulty';
-                fcTyping(() => fcAIMessage('Arquivo analisado com sucesso! Qual o <strong>Nível de Dificuldade</strong> desejado para as questões de vestibular?', `
-                    <div class="fc-subject-grid" style="flex-direction: column;">
-                        <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="fcPickDifficulty('Facil')">🟢 Fácil (ETEC, CESA)</div>
-                        <div class="fc-subject-btn" style="border-color:#f59e0b; color:#f59e0b;" onclick="fcPickDifficulty('Medio')">🟡 Médio (ENEM, FUVEST)</div>
-                        <div class="fc-subject-btn" style="border-color:#ef4444; color:#ef4444;" onclick="fcPickDifficulty('Dificil')">🔴 Difícil (ITA, USP)</div>
-                    </div>`));
-            } else {
-                fcState.step = 'ask_count';
-                fcTyping(() => fcAIMessage('Arquivo analisado com sucesso! Quantos cards quer estudar hoje?', `
-                    <div class="fc-num-grid">
-                        ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
-                    </div>`));
-            }
-        }
-
-        function fcPickDifficulty(diff) {
-            fcState.difficulty = diff;
-            const label = diff === 'Facil' ? 'Fácil' : diff === 'Medio' ? 'Médio' : 'Difícil';
-            fcUserMessage('Nível: ' + label);
-            
-            fcState.step = 'ask_count';
-            fcTyping(() => fcAIMessage('Quase lá! Quantos exercícios você quer na lista?', `
-                <div class="fc-num-grid">
-                    ${[3, 5, 8].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
-                </div>`));
+        function fcRenderCards() {
+            const list = document.getElementById('flashcard-list');
+            list.innerHTML = '';
+            fcState.cards.forEach(card => {
+                const el = document.createElement('div');
+                el.className = 'fc-card';
+                el.onclick = () => el.classList.toggle('flipped');
+                el.innerHTML = `
+                    <div class="fc-card-face fc-card-front">
+                        <div class="fc-card-subject-tag">${card.tag}</div>
+                        <div class="fc-card-q">${card.q}</div>
+                        <div class="fc-card-hint">Clique para ver a resposta</div>
+                    </div>
+                    <div class="fc-card-face fc-card-back">
+                        <div class="fc-card-a">${card.a}</div>
+                        <div class="fc-card-hint">Clique para voltar</div>
+                    </div>`;
+                list.appendChild(el);
+            });
+            document.getElementById('flashcards-view').classList.add('active');
         }
 
         function fcAIMessage(text, extra = '') {
-            const msgs = document.getElementById('fc-messages');
             const div = document.createElement('div');
             div.className = 'fc-bubble ai';
             div.innerHTML = `<div class="ai-label">🤖 Assistente</div>${text}${extra}`;
-            msgs.appendChild(div);
-            msgs.scrollTop = msgs.scrollHeight;
+            document.getElementById('fc-messages').appendChild(div);
+            document.getElementById('fc-messages').scrollTop = 9999;
         }
 
         function fcUserMessage(text) {
-            const msgs = document.getElementById('fc-messages');
             const div = document.createElement('div');
             div.className = 'fc-bubble user';
             div.textContent = text;
-            msgs.appendChild(div);
-            msgs.scrollTop = msgs.scrollHeight;
+            document.getElementById('fc-messages').appendChild(div);
+            document.getElementById('fc-messages').scrollTop = 9999;
         }
 
         function fcTyping(cb) {
-            const msgs = document.getElementById('fc-messages');
             const t = document.createElement('div');
             t.className = 'fc-bubble ai fc-typing';
-            t.id = 'fc-typing';
             t.innerHTML = '<span></span><span></span><span></span>';
-            msgs.appendChild(t);
-            msgs.scrollTop = msgs.scrollHeight;
-            setTimeout(() => { t.remove(); cb(); }, 900);
-        }
-
-        function fcPickCount(n) {
-            fcState.count = n;
-            fcUserMessage(n + (fcState.mode === 'exercises' ? ' questões' : ' flashcards'));
-            
-            // Se veio de arquivo nos flashcards, gera direto sem perguntar matéria
-            if (fcState.mode === 'flashcards' && fcState.fcSource === 'file' && fcExtractedText) {
-                fcState.step = 'generating';
-                fcTyping(() => {
-                    fcAIMessage(`🎯 Gerando ${n} flashcards a partir do conteúdo do arquivo...`);
-                    setTimeout(() => {
-                        const sentences = fcExtractSentences(fcExtractedText);
-                        fcState.cards = fcGenerateQAFromText(sentences, n);
-                        fcRenderCards();
-                        fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards criados!</strong> Baseados no conteúdo real do seu arquivo "${fcSelectedFileName}".<br>
-                            <em style="font-size:12px; color:var(--text-dim);">Clique em cada card para ver a resposta.</em>
-                            <br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
-                    }, 800);
-                });
-                return;
-            }
-            
-            // Fluxo normal: pergunta a matéria
-            fcState.step = 'ask_subject';
-            let normal = ['Matemática', 'Física', 'Biologia', 'Gramática da Língua Portuguesa'];
-            if (fcState.mode === 'flashcards') {
-                normal = ['Matemática', 'Física', 'Química', 'Biologia', 'Gramática da Língua Portuguesa', 'Literatura Lusófona', 'Leitura e produção de textos', 'Geografia', 'Artes', 'Educação Física', 'Direito e Ética'];
-            }
-            const tech = ['Lógica de Programação', 'Linguagem de Programação', 'Manutenção e Suporte de Computadores', 'Robótica', 'Sistemas Operacionais', 'Tecnologias Interativas', 'Web Design', 'Steam Maker'];
-            
-            let text = `Excelente! Serão ${n} ${fcState.mode === 'exercises' ? 'questões adaptadas para o vestibular' : 'cards'}. Agora escolha a <strong>matéria</strong>:`;
-            
-            fcTyping(() => fcAIMessage(text + `<br><br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Regulares</strong>
-                <div class="fc-subject-grid">${normal.map(s => `<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>
-                <br><strong style="font-size:11px;color:var(--text-dim);text-transform:uppercase;">Matérias Técnicas</strong>
-                <div class="fc-subject-grid">${tech.map(s => `<div class="fc-subject-btn" onclick="fcPickSubject('${s}')">${s}</div>`).join('')}</div>`));
-        }
-
-        function fcPickSubject(subject) {
-            fcState.subject = subject;
-            fcState.step = 'generating';
-            fcUserMessage(subject);
-            fcTyping(() => {
-                fcAIMessage(`🎯 Gerando ${fcState.count} ${fcState.mode === 'exercises' ? 'exercícios' : 'flashcards'} de <strong>${subject}</strong>...`);
-                setTimeout(() => {
-                    if (fcState.mode === 'exercises') {
-                        fcGenerateExercises();
-                    } else if (fcState.fcSource === 'file') {
-                        fcGenerateFileCards();
-                    } else {
-                        fcGenerateCards();
-                    }
-                }, 800);
-            });
-        }
-
-        function fcGenerateCards() {
-            const pool = [...(fcKB[fcState.subject] || [])];
-            for (let i = pool.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [pool[i], pool[j]] = [pool[j], pool[i]];
-            }
-            fcState.cards = [];
-            
-            const maxAvailable = pool.length;
-            const targetCount = Math.min(fcState.count, maxAvailable);
-
-            if (maxAvailable > 0) {
-                for (let k = 0; k < targetCount; k++) {
-                    fcState.cards.push(pool[k]);
-                }
-            }
-            fcRenderCards();
-            
-            let message = `✅ <strong>${fcState.cards.length} flashcards prontos!</strong> Clique em cada card para ver a resposta.`;
-            if (fcState.count > maxAvailable) message = `⚠️ Encontrei apenas ${maxAvailable} perguntas para esta matéria.`;
-            
-            fcAIMessage(message + `<br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
-        }
-
-        function fcGenerateFileCards() {
-            // Gera flashcards interpretando o conteúdo do arquivo enviado
-            const fileName = fcState.docContext.replace('Conteúdo de: ', '');
-            const subject = fcState.subject;
-            const count = fcState.count;
-            
-            // Banco de flashcards simulados baseados em interpretação de arquivo por matéria
-            const fileBasedCards = {
-                'Matemática': [
-                    {q: `Com base no material "${fileName}", qual fórmula é usada para calcular a área do trapézio?`, a: 'A = (B + b) × h / 2, onde B é a base maior, b a base menor e h a altura.'},
-                    {q: `Segundo o conteúdo da aula, como resolver uma equação do 2° grau?`, a: 'Usando a fórmula de Bhaskara: x = (-b ± √(b²-4ac)) / 2a'},
-                    {q: `De acordo com o arquivo, qual a diferença entre função linear e quadrática?`, a: 'Linear: f(x) = ax + b (reta). Quadrática: f(x) = ax² + bx + c (parábola).'},
-                    {q: `O material menciona progressões. Qual a fórmula do termo geral da P.A.?`, a: 'an = a1 + (n-1) × r, onde r é a razão da progressão.'},
-                    {q: `Baseado na aula, como calcular o volume de um cilindro?`, a: 'V = π × r² × h, onde r é o raio da base e h é a altura.'},
-                    {q: `Conforme estudado, o que é o Teorema de Pitágoras?`, a: 'Em um triângulo retângulo, a² = b² + c², onde a é a hipotenusa.'},
-                    {q: `De acordo com o documento, como calcular porcentagem?`, a: 'Porcentagem = (parte / todo) × 100. Ex: 25/100 = 25%'},
-                    {q: `O arquivo aborda logaritmos. O que é log na base 10 de 1000?`, a: 'log₁₀(1000) = 3, pois 10³ = 1000.'}
-                ],
-                'Física': [
-                    {q: `Com base no material "${fileName}", qual a fórmula da velocidade média?`, a: 'Vm = ΔS / Δt (variação do espaço pela variação do tempo).'},
-                    {q: `Segundo a aula, o que é a 2ª Lei de Newton?`, a: 'F = m × a. A força resultante é igual à massa vezes a aceleração.'},
-                    {q: `De acordo com o conteúdo, como funciona a conservação de energia?`, a: 'Energia não se cria nem se destrói, apenas se transforma. Ec + Ep = constante.'},
-                    {q: `O material explica eletricidade. O que é a Lei de Ohm?`, a: 'V = R × I, onde V é tensão (volts), R é resistência (ohms) e I é corrente (ampères).'},
-                    {q: `Baseado no documento, o que são ondas eletromagnéticas?`, a: 'São perturbações que se propagam no espaço transportando energia, sem necessitar de meio material.'},
-                    {q: `Conforme o arquivo, qual a diferença entre calor e temperatura?`, a: 'Temperatura é a medida da agitação molecular. Calor é a energia transferida entre corpos com temperaturas diferentes.'}
-                ],
-                'Biologia': [
-                    {q: `Com base no material "${fileName}", o que é mitose?`, a: 'Divisão celular que gera 2 células idênticas à célula-mãe, com mesmo número de cromossomos.'},
-                    {q: `Segundo a aula, qual a função do DNA?`, a: 'Armazenar a informação genética e transmitir as instruções para a síntese de proteínas.'},
-                    {q: `De acordo com o conteúdo, o que é fotossíntese?`, a: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂. Plantas convertem luz solar em energia química (glicose).'},
-                    {q: `O material menciona ecologia. O que é cadeia alimentar?`, a: 'Sequência de organismos onde cada um serve de alimento para o seguinte: produtores → consumidores → decompositores.'},
-                    {q: `Baseado no documento, o que são organelas celulares?`, a: 'Estruturas especializadas dentro da célula: mitocôndria (energia), ribossomos (proteínas), núcleo (DNA).'},
-                    {q: `Conforme o arquivo, como funciona a respiração celular?`, a: 'C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP. Processo inverso da fotossíntese.'}
-                ],
-                'Gramática da Língua Portuguesa': [
-                    {q: `Com base no material "${fileName}", quais são as classes gramaticais?`, a: 'Substantivo, adjetivo, verbo, advérbio, pronome, artigo, numeral, preposição, conjunção e interjeição.'},
-                    {q: `Segundo a aula, quando usar crase?`, a: 'Usa-se crase (à) quando há a fusão da preposição "a" com o artigo definido feminino "a".'},
-                    {q: `De acordo com o conteúdo, o que é sujeito e predicado?`, a: 'Sujeito: de quem se fala na oração. Predicado: o que se diz sobre o sujeito.'},
-                    {q: `O material aborda figuras de linguagem. O que é metáfora?`, a: 'Comparação implícita entre dois termos. Ex: "Ele é um leão" (corajoso).'},
-                    {q: `Baseado no documento, quando usar "mas" e "mais"?`, a: '"Mas" = conjunção adversativa (porém). "Mais" = advérbio de intensidade (quantidade).'},
-                    {q: `Conforme o arquivo, o que são orações subordinadas?`, a: 'São orações que exercem função sintática em relação à oração principal, podendo ser substantivas, adjetivas ou adverbiais.'}
-                ]
-            };
-            
-            // Pega os cards da matéria ou gera genéricos
-            let pool = fileBasedCards[subject] || [];
-            if (pool.length === 0) {
-                for (let i = 0; i < count; i++) {
-                    pool.push({
-                        q: `Pergunta ${i+1} baseada no arquivo "${fileName}" sobre ${subject}: Explique o conceito principal abordado no tópico ${i+1}.`,
-                        a: `Resposta baseada na interpretação do conteúdo fornecido na aula de ${subject}.`
-                    });
-                }
-            }
-            
-            // Embaralha
-            for (let i = pool.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [pool[i], pool[j]] = [pool[j], pool[i]];
-            }
-            
-            fcState.cards = pool.slice(0, count);
-            fcRenderCards();
-            
-            fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards criados a partir do arquivo!</strong><br>
-                <em style="font-size:12px; color:var(--text-dim);">Foquei em extrair a teoria e os conceitos do seu material.</em>
-                <br><br>
-                <div class="fc-subject-grid">
-                    <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="fcSaveToFirebase()">💾 Salvar no Site</div>
-                    <div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div>
-                </div>`);
+            document.getElementById('fc-messages').appendChild(t);
+            setTimeout(() => { t.remove(); cb(); }, 800);
         }
 
         function fcSaveToFirebase() {
-            if (!db) return alert('Firebase não configurado ou conectado.');
-            if (fcState.cards.length === 0) return alert('Nenhum flashcard para salvar.');
-            
-            const userName = document.getElementById('user-display-name').textContent || 'Visitante';
-            const sessionId = Date.now();
-            
-            db.ref('user_flashcards/' + userName.replace(/\s/g, '_')).push({
-                subject: fcState.subject || 'Arquivo Enviado',
-                fileName: fcSelectedFileName,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                cards: fcState.cards
-            }).then(() => {
-                alert('Flashcards salvos com sucesso no seu perfil do site!');
-            }).catch(e => {
-                console.error(e);
-                alert('Erro ao salvar. Verifique sua conexão.');
-            });
+            if (!db) return alert('Sem conexão!');
+            const user = document.getElementById('user-display-name').textContent;
+            db.ref('user_flashcards/' + user.replace(/\s/g, '_')).push({
+                cards: fcState.cards, timestamp: Date.now()
+            }).then(() => alert('Salvo com sucesso!'));
         }
 
-        function getDynamicExercise(subject, difficulty, context) {
-            let pool = [];
-            if (vestibularKB[subject] && vestibularKB[subject][difficulty]) {
-                pool = [...vestibularKB[subject][difficulty]];
-            } else {
-                let inst = difficulty === 'Facil' ? '[ETEC]' : difficulty === 'Medio' ? '[ENEM]' : '[ITA]';
-                pool = [
-                    { q: `${inst} De acordo com o documento: Qual a principal ideia de "${context.substring(0, 15)}..."?`, a: 'A interpretação principal do texto base da aula.' },
-                    { q: `${inst} Baseado no material de ${subject}: Cite uma consequência do conceito abordado.`, a: 'O texto aponta reflexos diretos conforme discutido pelo professor.' },
-                    { q: `${inst} Qual o ponto focal abordado na aula sobre ${subject}?`, a: 'O mecanismo detalhado na documentação fornecida.' }
-                ];
-            }
-            return pool[Math.floor(Math.random() * pool.length)];
-        }
-
-        function swapExercise(cardIndex) {
-            const newEx = getDynamicExercise(fcState.subject, fcState.difficulty, fcState.docContext);
-            fcState.cards[cardIndex] = newEx;
-            fcRenderCards();
-        }
-
-        function fcGenerateExercises() {
-            fcState.cards = [];
-            for (let i = 0; i < fcState.count; i++) {
-                fcState.cards.push(getDynamicExercise(fcState.subject, fcState.difficulty, fcState.docContext));
-            }
-            fcRenderCards();
-            
-            fcAIMessage(`✅ <strong>${fcState.count} exercícios criados!</strong><br>
-                Eles foram adaptados para o nível <strong>${fcState.difficulty}</strong>.<br><br>
-                <em style="font-size:12px; color:var(--text-dim);">Se o conteúdo de uma questão não foi dado em sala, clique em "Trocar Exercício" no card correspondente.</em>
-                <br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
-        }
-
-        function fcRenderCards() {
-            const list = document.getElementById('flashcard-list');
-            const badge = document.getElementById('fc-badge');
-            const title = document.getElementById('fc-results-title');
-            title.textContent = fcState.subject + (fcState.mode === 'exercises' ? ' (Exercícios)' : '');
-            badge.style.display = 'block';
-            badge.textContent = fcState.cards.length + (fcState.mode === 'exercises' ? ' questões' : ' cards');
-            
-            list.innerHTML = `<div class="flashcard-grid">${fcState.cards.map((c, i) => `
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <div class="flashcard" id="fc-card-${i}" onclick="this.classList.toggle('flipped')">
-                        <div class="flashcard-inner">
-                            <div class="flashcard-front">${c.q}</div>
-                            <div class="flashcard-back" style="font-size:13px;white-space:pre-wrap;">${c.a}</div>
-                        </div>
-                    </div>
-                    ${fcState.mode === 'exercises' ? `<button onclick="swapExercise(${i})" class="fc-subject-btn" style="align-self:center; width:100%; font-size:11px;">🔄 Conteúdo não dado (Trocar)</button>` : ''}
-                </div>`).join('')}</div>`;
-        }
-
-        function fcSendUserMessage() {
-            const inp = document.getElementById('fc-user-input');
-            const val = inp.value.trim();
-            if (!val) return;
-            inp.value = '';
-            if (fcState.step === 'ask_count') {
-                const n = parseInt(val);
-                if (n > 0) fcPickCount(Math.min(n, 15));
-                else fcAIMessage('Por favor, digite um número válido (ex: 5).');
-            } else if (fcState.step === 'ask_subject') {
-                const match = Object.keys(fcKB).find(k => k.toLowerCase().includes(val.toLowerCase()));
-                if (match) fcPickSubject(match);
-                else fcAIMessage('Matéria não encontrada. Por favor, clique em uma das opções acima. 👆');
-            } else if (fcState.step === 'ask_mode') {
-                fcAIMessage('Por favor, clique em um dos botões acima para selecionar.');
-            } else if (fcState.step === 'ask_document') {
-                fcAIMessage('Por favor, cole o material na caixa de texto acima e clique no botão confirmar.');
-            } else if (fcState.step === 'ask_difficulty') {
-                fcAIMessage('Por favor, selecione um nível de dificuldade nos botões acima.');
-            }
-        }
-
-        const rooms = [
-            'Leitura e produção de textos',
-            'Artes',
-            'Biologia',
-            'Direito e Ética',
-            'Educação Física',
-            'Física',
-            'Geografia',
-            'Gramática da Língua Portuguesa',
-            'Lógica de Programação',
-            'Steam Maker',
-            'Linguagem de Programação',
-            'Literatura Lusófona',
-            'Manutenção e Suporte de Computadores',
-            'Matemática',
-            'Química',
-            'Robótica',
-            'Sistemas Operacionais',
-            'Tecnologias Interativas',
-            'Web Design',
-            'Dúvidas Gerais'
-        ];
-
-        // Render Functions
-        function renderFeed(filter = "") {
+        // --- FEED & OTHERS ---
+        let notebooks = JSON.parse(localStorage.getItem('fecad_notebooks')) || [];
+        function renderFeed(f = "") {
             const feed = document.getElementById('notebook-feed');
-            const filtered = notebooks.filter(nb =>
-                nb.title.toLowerCase().includes(filter.toLowerCase()) ||
-                nb.subject.toLowerCase().includes(filter.toLowerCase()) ||
-                nb.author.toLowerCase().includes(filter.toLowerCase())
-            );
-
-            feed.innerHTML = filtered.map(nb => `
+            if(!feed) return;
+            feed.innerHTML = notebooks.filter(n => n.title.toLowerCase().includes(f.toLowerCase())).map(nb => `
                 <div class="notebook-card" onclick="viewNotebook(${nb.id})">
-                    <img src="${nb.img}" class="notebook-img" alt="Notebook">
+                    <img src="${nb.img}" class="notebook-img">
                     <div class="notebook-content">
-                        <div class="notebook-tags">
-                            <span class="tag">${nb.subject}</span>
-                        </div>
+                        <span class="tag">${nb.subject}</span>
                         <h3 class="notebook-title">${nb.title}</h3>
-                        <div class="author">
-                            <div class="author-avatar"></div>
-                            <span>Por ${nb.author}</span>
-                        </div>
-                        <div class="notebook-meta">
-                            <div class="stars">${'★'.repeat(nb.stars)}${'☆'.repeat(5 - nb.stars)}</div>
-                            <div style="font-size: 12px; color: var(--accent);">Ver Feedbacks</div>
-                        </div>
+                        <div class="author">Por ${nb.author}</div>
                     </div>
-                </div>
-            `).join('');
-
-            if (filtered.length === 0) {
-                feed.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">Nenhum caderno encontrado para "${filter}"</div>`;
-            }
-        }
-
-
-
-
-        // Salas do Estudante (A-I) com cores únicas
-        const salaColors = {
-            'A': '#e74c3c',
-            'B': '#e67e22',
-            'C': '#f1c40f',
-            'D': '#2ecc71',
-            'E': '#1abc9c',
-            'F': '#3498db',
-            'G': '#9b59b6',
-            'H': '#e91e63',
-            'I': '#00bcd4'
-        };
-        let currentSala = localStorage.getItem('fecad_sala') || null;
-
-        function renderSalas() {
-            const container = document.getElementById('sala-selector');
-            let html = '<span style="color:var(--text-dim); font-size:13px; display:flex; align-items:center; margin-right:8px;">🏫 Sua Sala:</span>';
-            Object.entries(salaColors).forEach(([letra, cor]) => {
-                const isActive = currentSala === letra;
-                html += `<div class="sala-btn ${isActive ? 'active' : ''}" style="background:${cor};" onclick="pickSala('${letra}')">
-                    Sala ${letra}
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        function pickSala(letra) {
-            currentSala = letra;
-            localStorage.setItem('fecad_sala', letra);
-            renderSalas();
-            // Atualiza o header do chat com a cor da sala
-            const header = document.getElementById('chat-header');
-            if (header && currentRoom) {
-                header.style.borderLeftColor = salaColors[letra];
-                header.style.borderLeftWidth = '4px';
-                header.style.borderLeftStyle = 'solid';
-            }
-        }
-
-        function renderRooms(filter = "") {
-            const list = document.getElementById('chat-rooms');
-            const filtered = rooms.filter(room =>
-                room.toLowerCase().includes(filter.toLowerCase())
-            );
-
-            list.innerHTML = filtered.map(room => `
-                <div class="room-item" onclick="selectRoom('${room}', this)">
-                    <div class="room-icon">#</div>
-                    ${room}
-                </div>
-            `).join('');
-
-            if (filtered.length === 0) {
-                list.innerHTML = `<div style="font-size: 12px; color: var(--text-dim); padding: 10px;">Nenhuma sala</div>`;
-            }
-        }
-
-        // Search Logic
-        function handleSearch() {
-            const query = document.getElementById('global-search').value;
-
-            // Re-render relevant parts based on active page
-            const activePage = document.querySelector('.page.active').id;
-
-            if (activePage === 'page-explorar') renderFeed(query);
-            if (activePage === 'page-chat') renderRooms(query);
-            if (activePage === 'page-flashcards') renderFlashcards(query);
-        }
-
-        // Logic
-        function showPage(pageId, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-' + pageId).classList.add('active');
-
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            el.classList.add('active');
-
-            if (pageId === 'explorar') renderFeed();
-            if (pageId === 'flashcards') renderFlashcards();
-            if (pageId === 'chat') renderRooms();
-            if (pageId === 'revisao') renderRevisao();
-        }
-
-        let currentChatMode = 'chat';
-        let currentRoom = null;
-
-        function toggleChatDisplay(mode) {
-            currentChatMode = mode;
-            document.getElementById('tab-chat-room').classList.toggle('active', mode === 'chat');
-            document.getElementById('tab-chat-faq').classList.toggle('active', mode === 'faq');
-            
-            document.getElementById('chat-view-ui').style.display = mode === 'chat' ? 'flex' : 'none';
-            document.getElementById('faq-view-ui').style.display = mode === 'faq' ? 'flex' : 'none';
-            
-            if (currentRoom) renderCurrentRoomContext();
-        }
-
-        function renderCurrentRoomContext() {
-            if (!currentRoom) return;
-            if (currentChatMode === 'chat') {
-                document.getElementById('chat-header').innerHTML = 'Conversando em: <span style="color:white;">' + currentRoom + '</span>';
-            } else {
-                document.getElementById('chat-header').innerHTML = 'Perguntas Frequentes de: <span style="color:white;">' + currentRoom + '</span>';
-                const kb = fcKB[currentRoom] || [];
-                const faqHTML = kb.map(q => `
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 15px;">
-                        <h4 style="font-size: 15px; margin-bottom: 8px; color: var(--primary-light);">Q: ${q.q}</h4>
-                        <p style="font-size: 13.5px; color: var(--text-dim); line-height: 1.5;">${q.a}</p>
-                    </div>
-                `).join('');
-                
-                if (kb.length > 0) {
-                    document.getElementById('faq-box-empty').style.display = 'none';
-                    document.getElementById('faq-box-content').innerHTML = faqHTML;
-                } else {
-                    document.getElementById('faq-box-empty').style.display = 'block';
-                    document.getElementById('faq-box-empty').innerText = 'Nenhuma pergunta frequente registrada para esta sala ainda.';
-                    document.getElementById('faq-box-content').innerHTML = '';
-                }
-            }
-        }
-
-        function selectRoom(name, el) {
-            currentRoom = name;
-            document.querySelectorAll('.room-item').forEach(r => r.classList.remove('active'));
-            el.classList.add('active');
-
-            // Atualiza header com badge da sala
-            const header = document.getElementById('chat-header');
-            const salaBadge = currentSala ? `<span class="sala-badge" style="background:${salaColors[currentSala]}">Sala ${currentSala}</span>` : '';
-            header.innerHTML = name + ' ' + salaBadge;
-            if (currentSala) {
-                header.style.borderLeftColor = salaColors[currentSala];
-                header.style.borderLeftWidth = '4px';
-                header.style.borderLeftStyle = 'solid';
-            }
-            
-            if (typeof listenToRoom === 'function') {
-                listenToRoom(name);
-            }
-            
-            document.getElementById('chat-box').innerHTML = `
-                <div class="message msg-received">
-                    <div class="msg-user">Sistema</div>
-                    Bem-vindo à sala de ${name}! Pergunte qualquer coisa.
-                </div>
-            `;
-            
-            renderCurrentRoomContext();
-        }
-
-        let currentViewNotebookId = null;
-
-        function renderViewFeedbacks(nb) {
-            document.getElementById('view-feedbacks').innerHTML = nb.feedbacks.map(f => `
-                <div style="margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-                    ${f}
-                </div>
-            `).join('');
-        }
-
-        function renderInteractiveStars(rating) {
-            const starsContainer = document.getElementById('interactive-stars');
-            let html = '';
-            for (let i = 1; i <= 5; i++) {
-                html += `<span onclick="rateNotebook(${i})" style="color: ${i <= rating ? '#fbbf24' : '#4b5563'}">${i <= rating ? '★' : '☆'}</span>`;
-            }
-            if (starsContainer) starsContainer.innerHTML = html;
-        }
-
-        function rateNotebook(rating) {
-            if (!currentViewNotebookId) return;
-            const nb = notebooks.find(n => n.id === currentViewNotebookId);
-            if (nb) {
-                nb.stars = rating;
-                saveNotebooks();
-                renderInteractiveStars(nb.stars);
-                renderFeed();
-            }
-        }
-
-        function addFeedback() {
-            const input = document.getElementById('new-feedback');
-            if (!input) return;
-            const val = input.value.trim();
-            if (!val || !currentViewNotebookId) return;
-            const nb = notebooks.find(n => n.id === currentViewNotebookId);
-            if (nb) {
-                nb.feedbacks.push(val);
-                saveNotebooks();
-                renderViewFeedbacks(nb);
-                input.value = '';
-            }
+                </div>`).join('');
         }
 
         function viewNotebook(id) {
-            currentViewNotebookId = id;
             const nb = notebooks.find(n => n.id === id);
             document.getElementById('view-img').src = nb.img;
             document.getElementById('view-title').textContent = nb.title;
-            document.getElementById('view-author').textContent = 'Postado por ' + nb.author;
-            renderViewFeedbacks(nb);
-            renderInteractiveStars(nb.stars);
+            document.getElementById('view-author').textContent = 'Por ' + nb.author;
             openModal('viewModal');
         }
 
         function addNotebook() {
             const title = document.getElementById('up-title').value;
-            const sub = document.getElementById('up-subject').value;
-            if (!title) return alert('Dê um título!');
-
-            let imgSrc = 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=800';
-            const preview = document.getElementById('up-preview');
-            if (preview && preview.src && preview.style.display !== 'none') {
-                imgSrc = preview.src;
-            }
-
-            let authorName = document.getElementById('user-display-name').textContent;
-            if (!authorName || authorName === 'Visitante') authorName = 'Você';
-
-            notebooks.unshift({
-                id: Date.now(),
-                title: title,
-                subject: sub,
-                author: authorName,
-                stars: 5,
-                img: imgSrc,
-                feedbacks: ['Aguardando recomendações...']
-            });
-
-            saveNotebooks();
+            const subject = document.getElementById('up-subject').value;
+            const author = document.getElementById('user-display-name').textContent;
+            const img = document.getElementById('up-preview').src || 'https://via.placeholder.com/300';
+            notebooks.unshift({ id: Date.now(), title, subject, author, img });
+            localStorage.setItem('fecad_notebooks', JSON.stringify(notebooks));
             renderFeed();
             closeModal('uploadModal');
-
-            if (preview) {
-                preview.style.display = 'none';
-                preview.src = '';
-                document.getElementById('up-text').style.display = 'block';
-                document.getElementById('up-file').value = '';
-            }
-            document.getElementById('up-title').value = '';
         }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function showPage(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + id).classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            el.classList.add('active');
+            if(id==='chat') renderRooms();
+            if(id==='explorar') renderFeed();
+        }
+
+        const rooms = ['Matemática', 'Física', 'Química', 'Biologia', 'Geral'];
+        function renderRooms() {
+            document.getElementById('chat-rooms').innerHTML = rooms.map(r => `<div class="room-item" onclick="selectRoom('${r}', this)"># ${r}</div>`).join('');
+        }
+
+        let currentChatMode = 'chat', currentRoom = null;
+        function selectRoom(r, el) {
+            currentRoom = r;
+            document.querySelectorAll('.room-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('chat-header').textContent = r;
+            listenToRoom(r);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const content = input.value.trim();
+            if (!content || !currentRoom) return;
+            const user = document.getElementById('user-display-name').textContent;
+            db.ref('chats/' + currentRoom.replace(/[.#$\[\]]/g, '')).push({ userId: user, content, timestamp: Date.now() });
+            input.value = '';
+        }
+
+        function handleSearch() { renderFeed(document.getElementById('global-search').value); }
 
         function previewImage(event) {
             const file = event.target.files[0];
@@ -3094,7 +2048,7 @@
                         preview.style.display = 'block';
                         text.style.display = 'none';
                     }
-                }
+                };
                 reader.readAsDataURL(file);
             }
         }
