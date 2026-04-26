@@ -47,11 +47,10 @@
         }
 
         /* Sidebar */
-        /* --- LAYOUT OPTIMIZATION (HAMBURGER & SIDEBAR) --- */
+        /* --- HAMBURGER (ESQUERDA) --- */
         .header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             padding: 15px 30px;
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(15px);
@@ -66,67 +65,124 @@
             flex-direction: column;
             gap: 5px;
             cursor: pointer;
-            padding: 10px;
+            padding: 12px;
             z-index: 1100;
             transition: all 0.3s;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-right: 20px;
+        }
+
+        .hamburger:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary-light);
         }
 
         .hamburger span {
-            width: 25px;
-            height: 3px;
+            width: 22px;
+            height: 2px;
             background: white;
             border-radius: 10px;
             transition: all 0.3s;
         }
 
-        /* Animação Hamburger -> X */
-        .hamburger.active span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        .hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
         .hamburger.active span:nth-child(2) { opacity: 0; }
-        .hamburger.active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+        .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* --- HOME PAGE GRID --- */
+        .home-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .home-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .home-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--gradient);
+            opacity: 0;
+            transition: 0.3s;
+            z-index: 0;
+        }
+
+        .home-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary-light);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .home-card:hover::before { opacity: 0.05; }
+
+        .home-card i {
+            font-size: 50px;
+            margin-bottom: 10px;
+            z-index: 1;
+        }
+
+        .home-card h3 { font-size: 20px; z-index: 1; }
+        .home-card p { color: var(--text-dim); font-size: 14px; z-index: 1; }
 
         .sidebar {
             width: 280px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(25px);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             position: fixed;
-            left: -280px; /* Escondido por padrão */
+            left: -280px;
             top: 0;
             bottom: 0;
             z-index: 1050;
             transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px;
         }
 
-        .sidebar.active {
-            left: 0;
+        .sidebar.active { left: 0; }
+
+        .nav-link {
+            padding: 14px 18px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: all 0.2s;
+            font-weight: 500;
+            margin-bottom: 5px;
         }
 
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-            width: 100%;
-            transition: margin-left 0.4s;
+        .nav-link:hover, .nav-link.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: white;
+            transform: translateX(5px);
         }
 
-        /* Overlay quando o menu abre */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(3px);
-            z-index: 1040;
-        }
-
-        .sidebar-overlay.active {
-            display: block;
-        }
-
-        @media (min-width: 1200px) {
-            /* No desktop, se quiser que ela fique fixa ou mude o comportamento */
+        .nav-link.active {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         }
 
         .logo {
@@ -1429,28 +1485,28 @@
 
         <!-- Header -->
         <div class="header">
-            <div class="search-bar">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5;">
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                </svg>
-                <input type="text" id="global-search" placeholder="Buscar matéria, professor ou tópico..." oninput="handleSearch()">
-            </div>
-            
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div class="user-profile">
-                    <div style="text-align: right;">
-                        <div id="user-display-name" style="font-weight: 600; font-size: 14px;">Carregando...</div>
-                        <div style="font-size: 11px; color: #10b981;">Premium Student</div>
-                    </div>
-                    <div class="author-avatar"></div>
-                </div>
-                
-                <!-- HAMBURGER MENU -->
+            <div style="display: flex; align-items: center;">
+                <!-- HAMBURGER MENU (ESQUERDA) -->
                 <div class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">
                     <span></span>
                     <span></span>
                     <span></span>
                 </div>
+
+                <div class="search-bar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5;">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input type="text" id="global-search" placeholder="Buscar matéria, professor ou tópico..." oninput="handleSearch()">
+                </div>
+            </div>
+            
+            <div class="user-profile">
+                <div style="text-align: right;">
+                    <div id="user-display-name" style="font-weight: 600; font-size: 14px;">Carregando...</div>
+                    <div style="font-size: 11px; color: #10b981;">Premium Student</div>
+                </div>
+                <div class="author-avatar"></div>
             </div>
         </div>
 
@@ -1465,22 +1521,22 @@
                 </div>
                 <div class="nav-menu">
                     <li class="nav-item">
-                        <a href="#" class="nav-link active" onclick="showPage('explorar', this); toggleSidebar()">
+                        <a href="#" class="nav-link" id="nav-explorar" onclick="showPage('explorar', this); toggleSidebar()">
                             <i>📚</i> Explorar Cadernos
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link" onclick="showPage('chat', this); toggleSidebar()">
+                        <a href="#" class="nav-link" id="nav-chat" onclick="showPage('chat', this); toggleSidebar()">
                             <i>💬</i> Salas de Chat
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link" onclick="showPage('flashcards', this); toggleSidebar()">
+                        <a href="#" class="nav-link" id="nav-flashcards" onclick="showPage('flashcards', this); toggleSidebar()">
                             <i>🃏</i> Flashcards & IA
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link" onclick="showPage('perfil', this); toggleSidebar()">
+                        <a href="#" class="nav-link" id="nav-perfil" onclick="showPage('perfil', this); toggleSidebar()">
                             <i>👤</i> Meu Perfil
                         </a>
                     </li>
@@ -1491,8 +1547,32 @@
             </nav>
 
             <main class="main-content">
+                <!-- TELA INICIAL (NOVA) -->
+                <div id="page-home" class="page active" style="text-align: center; padding-top: 50px;">
+                    <h1 style="font-size: 42px; font-weight: 800; margin-bottom: 10px;">Olá, <span id="welcome-name">Estudante</span>! 👋</h1>
+                    <p style="color: var(--text-dim); font-size: 18px;">O que você gostaria de ver primeiro hoje?</p>
+
+                    <div class="home-grid">
+                        <div class="home-card" onclick="showPage('explorar', document.getElementById('nav-explorar'))">
+                            <i>📚</i>
+                            <h3>Explorar Cadernos</h3>
+                            <p>Veja os melhores resumos compartilhados pelos seus colegas.</p>
+                        </div>
+                        <div class="home-card" onclick="showPage('chat', document.getElementById('nav-chat'))">
+                            <i>💬</i>
+                            <h3>Salas de Chat</h3>
+                            <p>Tire dúvidas e converse com estudantes da sua matéria.</p>
+                        </div>
+                        <div class="home-card" onclick="showPage('flashcards', document.getElementById('nav-flashcards'))">
+                            <i>🃏</i>
+                            <h3>Flashcards com IA</h3>
+                            <p>Crie cartões de estudo automáticos a partir dos seus arquivos.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- EXPLORAR PAGE -->
-                <div id="page-explorar" class="page active">
+                <div id="page-explorar" class="page">
                     <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Recém Adicionados</h2>
                     <div class="feed-grid" id="notebook-feed"></div>
                 </div>
@@ -1740,10 +1820,12 @@
         }
 
         function skipAuth() {
-            document.getElementById('user-display-name').textContent = 'Visitante';
+            const name = 'Visitante';
+            document.getElementById('user-display-name').textContent = name;
+            document.getElementById('welcome-name').textContent = name;
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
-            renderFeed();
+            showPage('home');
         }
 
         function togglePass(inputId, btn) {
@@ -1770,9 +1852,10 @@
                 if (!user && (email === 'admin' || email.includes('jeferson'))) user = { name: 'Jeferson Silva', email };
                 if (user) {
                     document.getElementById('user-display-name').textContent = user.name;
+                    document.getElementById('welcome-name').textContent = user.name.split(' ')[0];
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('main-app').style.display = 'flex';
-                    renderFeed();
+                    showPage('home');
                 } else alert('Dados incorretos!');
             }
         }
@@ -1984,8 +2067,10 @@
         function showPage(id, el) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
+            
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            el.classList.add('active');
+            if (el) el.classList.add('active');
+
             if(id==='chat') renderRooms();
             if(id==='explorar') renderFeed();
         }
