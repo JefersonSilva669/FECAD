@@ -41,24 +41,92 @@
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             overflow-x: hidden;
             overflow-y: auto;
         }
 
         /* Sidebar */
+        /* --- LAYOUT OPTIMIZATION (HAMBURGER & SIDEBAR) --- */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 30px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1100;
+            transition: all 0.3s;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        /* Animação Hamburger -> X */
+        .hamburger.active span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
         .sidebar {
             width: 280px;
-            background: var(--bg-card);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            padding: 30px 20px;
-            z-index: 100;
             position: fixed;
+            left: -280px; /* Escondido por padrão */
             top: 0;
             bottom: 0;
+            z-index: 1050;
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar.active {
             left: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
             overflow-y: auto;
+            width: 100%;
+            transition: margin-left 0.4s;
+        }
+
+        /* Overlay quando o menu abre */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            z-index: 1040;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        @media (min-width: 1200px) {
+            /* No desktop, se quiser que ela fique fixa ou mude o comportamento */
         }
 
         .logo {
@@ -146,21 +214,6 @@
         }
 
         /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            padding: 40px;
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%);
-            min-height: 100vh;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
         .search-bar {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -914,6 +967,7 @@
         #main-app {
             display: none;
             width: 100%;
+            flex-direction: column;
         }
 
         /* ===== REVISÃO POR MATÉRIA ===== */
@@ -1371,191 +1425,116 @@
     </div>
 
     <!-- Main App Container -->
-    <div id="main-app" style="display: flex; min-height: 100vh;">
+    <div id="main-app">
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <div class="logo-icon">F</div>
-                <div class="logo-text">FECAD</div>
+        <!-- Header -->
+        <div class="header">
+            <div class="search-bar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.5;">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input type="text" id="global-search" placeholder="Buscar matéria, professor ou tópico..." oninput="handleSearch()">
             </div>
+            
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="user-profile">
+                    <div style="text-align: right;">
+                        <div id="user-display-name" style="font-weight: 600; font-size: 14px;">Carregando...</div>
+                        <div style="font-size: 11px; color: #10b981;">Premium Student</div>
+                    </div>
+                    <div class="author-avatar"></div>
+                </div>
+                
+                <!-- HAMBURGER MENU -->
+                <div class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
 
-            <nav class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active" onclick="showPage('explorar', this)">
-                        <i>📚</i> Explorar Cadernos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="showPage('chat', this)">
-                        <i>💬</i> Chats por Matéria
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="showPage('flashcards', this)">
-                        <i>🃏</i> Meus Flashcards
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="showPage('revisao', this)">
-                        <i>📝</i> Revisão por Matéria
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="showPage('perfil', this)">
-                        <i>👤</i> Meu Perfil
-                    </a>
-                </li>
+        <!-- Overlay -->
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <div class="main-container" style="display:flex;">
+            <!-- Sidebar móvel -->
+            <nav class="sidebar" id="app-sidebar">
+                <div class="logo" style="padding: 20px;">
+                    <span style="font-size: 24px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FECAD</span>
+                </div>
+                <div class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" onclick="showPage('explorar', this); toggleSidebar()">
+                            <i>📚</i> Explorar Cadernos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('chat', this); toggleSidebar()">
+                            <i>💬</i> Salas de Chat
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('flashcards', this); toggleSidebar()">
+                            <i>🃏</i> Flashcards & IA
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('perfil', this); toggleSidebar()">
+                            <i>👤</i> Meu Perfil
+                        </a>
+                    </li>
+                </div>
+                <div style="margin-top: auto; padding: 20px;">
+                    <button class="btn-upload" onclick="openModal('uploadModal')" style="width: 100%;">+ Postar</button>
+                </div>
             </nav>
 
-            <button class="btn-upload" onclick="openModal('uploadModal')">
-                + Enviar Caderno
-            </button>
-        </aside>
-
-        <!-- Main -->
-        <main class="main-content">
-            <header>
-                <div class="search-bar">
-                    <i>🔍</i>
-                    <input type="text" id="global-search" oninput="handleSearch()"
-                        placeholder="Buscar matéria, professor ou tópico...">
-                </div>
-                <div style="display: flex; gap: 20px; align-items: center;">
-                    <div style="text-align: right">
-                        <div id="user-display-name" style="font-weight: 700;">Visitante</div>
-                        <div style="font-size: 12px; color: var(--accent)">Premium Student</div>
-                    </div>
-                    <div class="author-avatar" style="width: 45px; height: 45px; border: 2px solid var(--primary);">
-                    </div>
-                </div>
-            </header>
-
-            <!-- EXPLORAR PAGE -->
-            <div id="page-explorar" class="page active">
-                <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Recém Adicionados</h2>
-
-                <div class="feed-grid" id="notebook-feed">
-                    <!-- Cards will be injected here -->
-                </div>
-            </div>
-
-            <!-- CHAT PAGE -->
-            <div id="page-chat" class="page">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <h2 style="font-size: 28px; font-family: 'Outfit'; margin: 0;">💬 Salas de Chat</h2>
-                    <div class="auth-tabs" style="margin: 0; width: 350px;">
-                        <div id="tab-chat-room" class="auth-tab active" onclick="toggleChatDisplay('chat')">Bate-papo</div>
-                        <div id="tab-chat-faq" class="auth-tab" onclick="toggleChatDisplay('faq')">Perguntas Frequentes</div>
-                    </div>
+            <main class="main-content">
+                <!-- EXPLORAR PAGE -->
+                <div id="page-explorar" class="page active">
+                    <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Recém Adicionados</h2>
+                    <div class="feed-grid" id="notebook-feed"></div>
                 </div>
 
-                <div class="sala-selector" id="sala-selector">
-                    <span style="color:var(--text-dim); font-size:13px; display:flex; align-items:center; margin-right:8px;">🏫 Sua Sala:</span>
-                </div>
-
-                <div class="chat-container">
-                    <div class="chat-sidebar" id="chat-rooms">
-                        <!-- Rooms -->
-                    </div>
-                    <div class="chat-main">
-                        <div id="chat-header"
-                            style="padding: 20px; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--primary-light);">
-                            Selecione uma sala para começar
+                <!-- CHAT PAGE -->
+                <div id="page-chat" class="page">
+                    <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">💬 Salas de Chat</h2>
+                    <div class="chat-container">
+                        <div class="chat-sidebar">
+                            <div class="chat-sidebar-header">Matérias</div>
+                            <div class="room-list" id="chat-rooms"></div>
                         </div>
-                        
-                        <!-- CHAT VIEW -->
-                        <div id="chat-view-ui" style="display: flex; flex-direction: column; flex: 1; height: 100%;">
-                            <div class="chat-messages" id="chat-box">
-                                <div style="color: var(--text-dim); text-align: center; margin-top: 100px;">
-                                    Bata um papo com outros estudantes sobre as matérias!
-                                </div>
-                            </div>
+                        <div class="chat-main">
+                            <div class="chat-header" id="chat-header">Selecione uma sala</div>
+                            <div class="chat-messages" id="chat-box"></div>
                             <div class="chat-input-area">
-                                <input type="text" id="msgInput" placeholder="Sua pergunta ou dica...">
-                                <button class="btn-upload" style="margin-top: 0; padding: 0 25px;"
-                                    onclick="sendMessage()">Enviar</button>
+                                <input type="text" id="chat-input" placeholder="Digite..." onkeydown="if(event.key==='Enter') sendMessage()">
+                                <button onclick="sendMessage()">Enviar</button>
                             </div>
-                        </div>
-
-                        <!-- FAQ VIEW -->
-                        <div id="faq-view-ui" style="display: none; flex-direction: column; flex: 1; height: 100%; overflow-y: auto; padding: 20px;">
-                            <div style="color: var(--text-dim); text-align: center; margin-top: 40px;" id="faq-box-empty">
-                                Selecione uma matéria na barra lateral para ver as dúvidas frequentes (FAQ).
-                            </div>
-                            <div id="faq-box-content" style="display: flex; flex-direction: column; gap: 12px;"></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- FLASHCARDS PAGE -->
-            <div id="page-flashcards" class="page">
-                <h2 style="font-size: 28px; margin-bottom: 20px; font-family: 'Outfit';">🃏 Flashcards com IA</h2>
-                <div class="fc-ai-layout">
-
-                    <!-- LEFT: AI Chat Panel -->
-                    <div class="fc-chat-panel">
-                        <div class="fc-chat-header">
-                            <div class="fc-ai-avatar">🤖</div>
-                            <div class="fc-ai-info">
-                                <h4>Assistente FECAD</h4>
-                                <span>● Online — Pronto para estudar</span>
-                            </div>
+                <!-- FLASHCARDS PAGE -->
+                <div id="page-flashcards" class="page">
+                    <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">🃏 Flashcards com IA</h2>
+                    <div class="fc-layout">
+                        <div class="fc-chat-panel">
+                            <div class="fc-chat-header">🤖 Assistente</div>
+                            <div class="fc-chat-messages" id="fc-messages"></div>
                         </div>
-                        <div class="fc-messages" id="fc-messages"></div>
-                        <div class="fc-input-area">
-                            <input type="text" id="fc-user-input" placeholder="Digite sua resposta..."
-                                onkeydown="if(event.key==='Enter') fcSendUserMessage()">
-                            <button class="btn-upload" style="margin-top:0; padding: 0 18px; font-size:18px;"
-                                onclick="fcSendUserMessage()">➤</button>
-                        </div>
-                    </div>
-
-                    <!-- RIGHT: Generated Flashcards -->
-                    <div class="fc-results-panel" id="flashcards-view">
-                        <div class="fc-results-header">
-                            <h3 id="fc-results-title">Seus Flashcards</h3>
-                            <div id="fc-badge" class="fc-badge" style="display:none;"></div>
-                        </div>
-                        <div class="fc-cards-container">
-                            <div class="fc-container" id="flashcard-list">
-                                <div class="fc-empty">
-                                    <div class="fc-empty-icon">✨</div>
-                                    <p>Converse com a IA ao lado para gerar seus flashcards personalizados!</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- REVISÃO PAGE -->
-            <div id="page-revisao" class="page">
-                <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">📝 Revisão por Matéria</h2>
-                <div class="revisao-layout">
-                    <!-- Subject list -->
-                    <div class="revisao-subject-list" id="revisao-subject-list">
-                        <!-- Injected by JS -->
-                    </div>
-                    <!-- Content panel -->
-                    <div class="revisao-content-panel" id="revisao-content-panel">
-                        <div class="panel-empty">
-                            <div class="empty-icon">🎯</div>
-                            <p>Selecione uma matéria ao lado para ver os tópicos de revisão.</p>
+                        <div class="fc-results-panel" id="flashcards-view">
+                            <h3>Seus Flashcards</h3>
+                            <div class="fc-container" id="flashcard-list"></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- PERFIL PAGE -->
-            <div id="page-perfil" class="page">
-                <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">👤 Meu Perfil</h2>
-                
-                <div style="display: grid; grid-template-columns: 320px 1fr; gap: 28px; min-height: calc(100vh - 180px);">
-                    <!-- Coluna Esquerda: Info e Avatar -->
-                    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px 30px; display: flex; flex-direction: column; align-items: center; text-align: center; height: fit-content;">
+                <!-- PERFIL PAGE -->
+                <div id="page-perfil" class="page">
+                    <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">👤 Meu Perfil</h2>
+                    <div id="profile-content">
                         <div style="width: 130px; height: 130px; border-radius: 50%; border: 3px solid var(--primary); background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 48px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);" id="profile-avatar-preview">
                             <span style="font-weight: 800; color: white;">V</span>
                         </div>
@@ -2035,6 +2014,16 @@
         }
 
         function handleSearch() { renderFeed(document.getElementById('global-search').value); }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('app-sidebar');
+            const hamburger = document.getElementById('hamburger-btn');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.classList.toggle('active');
+            hamburger.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
 
         function previewImage(event) {
             const file = event.target.files[0];
