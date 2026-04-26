@@ -1625,6 +1625,7 @@
     <!-- Firebase SDK Compat -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         // ⚠️ COLE SUAS CHAVES DO FIREBASE AQUI ⚠️
         // Crie um projeto em console.firebase.google.com, habilite o Realtime Database e copie as chaves:
@@ -2346,23 +2347,118 @@
         }
 
         let fcSelectedFileName = "";
+        let fcSelectedFile = null;
+        let fcExtractedText = "";
 
         function fcHandleFileSelect(input) {
             if (input.files && input.files[0]) {
+                fcSelectedFile = input.files[0];
                 fcSelectedFileName = input.files[0].name;
                 document.getElementById('fc-file-label').innerHTML = `<span style="color:var(--primary-light)">${fcSelectedFileName}</span> selecionado`;
             }
         }
 
-        function fcSubmitDocument() {
+        async function fcReadFileContent(file) {
+            const name = file.name.toLowerCase();
+            
+            if (name.endsWith('.txt')) {
+                return await file.text();
+            } else if (name.endsWith('.pdf')) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    if (typeof pdfjsLib !== 'undefined') {
+                        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                        let fullText = '';
+                        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            fullText += content.items.map(item => item.str).join(' ') + '\n';
+                        }
+                        return fullText;
+                    }
+                } catch(e) { console.error('Erro ao ler PDF:', e); }
+                return 'Arquivo PDF: ' + file.name;
+            } else if (name.endsWith('.doc') || name.endsWith('.docx')) {
+                return 'Documento Word: ' + file.name + '. Para melhor precisão, salve como .txt ou .pdf antes de enviar.';
+            }
+            return 'Arquivo: ' + file.name;
+        }
+
+        function fcExtractSentences(text) {
+            // Extrai frases relevantes do texto (não vazias e com pelo menos 15 caracteres)
+            const sentences = text
+                .replace(/\n+/g, '. ')
+                .split(/[.!?]+/)
+                .map(s => s.trim())
+                .filter(s => s.length > 15 && !s.match(/^(http|www|page|página)/i));
+            return sentences;
+        }
+
+        function fcGenerateQAFromText(sentences, count) {
+            const cards = [];
+            const templates = [
+                (s) => ({q: `De acordo com o material: O que significa "${s.substring(0, 60)}..."?`, a: s}),
+                (s) => ({q: `Explique com suas palavras: ${s.substring(0, 50)}...`, a: s}),
+                (s) => ({q: `Complete a informação: ${s.substring(0, 35)}...`, a: s}),
+                (s) => ({q: `Verdadeiro ou Falso? "${s.substring(0, 70)}..." — Justifique.`, a: 'Verdadeiro. ' + s}),
+                (s) => ({q: `O que o material da aula diz sobre: "${s.substring(0, 45)}..."?`, a: s}),
+                (s) => ({q: `Qual o conceito por trás de: "${s.substring(0, 55)}..."?`, a: s}),
+            ];
+            
+            // Embaralha as frases
+            const shuffled = [...sentences];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            
+            for (let i = 0; i < Math.min(count, shuffled.length); i++) {
+                const template = templates[i % templates.length];
+                cards.push(template(shuffled[i]));
+            }
+            return cards;
+        }
+
+        async function fcSubmitDocument() {
             if (!fcSelectedFileName) return alert('Por favor, anexe um arquivo primeiro!');
-            fcState.docContext = "Conteúdo de: " + fcSelectedFileName;
             
             const fileInput = document.getElementById('fc-file-input');
             if(fileInput) fileInput.disabled = true;
             
             fcUserMessage('Arquivo enviado: ' + fcSelectedFileName);
             
+            // Se for flashcard por arquivo, lê o conteúdo real
+            if (fcState.mode === 'flashcards' && fcState.fcSource === 'file') {
+                fcTyping(async () => {
+                    fcAIMessage('📖 Analisando o conteúdo do arquivo...');
+                    
+                    try {
+                        fcExtractedText = await fcReadFileContent(fcSelectedFile);
+                        const sentences = fcExtractSentences(fcExtractedText);
+                        const preview = fcExtractedText.substring(0, 150).replace(/</g, '&lt;');
+                        
+                        setTimeout(() => {
+                            fcAIMessage(`✅ <strong>Arquivo analisado com sucesso!</strong><br>
+                                <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; margin:8px 0; font-size:12px; color:var(--text-dim); max-height:80px; overflow:hidden;">
+                                    "${preview}..."
+                                </div>
+                                <span style="font-size:12px;">📊 Encontrei <strong>${sentences.length}</strong> conceitos no documento.</span><br><br>
+                                Quantos flashcards você quer gerar a partir deste conteúdo?`, `
+                                <div class="fc-num-grid">
+                                    ${[3, 5, 8, 10, 15].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
+                                </div>`);
+                            fcState.step = 'ask_count';
+                        }, 1200);
+                    } catch(e) {
+                        fcAIMessage('⚠️ Não consegui ler o arquivo. Tente salvar como .txt e enviar novamente.');
+                    }
+                });
+                return;
+            }
+            
+            // Fluxo normal para exercícios
+            fcState.docContext = "Conteúdo de: " + fcSelectedFileName;
             if (fcState.mode === 'exercises') {
                 fcState.step = 'ask_difficulty';
                 fcTyping(() => fcAIMessage('Arquivo analisado com sucesso! Qual o <strong>Nível de Dificuldade</strong> desejado para as questões de vestibular?', `
@@ -2423,9 +2519,27 @@
 
         function fcPickCount(n) {
             fcState.count = n;
-            fcState.step = 'ask_subject';
             fcUserMessage(n + (fcState.mode === 'exercises' ? ' questões' : ' flashcards'));
             
+            // Se veio de arquivo nos flashcards, gera direto sem perguntar matéria
+            if (fcState.mode === 'flashcards' && fcState.fcSource === 'file' && fcExtractedText) {
+                fcState.step = 'generating';
+                fcTyping(() => {
+                    fcAIMessage(`🎯 Gerando ${n} flashcards a partir do conteúdo do arquivo...`);
+                    setTimeout(() => {
+                        const sentences = fcExtractSentences(fcExtractedText);
+                        fcState.cards = fcGenerateQAFromText(sentences, n);
+                        fcRenderCards();
+                        fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards criados!</strong> Baseados no conteúdo real do seu arquivo "${fcSelectedFileName}".<br>
+                            <em style="font-size:12px; color:var(--text-dim);">Clique em cada card para ver a resposta.</em>
+                            <br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
+                    }, 800);
+                });
+                return;
+            }
+            
+            // Fluxo normal: pergunta a matéria
+            fcState.step = 'ask_subject';
             let normal = ['Matemática', 'Física', 'Biologia', 'Gramática da Língua Portuguesa'];
             if (fcState.mode === 'flashcards') {
                 normal = ['Matemática', 'Física', 'Química', 'Biologia', 'Gramática da Língua Portuguesa', 'Literatura Lusófona', 'Leitura e produção de textos', 'Geografia', 'Artes', 'Educação Física', 'Direito e Ética'];
