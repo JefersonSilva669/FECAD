@@ -1626,6 +1626,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script>
         // ⚠️ COLE SUAS CHAVES DO FIREBASE AQUI ⚠️
         // Crie um projeto em console.firebase.google.com, habilite o Realtime Database e copie as chaves:
@@ -2370,7 +2371,7 @@
                         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
                         const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
                         let fullText = '';
-                        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+                        for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
                             const page = await pdf.getPage(i);
                             const content = await page.getTextContent();
                             fullText += content.items.map(item => item.str).join(' ') + '\n';
@@ -2378,32 +2379,41 @@
                         return fullText;
                     }
                 } catch(e) { console.error('Erro ao ler PDF:', e); }
-                return 'Arquivo PDF: ' + file.name;
-            } else if (name.endsWith('.doc') || name.endsWith('.docx')) {
-                return 'Documento Word: ' + file.name + '. Para melhor precisão, salve como .txt ou .pdf antes de enviar.';
+                return '';
+            } else if (name.endsWith('.docx') || name.endsWith('.doc')) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    if (typeof mammoth !== 'undefined') {
+                        const result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+                        return result.value;
+                    }
+                } catch(e) { console.error('Erro ao ler DOCX:', e); }
+                return '';
             }
-            return 'Arquivo: ' + file.name;
+            return '';
         }
 
         function fcExtractSentences(text) {
-            // Extrai frases relevantes do texto (não vazias e com pelo menos 15 caracteres)
             const sentences = text
+                .replace(/\r\n/g, '\n')
                 .replace(/\n+/g, '. ')
-                .split(/[.!?]+/)
+                .split(/[.!?;]+/)
                 .map(s => s.trim())
-                .filter(s => s.length > 15 && !s.match(/^(http|www|page|página)/i));
+                .filter(s => s.length > 12 && !s.match(/^(http|www|page|página|\d+$)/i));
             return sentences;
         }
 
         function fcGenerateQAFromText(sentences, count) {
             const cards = [];
             const templates = [
-                (s) => ({q: `De acordo com o material: O que significa "${s.substring(0, 60)}..."?`, a: s}),
-                (s) => ({q: `Explique com suas palavras: ${s.substring(0, 50)}...`, a: s}),
-                (s) => ({q: `Complete a informação: ${s.substring(0, 35)}...`, a: s}),
-                (s) => ({q: `Verdadeiro ou Falso? "${s.substring(0, 70)}..." — Justifique.`, a: 'Verdadeiro. ' + s}),
-                (s) => ({q: `O que o material da aula diz sobre: "${s.substring(0, 45)}..."?`, a: s}),
-                (s) => ({q: `Qual o conceito por trás de: "${s.substring(0, 55)}..."?`, a: s}),
+                (s) => ({q: `De acordo com o material da aula: "${s.substring(0, 80)}" — Explique este conceito.`, a: s}),
+                (s) => ({q: `O que o professor quis dizer com: "${s.substring(0, 70)}"?`, a: s}),
+                (s) => ({q: `Complete e explique: "${s.substring(0, 50)}..."`, a: s}),
+                (s) => ({q: `Verdadeiro ou Falso? "${s.substring(0, 80)}" — Justifique.`, a: 'Verdadeiro. ' + s}),
+                (s) => ({q: `Resuma com suas palavras o seguinte trecho da aula: "${s.substring(0, 65)}..."`, a: s}),
+                (s) => ({q: `Qual a importância do conceito: "${s.substring(0, 60)}..."?`, a: s}),
+                (s) => ({q: `Defina: "${s.substring(0, 70)}..."`, a: s}),
+                (s) => ({q: `Se um colega perguntar sobre "${s.substring(0, 55)}...", o que você responderia?`, a: s}),
             ];
             
             // Embaralha as frases
@@ -2413,9 +2423,11 @@
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
             
-            for (let i = 0; i < Math.min(count, shuffled.length); i++) {
-                const template = templates[i % templates.length];
-                cards.push(template(shuffled[i]));
+            // Gera exatamente a quantidade pedida, reciclando frases se necessário
+            for (let i = 0; i < count; i++) {
+                const sentenceIdx = i % shuffled.length;
+                const templateIdx = i % templates.length;
+                cards.push(templates[templateIdx](shuffled[sentenceIdx]));
             }
             return cards;
         }
