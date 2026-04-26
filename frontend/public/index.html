@@ -2399,35 +2399,37 @@
                 .replace(/\n+/g, '. ')
                 .split(/[.!?;]+/)
                 .map(s => s.trim())
-                .filter(s => s.length > 12 && !s.match(/^(http|www|page|página|\d+$)/i));
+                .filter(s => {
+                    if (s.length < 20) return false;
+                    // Ignora padrões comuns de exercícios
+                    if (s.match(/^(Questão|Questao|Exercício|Exercicio|Ex\.|Q\.|[0-9]+[\.\)\-\s])/i)) return false;
+                    if (s.match(/^[a-e][\)\-\.\s]/i)) return false; 
+                    return true;
+                });
             return sentences;
         }
 
         function fcGenerateQAFromText(sentences, count) {
             const cards = [];
             const templates = [
-                (s) => ({q: `De acordo com o material da aula: "${s.substring(0, 80)}" — Explique este conceito.`, a: s}),
-                (s) => ({q: `O que o professor quis dizer com: "${s.substring(0, 70)}"?`, a: s}),
-                (s) => ({q: `Complete e explique: "${s.substring(0, 50)}..."`, a: s}),
-                (s) => ({q: `Verdadeiro ou Falso? "${s.substring(0, 80)}" — Justifique.`, a: 'Verdadeiro. ' + s}),
-                (s) => ({q: `Resuma com suas palavras o seguinte trecho da aula: "${s.substring(0, 65)}..."`, a: s}),
-                (s) => ({q: `Qual a importância do conceito: "${s.substring(0, 60)}..."?`, a: s}),
-                (s) => ({q: `Defina: "${s.substring(0, 70)}..."`, a: s}),
-                (s) => ({q: `Se um colega perguntar sobre "${s.substring(0, 55)}...", o que você responderia?`, a: s}),
+                (s) => ({q: `O que o material explica sobre: "${s.substring(0, 75)}..."?`, a: `Conceito: ${s}`}),
+                (s) => ({q: `Com base na aula, explique o ponto: "${s.substring(0, 65)}..."`, a: `Explicação: ${s}`}),
+                (s) => ({q: `Defina o tema abordado neste trecho: "${s.substring(0, 60)}..."`, a: `Definição: ${s}`}),
+                (s) => ({q: `Qual a importância de entender que: "${s.substring(0, 70)}..."?`, a: `Importância: ${s}`}),
+                (s) => ({q: `Resuma o conceito teórico de: "${s.substring(0, 55)}..."`, a: `Resumo: ${s}`}),
             ];
             
-            // Embaralha as frases
             const shuffled = [...sentences];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
             
-            // Gera exatamente a quantidade pedida, reciclando frases se necessário
             for (let i = 0; i < count; i++) {
-                const sentenceIdx = i % shuffled.length;
+                const sentenceIdx = i % (shuffled.length || 1);
                 const templateIdx = i % templates.length;
-                cards.push(templates[templateIdx](shuffled[sentenceIdx]));
+                const text = shuffled[sentenceIdx] || "Conceito fundamental da matéria abordada.";
+                cards.push(templates[templateIdx](text));
             }
             return cards;
         }
@@ -2672,9 +2674,33 @@
             fcState.cards = pool.slice(0, count);
             fcRenderCards();
             
-            fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards criados a partir do arquivo "${fileName}"!</strong><br>
-                <em style="font-size:12px; color:var(--text-dim);">Os flashcards foram gerados interpretando o conteúdo do seu material de aula.</em>
-                <br><br><div class="fc-subject-grid"><div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div></div>`);
+            fcAIMessage(`✅ <strong>${fcState.cards.length} flashcards criados a partir do arquivo!</strong><br>
+                <em style="font-size:12px; color:var(--text-dim);">Foquei em extrair a teoria e os conceitos do seu material.</em>
+                <br><br>
+                <div class="fc-subject-grid">
+                    <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="fcSaveToFirebase()">💾 Salvar no Site</div>
+                    <div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div>
+                </div>`);
+        }
+
+        function fcSaveToFirebase() {
+            if (!db) return alert('Firebase não configurado ou conectado.');
+            if (fcState.cards.length === 0) return alert('Nenhum flashcard para salvar.');
+            
+            const userName = document.getElementById('user-display-name').textContent || 'Visitante';
+            const sessionId = Date.now();
+            
+            db.ref('user_flashcards/' + userName.replace(/\s/g, '_')).push({
+                subject: fcState.subject || 'Arquivo Enviado',
+                fileName: fcSelectedFileName,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                cards: fcState.cards
+            }).then(() => {
+                alert('Flashcards salvos com sucesso no seu perfil do site!');
+            }).catch(e => {
+                console.error(e);
+                alert('Erro ao salvar. Verifique sua conexão.');
+            });
         }
 
         function getDynamicExercise(subject, difficulty, context) {
