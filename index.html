@@ -480,13 +480,19 @@
         }
 
         /* Chat Area */
+        #page-chat {
+            margin: -30px;
+            height: calc(100vh - 61px);
+        }
+
         .chat-container {
-            height: calc(100vh - 180px);
+            height: 100%;
             display: flex;
             background: var(--bg-card);
-            border-radius: 24px;
+            border-radius: 0;
             overflow: hidden;
-            border: 1px solid var(--border);
+            border: none;
+            border-top: 1px solid var(--border);
         }
 
         .chat-sidebar {
@@ -518,6 +524,22 @@
         .room-item.active {
             background: rgba(99, 102, 241, 0.1);
             color: var(--primary-light);
+        }
+
+        .room-badge {
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+            display: none;
+        }
+
+        .room-badge.visible {
+            display: inline-block;
         }
 
         .room-icon {
@@ -1701,13 +1723,19 @@
 
                 <!-- EXPLORAR PAGE -->
                 <div id="page-explorar" class="page">
-                    <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">Recém Adicionados</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="font-size: 28px; font-family: 'Outfit';">Cadernos</h2>
+                        <div class="auth-tabs" style="margin-bottom: 0; min-width: 300px;">
+                            <div class="auth-tab active" id="tab-todos-cadernos" onclick="toggleCadernosTab('todos')">Todos</div>
+                            <div class="auth-tab" id="tab-meus-cadernos" onclick="toggleCadernosTab('meus')">Meus Cadernos Postados</div>
+                        </div>
+                    </div>
                     <div class="feed-grid" id="notebook-feed"></div>
+                    <div id="meus-cadernos-container" style="display: none; flex-direction: column; gap: 24px;"></div>
                 </div>
 
                 <!-- CHAT PAGE -->
                 <div id="page-chat" class="page">
-                    <h2 style="font-size: 28px; margin-bottom: 24px; font-family: 'Outfit';">💬 Salas de Chat</h2>
                     <div class="chat-container">
                         <div class="chat-sidebar">
                             <div class="chat-sidebar-header">Matérias</div>
@@ -2195,12 +2223,121 @@
                 </div>`).join('');
         }
 
+        let currentViewNotebookId = null;
+
         function viewNotebook(id) {
+            currentViewNotebookId = id;
             const nb = notebooks.find(n => n.id === id);
             document.getElementById('view-img').src = nb.img;
             document.getElementById('view-title').textContent = nb.title;
             document.getElementById('view-author').textContent = 'Por ' + nb.author;
+            
+            const feedbacksContainer = document.getElementById('view-feedbacks');
+            if (nb.feedbacks && nb.feedbacks.length > 0) {
+                feedbacksContainer.innerHTML = nb.feedbacks.map(f => `
+                    <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                        <div style="font-weight: bold; color: var(--primary-light); margin-bottom: 4px;">${f.user} <span style="color:#fbbf24; font-size:11px;">${'★'.repeat(f.rating)}</span></div>
+                        ${f.text}
+                    </div>
+                `).join('');
+            } else {
+                feedbacksContainer.innerHTML = '<div style="opacity: 0.5; font-style: italic;">Ainda não há recomendações. Seja o primeiro!</div>';
+            }
+            
+            setupInteractiveStars();
             openModal('viewModal');
+        }
+
+        let currentRating = 5;
+        function setupInteractiveStars() {
+            const container = document.getElementById('interactive-stars');
+            if(container) {
+                currentRating = 5;
+                const renderStars = () => {
+                    container.innerHTML = Array(5).fill(0).map((_, i) => 
+                        `<span style="color: ${i < currentRating ? '#fbbf24' : 'rgba(255,255,255,0.2)'}" onclick="currentRating=${i+1}; setupInteractiveStars();">★</span>`
+                    ).join('');
+                };
+                renderStars();
+            }
+        }
+
+        function addFeedback() {
+            if (!currentViewNotebookId) return;
+            const textInput = document.getElementById('new-feedback');
+            const text = textInput.value.trim();
+            if (!text) return alert("Escreva um comentário!");
+            
+            const nbIndex = notebooks.findIndex(n => n.id === currentViewNotebookId);
+            if (nbIndex === -1) return;
+            
+            if (!notebooks[nbIndex].feedbacks) notebooks[nbIndex].feedbacks = [];
+            let userName = document.getElementById('user-display-name').textContent;
+            if (!userName || userName === 'Visitante') userName = 'Visitante Anônimo';
+            
+            notebooks[nbIndex].feedbacks.push({ user: userName, text, rating: currentRating });
+            localStorage.setItem('fecad_notebooks', JSON.stringify(notebooks));
+            
+            textInput.value = '';
+            viewNotebook(currentViewNotebookId);
+            
+            if (document.getElementById('meus-cadernos-container').style.display !== 'none') {
+                renderMeusCadernos();
+            }
+        }
+        
+        function toggleCadernosTab(tab) {
+            document.getElementById('tab-todos-cadernos').classList.toggle('active', tab === 'todos');
+            document.getElementById('tab-meus-cadernos').classList.toggle('active', tab === 'meus');
+            
+            if (tab === 'todos') {
+                document.getElementById('notebook-feed').style.display = 'grid';
+                document.getElementById('meus-cadernos-container').style.display = 'none';
+                renderFeed();
+            } else {
+                document.getElementById('notebook-feed').style.display = 'none';
+                document.getElementById('meus-cadernos-container').style.display = 'flex';
+                renderMeusCadernos();
+            }
+        }
+
+        function renderMeusCadernos() {
+            const container = document.getElementById('meus-cadernos-container');
+            let userName = document.getElementById('user-display-name').textContent;
+            
+            const myNotebooks = notebooks.filter(n => n.author === userName);
+            
+            if (myNotebooks.length === 0) {
+                container.innerHTML = `<div class="panel-empty"><div class="empty-icon">📚</div><p>Você ainda não postou nenhum caderno. Seus cadernos e feedbacks aparecerão aqui!</p></div>`;
+                return;
+            }
+            
+            container.innerHTML = myNotebooks.map(nb => `
+                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex;">
+                    <img src="${nb.img}" style="width: 200px; height: 100%; object-fit: cover; min-height: 150px; border-right: 1px solid var(--border);">
+                    <div style="padding: 20px; flex: 1;">
+                        <span class="tag">${nb.subject}</span>
+                        <h3 style="font-size: 18px; font-weight: 700; margin: 8px 0;">${nb.title}</h3>
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
+                            <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--primary-light);">Feedbacks Recebidos:</h4>
+                            ${nb.feedbacks && nb.feedbacks.length > 0 ? 
+                                `<div style="display: flex; flex-direction: column; gap: 10px; max-height: 150px; overflow-y: auto; padding-right: 10px;">
+                                    ${nb.feedbacks.map(f => `
+                                        <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; font-size: 13px;">
+                                            <div style="display:flex; justify-content: space-between; margin-bottom: 4px;">
+                                                <strong>${f.user}</strong>
+                                                <span style="color:#fbbf24; font-size:11px;">${'★'.repeat(f.rating)}</span>
+                                            </div>
+                                            <div style="color: var(--text-dim);">${f.text}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>`
+                                : '<div style="color: var(--text-dim); font-size: 13px; font-style: italic;">Nenhum feedback recebido ainda.</div>'
+                            }
+                        </div>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function addNotebook() {
@@ -2228,8 +2365,27 @@
         }
 
         const rooms = ['Matemática', 'Física', 'Química', 'Biologia', 'Geral'];
+        let unreadCounts = {};
+        
         function renderRooms() {
-            document.getElementById('chat-rooms').innerHTML = rooms.map(r => `<div class="room-item" onclick="selectRoom('${r}', this)"># ${r}</div>`).join('');
+            document.getElementById('chat-rooms').innerHTML = rooms.map(r => 
+                `<div class="room-item" onclick="selectRoom('${r}', this)"># ${r} <span class="room-badge" id="badge-${r.replace(/\s+/g, '-')}"></span></div>`
+            ).join('');
+            
+            // Re-apply badges after re-rendering
+            rooms.forEach(r => updateRoomBadge(r));
+        }
+
+        function updateRoomBadge(r) {
+            const badge = document.getElementById('badge-' + r.replace(/\s+/g, '-'));
+            if (badge) {
+                if (unreadCounts[r] > 0) {
+                    badge.textContent = unreadCounts[r];
+                    badge.classList.add('visible');
+                } else {
+                    badge.classList.remove('visible');
+                }
+            }
         }
 
         let currentChatMode = 'chat', currentRoom = null;
@@ -2238,7 +2394,34 @@
             document.querySelectorAll('.room-item').forEach(i => i.classList.remove('active'));
             el.classList.add('active');
             document.getElementById('chat-header').textContent = r;
+            
+            // Clear unread count
+            unreadCounts[r] = 0;
+            updateRoomBadge(r);
+            
             listenToRoom(r);
+        }
+
+        function startNotificationsWatcher() {
+            if (!db) return;
+            rooms.forEach(r => {
+                const safeRoomName = r.replace(/[.#$\[\]]/g, '');
+                let initialDataLoaded = false;
+                
+                // Set flag to true after initial data load to avoid notifying about old messages
+                db.ref('chats/' + safeRoomName).once('value', () => { initialDataLoaded = true; });
+                
+                db.ref('chats/' + safeRoomName).limitToLast(1).on('child_added', (snapshot) => {
+                    if (initialDataLoaded && currentRoom !== r) {
+                        let userName = document.getElementById('user-display-name').textContent;
+                        let sender = snapshot.val().userId;
+                        if (sender !== userName && sender !== 'Você' && sender !== 'Sistema') {
+                            unreadCounts[r] = (unreadCounts[r] || 0) + 1;
+                            updateRoomBadge(r);
+                        }
+                    }
+                });
+            });
         }
 
         function sendMessage() {
@@ -2691,6 +2874,7 @@ Para salvar como PDF: <strong>Arquivo → Salvar Como → Tipo: PDF</strong>.`
         // Init
         renderFeed();
         renderSalas();
+        startNotificationsWatcher();
     </script>
 </body>
 
