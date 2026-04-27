@@ -480,19 +480,14 @@
         }
 
         /* Chat Area */
-        #page-chat {
-            margin: -30px;
-            height: calc(100vh - 61px);
-        }
-
         .chat-container {
-            height: 100%;
+            width: 100%;
+            height: calc(100vh - 120px);
             display: flex;
             background: var(--bg-card);
-            border-radius: 0;
+            border-radius: 24px;
             overflow: hidden;
-            border: none;
-            border-top: 1px solid var(--border);
+            border: 1px solid var(--border);
         }
 
         .chat-sidebar {
@@ -2364,7 +2359,7 @@
             if(id==='explorar') renderFeed();
         }
 
-        const rooms = ['Matemática', 'Física', 'Química', 'Biologia', 'Geral'];
+        const rooms = ['Matemática', 'Física', 'Química', 'Biologia', 'Geografia', 'História', 'Português', 'Literatura', 'Artes', 'Educação Física', 'Geral'];
         let unreadCounts = {};
         
         function renderRooms() {
