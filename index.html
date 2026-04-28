@@ -2088,6 +2088,16 @@
 
         let currentChatRef = null;
 
+        function getSalaColor(sala) {
+            const colors = {
+                'A': '#ef4444', 'B': '#f97316', 'C': '#eab308',
+                'D': '#22c55e', 'E': '#06b6d4', 'F': '#3b82f6',
+                'G': '#8b5cf6', 'H': '#d946ef', 'I': '#f43f5e',
+                'Visitante': '#10b981', 'Admin': '#ec4899'
+            };
+            return colors[sala] || '#64748b';
+        }
+
         function listenToRoom(roomName) {
             if (!db) return;
             if (currentChatRef) currentChatRef.off('child_added');
@@ -2109,8 +2119,33 @@
                     let userName = document.getElementById('user-display-name').textContent;
                     if (!userName || userName === 'Visitante') userName = 'Você';
                     const isMe = data.userId === userName;
-                    message.className = 'message ' + (isMe ? 'msg-sent' : 'msg-received');
-                    message.innerHTML = `<div class="msg-user">${isMe ? 'Você' : data.userId}</div>${data.content}`;
+                    const senderSala = data.sala || '';
+                    const mySala = document.getElementById('user-badge').textContent.replace('Sala ', '').trim();
+                    const isOtherSala = !isMe && senderSala && senderSala !== mySala;
+                    
+                    // Color by sala for received messages
+                    const salaColor = getSalaColor(senderSala);
+                    
+                    if (isMe) {
+                        message.className = 'message msg-sent';
+                        message.innerHTML = `
+                            <div class="msg-user">Você</div>
+                            ${data.content}
+                            <div class="msg-time">${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</div>
+                        `;
+                    } else {
+                        message.className = 'message msg-received';
+                        if (isOtherSala) {
+                            message.style.background = `${salaColor}18`;
+                            message.style.borderLeft = `3px solid ${salaColor}`;
+                        }
+                        message.innerHTML = `
+                            <div class="msg-user" style="color:${salaColor}">${data.userId}</div>
+                            ${senderSala ? `<div style="font-size:10px; color:${salaColor}80; margin-bottom:4px; font-weight:600;">Sala ${senderSala}</div>` : ''}
+                            ${data.content}
+                            <div class="msg-time">${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</div>
+                        `;
+                    }
                     document.getElementById('chat-box').appendChild(message);
                     document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
                 }
@@ -2715,11 +2750,16 @@
 
             let userName = document.getElementById('user-display-name').textContent;
             if (!userName || userName === 'Visitante') userName = 'Você';
+            
+            // Get user's sala from badge
+            const badgeText = document.getElementById('user-badge').textContent;
+            const userSala = badgeText.startsWith('Sala ') ? badgeText.replace('Sala ', '').trim() : '';
 
             if (typeof db !== 'undefined' && db !== null) {
                 const safeRoomName = currentRoom.replace(/[.#$\[\]]/g, '');
                 db.ref('chats/' + safeRoomName).push({
                     userId: userName,
+                    sala: userSala,
                     content: content,
                     timestamp: firebase.database.ServerValue.TIMESTAMP || Date.now()
                 });
@@ -2729,14 +2769,16 @@
                 message.className = 'message msg-sent';
                 message.innerHTML = `
                     <div class="msg-user">Você</div>
+                    ${userSala ? `<div style="font-size:10px; color:rgba(255,255,255,0.5); margin-bottom:4px;">Sala ${userSala}</div>` : ''}
                     ${content}
+                    <div class="msg-time">${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
                 `;
                 document.getElementById('chat-box').appendChild(message);
                 document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
                 
                 const warning = document.createElement('div');
                 warning.className = 'message msg-received';
-                warning.innerHTML = `<div class="msg-user">Sistema</div>⚠️ Você não configurou as chaves do Firebase! A mensagem só aparece localmente e sumirá ao recarregar a página. Verifique o código fonte.`;
+                warning.innerHTML = `<div class="msg-user">Sistema</div>⚠️ Você não configurou as chaves do Firebase! A mensagem só aparece localmente e sumirá ao recarregar a página.`;
                 document.getElementById('chat-box').appendChild(warning);
                 document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
             }
