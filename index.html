@@ -1756,8 +1756,18 @@
                             <div class="fc-chat-messages" id="fc-messages"></div>
                         </div>
                         <div class="fc-results-panel" id="flashcards-view">
-                            <h3>Seus Flashcards</h3>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                <h3 id="fc-panel-title">Seus Flashcards</h3>
+                                <span id="fc-count-badge" style="display:none; background: rgba(99,102,241,0.15); border: 1px solid var(--primary); color: var(--primary-light); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700;"></span>
+                            </div>
+                            <!-- Tópicos salvos -->
+                            <div id="fc-topics-history" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;"></div>
+                            <!-- Flashcards gerados -->
                             <div class="fc-container" id="flashcard-list"></div>
+                            <div class="panel-empty" id="fc-empty-state">
+                                <div class="empty-icon">📄</div>
+                                <p>Envie um documento no chat ao lado para gerar seus flashcards personalizados!</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2115,9 +2125,9 @@
                     const sentences = fcExtractedText.split(/[.!?\n]+/).filter(s => s.trim().length > 25);
                     fcState.cards = fcGenerateQAFromText(sentences, n);
                     fcRenderCards();
-                    fcAIMessage('✅ <strong>Pronto!</strong> Use os cartões ao lado para estudar.', `
+                    fcAIMessage('✅ <strong>Pronto!</strong> Use os cartões ao lado para estudar. Clique em qualquer cartão para ver a resposta!', `
                         <div class="fc-subject-grid">
-                            <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="fcSaveToFirebase()">💾 Salvar no Site</div>
+                            <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="saveFlashcardTopic()">💾 Salvar Tópico</div>
                             <div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div>
                         </div>`);
                 }, 1000);
@@ -2125,24 +2135,55 @@
         }
 
         function fcGenerateQAFromText(sentences, count) {
-            const cards = [];
-            const text = sentences.join(' ').toLowerCase();
+            const stopwords = new Set(['de','do','da','dos','das','em','no','na','nos','nas','para','com','por','que','se','um','uma','uns','umas','o','a','os','as','e','ou','ao','aos','à','às','seu','sua','este','esta','pelo','pela','mais','mas','como','há','foi','são','uma','isso','ele','ela','ser']);
+            const fullText = sentences.join(' ');
+            
+            // Detectar matéria pelo conteúdo
+            const textLower = fullText.toLowerCase();
             const topicMaps = [
-                { key: "Química", words: ["tabela", "átomo", "pauling", "eletrônica", "valência", "família", "período", "ligação", "mol", "subnível"] },
-                { key: "Biologia", words: ["célula", "dna", "mitocôndria", "genética", "reprodução", "ecologia"] },
-                { key: "Física", words: ["força", "newton", "velocidade", "aceleração", "energia", "óptica"] }
+                { key: 'Química', words: ['átomo','mol','ligação','valência','período','tabela periódica','elétron','íon','solução','reação','reagente','produto','elemento'] },
+                { key: 'Biologia', words: ['célula','dna','rna','proteína','mitose','meiose','organela','gene','cromossomo','organismo','fotossíntese','ecossistema','espécie','tecido'] },
+                { key: 'Física', words: ['força','velocidade','aceleração','newton','energia','massa','potência','corrente','tensão','resistência','onda','frequência','óptica'] },
+                { key: 'Matemática', words: ['função','equação','inequação','derivada','integral','logaritmo','seno','cosseno','tangente','matriz','vetor','probabilidade','fatorial'] },
+                { key: 'História', words: ['guerra','revolução','império','colônia','monarquia','república','século','nação','tratado','independência','escravidão'] },
+                { key: 'Geografia', words: ['clima','bioma','relevo','população','urbanização','território','latitude','longitude','continente','oceano','erosão','fronteira'] },
             ];
-            const detected = topicMaps.find(m => m.words.some(w => text.includes(w))) || { key: "CONCEITO" };
-            sentences = sentences.filter(s => !s.match(/^(OBS|Página|Fig|Nota)/i)).slice(0, 30);
+            const detected = topicMaps.find(m => m.words.some(w => textLower.includes(w))) || { key: 'Estudo' };
+
+            // Extrair palavras-chave reais do documento (frequência e comprimento)
+            const wordFreq = {};
+            const allWords = fullText.split(/\W+/).filter(w => w.length > 4 && !stopwords.has(w.toLowerCase()));
+            allWords.forEach(w => { const k = w.toLowerCase(); wordFreq[k] = (wordFreq[k] || 0) + 1; });
+            const keywords = Object.entries(wordFreq)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 30)
+                .map(e => e[0]);
+
+            // Filtrar sentenças mais ricas (>= 20 chars, não header/figura)
+            const goodSentences = sentences
+                .filter(s => s.trim().length >= 20 && !s.match(/^(fig|tabela|obs|nota|página|quadro|fonte)/i))
+                .sort((a, b) => b.length - a.length);
+
+            const cards = [];
             for (let i = 0; i < count; i++) {
-                const s = sentences[i % sentences.length] || "Importante conceito da aula.";
-                let q = `Qual o ponto principal sobre "${s.substring(0, 40)}..."?`;
-                let a = s;
-                if (s.toLowerCase().includes('família')) q = "Qual a característica das famílias mencionadas neste trecho?";
-                if (s.toLowerCase().includes('período')) q = "O que determina o período de um elemento segundo o texto?";
-                if (s.toLowerCase().includes('energia')) q = "Qual a parte mais energética ou a relação de energia abordada?";
-                if (s.toLowerCase().includes('determina')) q = "O que é determinado pelo processo descrito no material?";
-                if (s.toLowerCase().includes('diagrama')) q = "Qual a importância deste diagrama para o conteúdo da aula?";
+                const s = goodSentences[i % goodSentences.length] || fullText.substring(i*80, i*80+120);
+                const clean = s.trim();
+
+                // Encontrar palavra-chave nesta sentença para fazer Cloze
+                const sentWords = clean.split(/\W+/).map(w => w.toLowerCase());
+                const found = sentWords.find(w => w.length > 4 && keywords.includes(w));
+
+                let q, a;
+                if (found) {
+                    // Cloze deletion real baseado no documento
+                    const regex = new RegExp(found, 'i');
+                    q = `Complete: "${clean.replace(regex, '______')}"`;
+                    a = `A palavra que completa é: <strong>${found}</strong>. Contexto: ${clean}`;
+                } else {
+                    // Pergunta direta baseada na sentença
+                    q = `O que o material diz sobre: "${clean.substring(0, 60)}..."?`;
+                    a = clean;
+                }
                 cards.push({ q, a, tag: detected.key });
             }
             return cards;
@@ -2194,12 +2235,73 @@
             setTimeout(() => { t.remove(); cb(); }, 800);
         }
 
-        function fcSaveToFirebase() {
-            if (!db) return alert('Sem conexão!');
-            const user = document.getElementById('user-display-name').textContent;
-            db.ref('user_flashcards/' + user.replace(/\s/g, '_')).push({
-                cards: fcState.cards, timestamp: Date.now()
-            }).then(() => alert('Salvo com sucesso!'));
+        function saveFlashcardTopic() {
+            if (!fcState.cards || fcState.cards.length === 0) return;
+            let saved = JSON.parse(localStorage.getItem('fecad_my_flashcards') || '[]');
+            const subject = fcState.cards[0]?.tag || 'Estudo';
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            const topicName = `Flashcards de ${subject} — ${dateStr}`;
+            const topicId = Date.now();
+            saved.unshift({ id: topicId, name: topicName, cards: fcState.cards, date: now.toISOString() });
+            localStorage.setItem('fecad_my_flashcards', JSON.stringify(saved));
+            renderTopicsHistory();
+            alert('✅ Tópico "' + topicName + '" salvo!');
+        }
+
+        function renderTopicsHistory() {
+            const container = document.getElementById('fc-topics-history');
+            const emptyState = document.getElementById('fc-empty-state');
+            const list = document.getElementById('flashcard-list');
+            if (!container) return;
+            let saved = JSON.parse(localStorage.getItem('fecad_my_flashcards') || '[]');
+            if (saved.length === 0) {
+                container.innerHTML = '';
+                if (list.children.length === 0) {
+                    emptyState.style.display = 'flex';
+                }
+                return;
+            }
+            emptyState.style.display = 'none';
+            container.innerHTML = `
+                <div style="font-size: 13px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">📂 Tópicos Salvos</div>
+                ${saved.map(t => `
+                    <div onclick="loadFlashcardTopic(${t.id})" style="background: rgba(99,102,241,0.05); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 12px 16px; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;" 
+                         onmouseover="this.style.borderColor='var(--primary-light)'; this.style.background='rgba(99,102,241,0.12)'" 
+                         onmouseout="this.style.borderColor='rgba(99,102,241,0.2)'; this.style.background='rgba(99,102,241,0.05)'">
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;">${t.name}</div>
+                            <div style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">${t.cards.length} cartões</div>
+                        </div>
+                        <div style="color: var(--primary-light); font-size: 20px;">▶</div>
+                    </div>
+                `).join('')}
+                <div onclick="clearAllTopics()" style="text-align:center; font-size: 11px; color: var(--text-dim); cursor: pointer; text-decoration: underline; margin-top: 4px;">Limpar histórico</div>
+            `;
+        }
+
+        function loadFlashcardTopic(id) {
+            let saved = JSON.parse(localStorage.getItem('fecad_my_flashcards') || '[]');
+            const topic = saved.find(t => t.id === id);
+            if (!topic) return;
+            fcState.cards = topic.cards;
+            document.getElementById('fc-panel-title').textContent = topic.name;
+            const badge = document.getElementById('fc-count-badge');
+            badge.textContent = topic.cards.length + ' cartões';
+            badge.style.display = 'inline';
+            document.getElementById('fc-empty-state').style.display = 'none';
+            fcRenderCards();
+        }
+
+        function clearAllTopics() {
+            if (confirm('Tem certeza que quer apagar todos os tópicos salvos?')) {
+                localStorage.removeItem('fecad_my_flashcards');
+                renderTopicsHistory();
+                document.getElementById('flashcard-list').innerHTML = '';
+                document.getElementById('fc-panel-title').textContent = 'Seus Flashcards';
+                document.getElementById('fc-count-badge').style.display = 'none';
+                document.getElementById('fc-empty-state').style.display = 'flex';
+            }
         }
 
         // --- FEED & OTHERS ---
@@ -2357,6 +2459,10 @@
 
             if(id==='chat') renderRooms();
             if(id==='explorar') renderFeed();
+            if(id==='flashcards') {
+                if(fcState.step === 'idle') fcInitChat();
+                renderTopicsHistory();
+            }
         }
 
         const rooms = ['Matemática', 'Física', 'Química', 'Biologia', 'Geografia', 'História', 'Português', 'Literatura', 'Artes', 'Educação Física', 'Geral'];
