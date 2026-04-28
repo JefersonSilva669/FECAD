@@ -2423,8 +2423,35 @@
             const input = document.getElementById('chat-input');
             const content = input.value.trim();
             if (!content || !currentRoom) return;
-            const user = document.getElementById('user-display-name').textContent;
-            db.ref('chats/' + currentRoom.replace(/[.#$\[\]]/g, '')).push({ userId: user, content, timestamp: Date.now() });
+
+            let userName = document.getElementById('user-display-name').textContent;
+            if (!userName || userName === 'Visitante') userName = 'Você';
+
+            if (typeof db !== 'undefined' && db !== null) {
+                const safeRoomName = currentRoom.replace(/[.#$\[\]]/g, '');
+                db.ref('chats/' + safeRoomName).push({
+                    userId: userName,
+                    content: content,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP || Date.now()
+                });
+            } else {
+                // Fallback para mock local
+                const message = document.createElement('div');
+                message.className = 'message msg-sent';
+                message.innerHTML = `
+                    <div class="msg-user">Você</div>
+                    ${content}
+                `;
+                document.getElementById('chat-box').appendChild(message);
+                document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+                
+                const warning = document.createElement('div');
+                warning.className = 'message msg-received';
+                warning.innerHTML = `<div class="msg-user">Sistema</div>⚠️ Você não configurou as chaves do Firebase! A mensagem só aparece localmente e sumirá ao recarregar a página. Verifique o código fonte.`;
+                document.getElementById('chat-box').appendChild(warning);
+                document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+            }
+
             input.value = '';
         }
 
@@ -2456,46 +2483,6 @@
                 reader.readAsDataURL(file);
             }
         }
-
-        function sendMessage() {
-            const input = document.getElementById('msgInput');
-            if (!input.value || !currentRoom) return;
-
-            let userName = document.getElementById('user-display-name').textContent;
-            if (!userName || userName === 'Visitante') userName = 'Você';
-
-            if (typeof db !== 'undefined' && db !== null) {
-                const safeRoomName = currentRoom.replace(/[.#$\[\]]/g, '');
-                db.ref('chats/' + safeRoomName).push({
-                    userId: userName,
-                    content: input.value,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
-            } else {
-                // Fallback para mock local
-                const message = document.createElement('div');
-                message.className = 'message msg-sent';
-                message.innerHTML = `
-                    <div class="msg-user">Você</div>
-                    ${input.value}
-                `;
-                document.getElementById('chat-box').appendChild(message);
-                document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
-                
-                if (typeof db !== 'undefined' && db === null) {
-                    const warning = document.createElement('div');
-                    warning.className = 'message msg-received';
-                    warning.innerHTML = `<div class="msg-user">Sistema</div>⚠️ Você não configurou as chaves do Firebase! A mensagem só aparece localmente e sumirá ao recarregar a página. Verifique o código fonte.`;
-                    document.getElementById('chat-box').appendChild(warning);
-                    document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
-                }
-            }
-
-            input.value = '';
-        }
-
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         // ===== REVISÃO POR MATÉRIA =====
         const revisaoData = [
