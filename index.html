@@ -1748,7 +1748,7 @@
                 </div>
             </nav>
 
-            <main class="main-content">
+            <main class="main-content" style="flex:1; padding: 30px 40px; overflow-y: auto; min-height: 0;">
                 <!-- TELA INICIAL (NOVA REFERÊNCIA) -->
                 <div id="page-home" class="page active">
                     <div class="page-home-layout">
@@ -2486,13 +2486,35 @@
         }
 
         // --- FEED & OTHERS ---
-        let notebooks = JSON.parse(localStorage.getItem('fecad_notebooks')) || [];
+        let notebooks = [];
+
+        function loadNotebooksFromFirebase() {
+            if (!db) {
+                // Fallback: localStorage
+                notebooks = JSON.parse(localStorage.getItem('fecad_notebooks_local') || '[]');
+                renderFeed();
+                return;
+            }
+            db.ref('notebooks').on('value', (snapshot) => {
+                notebooks = [];
+                snapshot.forEach(child => {
+                    notebooks.unshift({ ...child.val(), firebaseKey: child.key });
+                });
+                renderFeed();
+            });
+        }
+
         function renderFeed(f = "") {
             const feed = document.getElementById('notebook-feed');
             if(!feed) return;
-            feed.innerHTML = notebooks.filter(n => n.title.toLowerCase().includes(f.toLowerCase())).map(nb => `
+            const filtered = notebooks.filter(n => n.title && n.title.toLowerCase().includes((f || '').toLowerCase()));
+            if (filtered.length === 0) {
+                feed.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-dim); padding:60px 0;"><div style="font-size:48px; margin-bottom:12px;">📚</div><p>Nenhum caderno encontrado. Seja o primeiro a compartilhar!</p></div>`;
+                return;
+            }
+            feed.innerHTML = filtered.map(nb => `
                 <div class="notebook-card" onclick="viewNotebook(${nb.id})">
-                    <img src="${nb.img}" class="notebook-img">
+                    ${nb.img ? `<img src="${nb.img}" class="notebook-img">` : `<div class="notebook-img" style="background:var(--gradient); display:flex; align-items:center; justify-content:center; font-size:48px;">📓</div>`}
                     <div class="notebook-content">
                         <span class="tag">${nb.subject}</span>
                         <h3 class="notebook-title">${nb.title}</h3>
@@ -2622,11 +2644,22 @@
             const title = document.getElementById('up-title').value;
             const subject = document.getElementById('up-subject').value;
             const author = document.getElementById('user-display-name').textContent;
-            const img = document.getElementById('up-preview').src || 'https://via.placeholder.com/300';
-            notebooks.unshift({ id: Date.now(), title, subject, author, img });
-            localStorage.setItem('fecad_notebooks', JSON.stringify(notebooks));
-            renderFeed();
-            closeModal('uploadModal');
+            const img = document.getElementById('up-preview').src || '';
+            if (!title || !subject) return alert('Preencha o título e a matéria!');
+
+            const nb = { id: Date.now(), title, subject, author, img, timestamp: Date.now() };
+
+            if (db) {
+                db.ref('notebooks').push(nb)
+                    .then(() => { closeModal('uploadModal'); })
+                    .catch(e => alert('Erro ao salvar: ' + e.message));
+            } else {
+                // Fallback local
+                notebooks.unshift(nb);
+                localStorage.setItem('fecad_notebooks_local', JSON.stringify(notebooks));
+                renderFeed();
+                closeModal('uploadModal');
+            }
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -3185,7 +3218,7 @@ Para salvar como PDF: <strong>Arquivo → Salvar Como → Tipo: PDF</strong>.`
         }
 
         // Init
-        renderFeed();
+        loadNotebooksFromFirebase();
         renderSalas();
         startNotificationsWatcher();
     </script>
