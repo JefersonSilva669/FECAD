@@ -651,6 +651,10 @@
             margin-top: 3px;
         }
 
+        .message:hover .msg-reply-icon { opacity: 1 !important; }
+        .msg-received .msg-reply-icon { right: -25px; left: auto; }
+        .msg-sent .msg-reply-icon { left: -25px; right: auto; }
+
         .chat-empty-state {
             flex: 1;
             display: flex;
@@ -1860,9 +1864,16 @@
                             <div class="chat-messages" id="chat-box" style="display:none;"></div>
 
                             <!-- Input -->
-                            <div class="chat-input-area" id="chat-input-area" style="display:none;">
-                                <input type="text" id="chat-input" placeholder="Digite uma mensagem..." onkeydown="if(event.key==='Enter') sendMessage()">
-                                <button class="chat-send-btn" onclick="sendMessage()">➤</button>
+                            <div id="chat-bottom-area" style="display:none; background: rgba(15, 23, 42, 0.9); border-top: 1px solid var(--border); flex-direction:column;">
+                                <div id="chat-reply-preview" style="display:none; padding: 10px 60px; background: rgba(0,0,0,0.2); border-left: 3px solid var(--primary); font-size: 12px; position:relative;">
+                                    <div style="font-weight:bold; color:var(--primary-light); margin-bottom:4px;" id="reply-preview-user">Usuário</div>
+                                    <div style="color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="reply-preview-text">Texto</div>
+                                    <div style="position:absolute; right:20px; top:15px; cursor:pointer; color:var(--text-dim); padding: 5px;" onclick="cancelReply()">✕</div>
+                                </div>
+                                <div class="chat-input-area" id="chat-input-area" style="border-top:none;">
+                                    <input type="text" id="chat-input" placeholder="Digite uma mensagem..." onkeydown="if(event.key==='Enter') sendMessage()">
+                                    <button class="chat-send-btn" onclick="sendMessage()">➤</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2008,14 +2019,13 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Foto do Caderno</label>
-                    <input type="file" id="up-file" style="display: none;" accept="image/*"
-                        onchange="previewImage(event)">
-                    <div style="border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer;"
+                    <label>Fotos do Caderno (Máx 5)</label>
+                    <input type="file" id="up-file" style="display: none;" accept="image/*" multiple
+                        onchange="previewMultipleImages(event)">
+                    <div style="border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; min-height: 100px; display:flex; align-items:center; justify-content:center; flex-direction:column;"
                         onclick="document.getElementById('up-file').click()">
-                        <img id="up-preview"
-                            style="max-width: 100%; max-height: 150px; display: none; margin: 0 auto; border-radius: 8px;">
-                        <span id="up-text">Clique ou arraste a foto aqui</span>
+                        <div id="up-preview-container" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom: 8px;"></div>
+                        <span id="up-text">Clique ou arraste as fotos aqui</span>
                     </div>
                 </div>
                 <div style="display: flex; gap: 12px; margin-top: 30px;">
@@ -2032,8 +2042,13 @@
     <div id="viewModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
             <div id="view-content" style="display: flex; gap: 24px;">
-                <div style="flex: 1;">
-                    <img id="view-img" src="" style="width: 100%; border-radius: 12px; box-shadow: var(--shadow);">
+                <div style="flex: 1; position: relative; min-width:0;">
+                    <img id="view-img" src="" style="width: 100%; border-radius: 12px; box-shadow: var(--shadow); object-fit: contain; max-height: 500px; background: rgba(0,0,0,0.2);">
+                    <div id="view-carousel-controls" style="display:none; position:absolute; top:50%; width:100%; justify-content:space-between; transform:translateY(-50%); padding: 0 10px; box-sizing:border-box;">
+                        <button onclick="prevPage()" style="background:var(--bg-deep); color:white; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; opacity:0.8; font-size:18px;">❮</button>
+                        <button onclick="nextPage()" style="background:var(--bg-deep); color:white; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; opacity:0.8; font-size:18px;">❯</button>
+                    </div>
+                    <div id="view-page-indicator" style="text-align:center; margin-top:8px; font-size:12px; color:var(--text-dim); display:none;">1 / 1</div>
                 </div>
                 <div style="width: 280px; display: flex; flex-direction: column;">
                     <h3 id="view-title" style="margin-bottom: 10px;"></h3>
@@ -2106,7 +2121,7 @@
             
             document.getElementById('chat-top-bar').style.display = 'flex';
             document.getElementById('chat-box').style.display = 'flex';
-            document.getElementById('chat-input-area').style.display = 'flex';
+            document.getElementById('chat-bottom-area').style.display = 'flex';
             document.getElementById('chat-empty-state').style.display = 'none';
             
             document.getElementById('chat-box').innerHTML = `<div class="message msg-received"><div class="msg-user">Sistema</div>Conectado à sala de ${roomName}.</div>`;
@@ -2126,12 +2141,27 @@
                     // Color by sala for received messages
                     const salaColor = getSalaColor(senderSala);
                     
+                    let replyHtml = '';
+                    if (data.replyTo) {
+                        replyHtml = `
+                            <div style="background:rgba(0,0,0,0.15); padding:6px 10px; border-radius:6px; border-left:3px solid var(--primary-light); font-size:11px; margin-bottom:6px; opacity:0.8;">
+                                <div style="font-weight:bold; color:var(--primary-light); margin-bottom:2px;">${data.replyTo.user}</div>
+                                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${data.replyTo.text}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    const safeContent = (data.content || '').replace(/'/g, "\\'");
+                    const replyBtnHtml = `<div style="position:absolute; top:50%; transform:translateY(-50%); cursor:pointer; font-size:16px; opacity:0; transition:opacity 0.2s;" class="msg-reply-icon" onclick="startReply('${isMe ? 'Você' : data.userId}', '${safeContent}')" title="Responder">↩️</div>`;
+
                     if (isMe) {
                         message.className = 'message msg-sent';
                         message.innerHTML = `
+                            ${replyBtnHtml}
                             <div class="msg-user">Você</div>
+                            ${replyHtml}
                             ${data.content}
-                            <div class="msg-time">${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</div>
+                            <div class="msg-time">${new Date(data.timestamp || Date.now()).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</div>
                         `;
                     } else {
                         message.className = 'message msg-received';
@@ -2140,10 +2170,12 @@
                             message.style.borderLeft = `3px solid ${salaColor}`;
                         }
                         message.innerHTML = `
+                            ${replyBtnHtml}
                             <div class="msg-user" style="color:${salaColor}">${data.userId}</div>
                             ${senderSala ? `<div style="font-size:10px; color:${salaColor}80; margin-bottom:4px; font-weight:600;">Sala ${senderSala}</div>` : ''}
+                            ${replyHtml}
                             ${data.content}
-                            <div class="msg-time">${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</div>
+                            <div class="msg-time">${new Date(data.timestamp || Date.now()).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</div>
                         `;
                     }
                     document.getElementById('chat-box').appendChild(message);
@@ -2316,7 +2348,7 @@
         }
 
         function fcGenerateQAFromText(sentences, count) {
-            const stopwords = new Set(['de','do','da','dos','das','em','no','na','nos','nas','para','com','por','que','se','um','uma','uns','umas','o','a','os','as','e','ou','ao','aos','à','às','seu','sua','este','esta','pelo','pela','mais','mas','como','há','foi','são','uma','isso','ele','ela','ser']);
+            const stopwords = new Set(['de','do','da','dos','das','em','no','na','nos','nas','para','com','por','que','se','um','uma','uns','umas','o','a','os','as','e','ou','ao','aos','à','às','seu','sua','este','esta','pelo','pela','mais','mas','como','há','foi','são','uma','isso','ele','ela','ser','está','sido']);
             const fullText = sentences.join(' ');
             
             // Detectar matéria pelo conteúdo
@@ -2328,10 +2360,16 @@
                 { key: 'Matemática', words: ['função','equação','inequação','derivada','integral','logaritmo','seno','cosseno','tangente','matriz','vetor','probabilidade','fatorial'] },
                 { key: 'História', words: ['guerra','revolução','império','colônia','monarquia','república','século','nação','tratado','independência','escravidão'] },
                 { key: 'Geografia', words: ['clima','bioma','relevo','população','urbanização','território','latitude','longitude','continente','oceano','erosão','fronteira'] },
+                { key: 'Português', words: ['verbo','substantivo','oração','sujeito','predicado','adjetivo','texto','poema','literatura','autor','figura de linguagem'] }
             ];
             const detected = topicMaps.find(m => m.words.some(w => textLower.includes(w))) || { key: 'Estudo' };
+            fcState.subject = detected.key;
 
-            // Extrair palavras-chave reais do documento (frequência e comprimento)
+            if (fcState.mode === 'exercises') {
+                return fcGenerateExercises(detected.key, count);
+            }
+
+            // Extrair palavras-chave reais do documento
             const wordFreq = {};
             const allWords = fullText.split(/\W+/).filter(w => w.length > 4 && !stopwords.has(w.toLowerCase()));
             allWords.forEach(w => { const k = w.toLowerCase(); wordFreq[k] = (wordFreq[k] || 0) + 1; });
@@ -2340,34 +2378,112 @@
                 .slice(0, 30)
                 .map(e => e[0]);
 
-            // Filtrar sentenças mais ricas (>= 20 chars, não header/figura)
+            // Feedback visual no chat
+            const logBox = document.createElement('div');
+            logBox.className = 'message msg-received';
+            logBox.innerHTML = `<div class="msg-user">Sistema</div>📄 Detectei conteúdo de <strong>${detected.key}</strong>.<br><small style="opacity:0.7">Palavras-chave: ${keywords.slice(0,5).join(', ')}</small>`;
+            document.getElementById('fc-messages').appendChild(logBox);
+            document.getElementById('fc-messages').scrollTop = document.getElementById('fc-messages').scrollHeight;
+
+            // Filtrar sentenças
             const goodSentences = sentences
                 .filter(s => s.trim().length >= 20 && !s.match(/^(fig|tabela|obs|nota|página|quadro|fonte)/i))
                 .sort((a, b) => b.length - a.length);
 
             const cards = [];
-            for (let i = 0; i < count; i++) {
-                const s = goodSentences[i % goodSentences.length] || fullText.substring(i*80, i*80+120);
+            let attempts = 0;
+            while(cards.length < count && attempts < goodSentences.length * 2 && attempts < 100) {
+                const s = goodSentences[attempts % goodSentences.length] || fullText.substring(attempts*80, attempts*80+120);
                 const clean = s.trim();
+                attempts++;
+                
+                if (!clean || clean.length < 15) continue;
 
-                // Encontrar palavra-chave nesta sentença para fazer Cloze
                 const sentWords = clean.split(/\W+/).map(w => w.toLowerCase());
                 const found = sentWords.find(w => w.length > 4 && keywords.includes(w));
-
-                let q, a;
-                if (found) {
-                    // Cloze deletion real baseado no documento
-                    const regex = new RegExp(found, 'i');
-                    q = `Complete: "${clean.replace(regex, '______')}"`;
-                    a = `A palavra que completa é: <strong>${found}</strong>. Contexto: ${clean}`;
-                } else {
-                    // Pergunta direta baseada na sentença
-                    q = `O que o material diz sobre: "${clean.substring(0, 60)}..."?`;
+                
+                let q = '', a = '';
+                
+                if (clean.match(/\b(é|são|consiste em|significa|representa)\b/i) && clean.length < 150) {
+                    const parts = clean.split(/\b(é|são|consiste em|significa|representa)\b/i);
+                    if (parts.length >= 3 && parts[0].trim().length > 3) {
+                        q = `O que ${parts[1]} "${parts[0].trim()}"?`;
+                        a = clean;
+                    }
+                } 
+                
+                if (!q && found) {
+                    const regex = new RegExp(`\\b${found}\\b`, 'i');
+                    q = `Complete a lacuna:<br><br>"${clean.replace(regex, '______')}"`;
+                    a = `A palavra correta é: <strong>${found}</strong>.<br><br><small>Contexto: ${clean}</small>`;
+                } 
+                
+                if (!q) {
+                    q = `O que o texto afirma sobre:<br><br>"${clean.substring(0, 40)}..."?`;
                     a = clean;
                 }
-                cards.push({ q, a, tag: detected.key });
+                
+                if (q && a) cards.push({ q, a, tag: detected.key });
             }
             return cards;
+        }
+
+        function fcGenerateExercises(subject, count) {
+            const dbEx = {
+                'Biologia': [
+                    { q: "(ENEM) Mitocôndrias são organelas celulares cujas principais funções são:", options: ["a) Fotossíntese", "b) Respiração celular", "c) Síntese de proteínas", "d) Digestão intracelular", "e) Armazenamento de lipídios"], ans: "b) Respiração celular. As mitocôndrias são as usinas de energia das células aeróbicas." },
+                    { q: "(FUVEST) O códon corresponde a uma trinca de bases do:", options: ["a) DNA", "b) RNA transportador", "c) RNA ribossômico", "d) RNA mensageiro", "e) Ribossomo"], ans: "d) RNA mensageiro. Os códons do RNAm são lidos pelos anticódons do RNAt." },
+                    { q: "(UNICAMP) A fotossíntese e a respiração celular são processos que se complementam, pois:", options: ["a) Ambos consomem oxigênio", "b) A fotossíntese produz o oxigênio consumido na respiração", "c) Ambos produzem glicose", "d) A respiração produz o oxigênio para a fotossíntese", "e) Apenas ocorrem em plantas"], ans: "b) A fotossíntese produz o oxigênio e a glicose que são consumidos na respiração celular." },
+                    { q: "(ENEM) As vacinas atuam estimulando o sistema imunológico a produzir:", options: ["a) Antígenos", "b) Anticorpos", "c) Antibióticos", "d) Glóbulos vermelhos", "e) Plaquetas"], ans: "b) Anticorpos. As vacinas contêm antígenos que estimulam a memória imunológica e produção de anticorpos." },
+                    { q: "(UNESP) O processo de divisão celular que reduz pela metade o número de cromossomos é a:", options: ["a) Mitose", "b) Meiose", "c) Clivagem", "d) Fissão binária", "e) Brotamento"], ans: "b) Meiose. Ocorre na formação de gametas, gerando células haploides." }
+                ],
+                'Química': [
+                    { q: "(ENEM) O elemento químico presente em todos os compostos orgânicos é o:", options: ["a) Oxigênio", "b) Nitrogênio", "c) Carbono", "d) Hidrogênio", "e) Enxofre"], ans: "c) Carbono. É a base da química orgânica devido a sua tetravalência." },
+                    { q: "(FUVEST) Ácidos, segundo Arrhenius, são substâncias que em solução aquosa liberam como cátion exclusivo o:", options: ["a) H+", "b) OH-", "c) Na+", "d) Cl-", "e) O2-"], ans: "a) H+ (ou H3O+). É a definição clássica de Arrhenius para ácidos." },
+                    { q: "(UNICAMP) Uma solução de pH = 3 é considerada:", options: ["a) Fortemente básica", "b) Levemente básica", "c) Neutra", "d) Levemente ácida", "e) Fortemente ácida"], ans: "e) Fortemente ácida. A escala de pH vai de 0 a 14, sendo < 7 ácido, e 3 é bem ácido." },
+                    { q: "(ENEM) A reação de um ácido com uma base produz:", options: ["a) Apenas água", "b) Apenas sal", "c) Sal e água", "d) Ácido e sal", "e) Base e água"], ans: "c) Sal e água. É a clássica reação de neutralização." },
+                    { q: "(UNESP) O isótopo mais abundante do carbono, o Carbono-12, possui em seu núcleo:", options: ["a) 6 prótons e 6 nêutrons", "b) 6 prótons e 8 nêutrons", "c) 8 prótons e 6 nêutrons", "d) 12 prótons e 12 nêutrons", "e) 6 prótons e 0 nêutrons"], ans: "a) 6 prótons e 6 nêutrons. (A = Z + N -> 12 = 6 + N -> N = 6)." }
+                ],
+                'Física': [
+                    { q: "(ENEM) Segundo a 2ª Lei de Newton, a força resultante sobre um corpo é igual ao produto de sua massa pela sua:", options: ["a) Velocidade", "b) Aceleração", "c) Energia", "d) Posição", "e) Densidade"], ans: "b) Aceleração. A famosa equação F = m * a." },
+                    { q: "(FUVEST) A energia cinética de um corpo está diretamente relacionada com a sua:", options: ["a) Altura", "b) Massa e velocidade", "c) Temperatura", "d) Posição", "e) Cor"], ans: "b) Massa e velocidade. A fórmula é Ec = (m * v^2) / 2." },
+                    { q: "(UNICAMP) A unidade de medida de potência no Sistema Internacional (SI) é o:", options: ["a) Joule", "b) Newton", "c) Watt", "d) Volt", "e) Ampère"], ans: "c) Watt. 1 Watt equivale a 1 Joule por segundo." },
+                    { q: "(ENEM) O som é uma onda:", options: ["a) Eletromagnética e transversal", "b) Mecânica e transversal", "c) Mecânica e longitudinal", "d) Eletromagnética e longitudinal", "e) Gravitacional"], ans: "c) Mecânica e longitudinal. O som precisa de um meio material para se propagar." },
+                    { q: "(UNESP) Dois corpos em equilíbrio térmico possuem necessariamente a mesma:", options: ["a) Massa", "b) Energia Térmica", "c) Capacidade térmica", "d) Temperatura", "e) Densidade"], ans: "d) Temperatura. É a condição para que não haja fluxo de calor entre eles." }
+                ],
+                'Matemática': [
+                    { q: "(ENEM) Em um triângulo retângulo, o quadrado da hipotenusa é igual à:", options: ["a) Soma dos catetos", "b) Diferença dos quadrados dos catetos", "c) Soma dos quadrados dos catetos", "d) Metade da soma dos catetos", "e) Produto dos catetos"], ans: "c) Soma dos quadrados dos catetos. O clássico Teorema de Pitágoras: c^2 = a^2 + b^2." },
+                    { q: "(FUVEST) O logaritmo de 1 em qualquer base a (a > 0 e a ≠ 1) é igual a:", options: ["a) a", "b) 1", "c) -1", "d) 0", "e) Não existe"], ans: "d) 0. Pois qualquer número elevado a 0 é 1 (a^0 = 1)." },
+                    { q: "(UNICAMP) Uma função do 2º grau do tipo f(x) = ax² + bx + c, com a > 0, tem um gráfico em forma de parábola com concavidade voltada para:", options: ["a) Cima", "b) Baixo", "c) Esquerda", "d) Direita", "e) É uma reta"], ans: "a) Cima. Quando o coeficiente 'a' é positivo, a concavidade é para cima." },
+                    { q: "(ENEM) O fatorial de 5 (5!) é igual a:", options: ["a) 15", "b) 25", "c) 120", "d) 60", "e) 24"], ans: "c) 120. Pois 5! = 5 * 4 * 3 * 2 * 1 = 120." },
+                    { q: "(UNESP) A área de um círculo de raio r é dada pela fórmula:", options: ["a) 2πr", "b) πr²", "c) 4πr²", "d) (4/3)πr³", "e) π²r"], ans: "b) πr². A área do círculo é o produto de Pi pelo quadrado do raio." }
+                ],
+                'Geral': [
+                    { q: "(ENEM) Qual é o continente com a maior extensão territorial do mundo?", options: ["a) América", "b) África", "c) Europa", "d) Ásia", "e) Antártida"], ans: "d) Ásia. É o maior e mais populoso continente." },
+                    { q: "(FUVEST) A Revolução Francesa iniciou-se em qual ano?", options: ["a) 1500", "b) 1776", "c) 1789", "d) 1822", "e) 1914"], ans: "c) 1789. Com a Queda da Bastilha." },
+                    { q: "(UNICAMP) Qual destes é considerado o maior planeta do Sistema Solar?", options: ["a) Terra", "b) Marte", "c) Júpiter", "d) Saturno", "e) Vênus"], ans: "c) Júpiter." },
+                    { q: "(ENEM) Qual foi o primeiro país da América Latina a declarar independência?", options: ["a) Brasil", "b) Argentina", "c) México", "d) Haiti", "e) Colômbia"], ans: "d) Haiti. Em 1804." },
+                    { q: "(UNESP) O processo de desertificação está mais associado a qual bioma brasileiro?", options: ["a) Amazônia", "b) Cerrado", "c) Caatinga", "d) Pantanal", "e) Pampa"], ans: "c) Caatinga. Devido ao clima semiárido e degradação do solo." }
+                ]
+            };
+
+            const pool = dbEx[subject] || dbEx['Geral'];
+            const shuffled = [...pool].sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, Math.min(count, shuffled.length));
+
+            const logBox = document.createElement('div');
+            logBox.className = 'message msg-received';
+            logBox.innerHTML = `<div class="msg-user">Sistema</div>📝 Preparei <strong>${selected.length} questões de vestibulares</strong> focadas em ${subject}!`;
+            document.getElementById('fc-messages').appendChild(logBox);
+            document.getElementById('fc-messages').scrollTop = document.getElementById('fc-messages').scrollHeight;
+
+            return selected.map(ex => {
+                return {
+                    q: `<strong style="color:var(--primary-light)">EXERCÍCIO DE ${subject.toUpperCase()}</strong><br><br>${ex.q}<br><br><div style="text-align:left; padding-left:10px; border-left:2px solid var(--border);">${ex.options.join('<br><br>')}</div>`,
+                    a: `<div style="background:rgba(16,185,129,0.15); padding:15px; border-left:4px solid #10b981; border-radius:6px; text-align:left;"><strong>GABARITO:</strong><br><br>${ex.ans}</div>`,
+                    tag: subject
+                };
+            });
         }
 
         function fcRenderCards() {
@@ -2498,9 +2614,23 @@
             db.ref('notebooks').on('value', (snapshot) => {
                 notebooks = [];
                 snapshot.forEach(child => {
-                    notebooks.unshift({ ...child.val(), firebaseKey: child.key });
+                    const val = child.val();
+                    let feedbacksArray = [];
+                    let avgRating = 0;
+                    if (val.feedbacks) {
+                        feedbacksArray = Object.values(val.feedbacks);
+                        const sum = feedbacksArray.reduce((acc, f) => acc + (f.rating || 5), 0);
+                        avgRating = (sum / feedbacksArray.length).toFixed(1);
+                    }
+                    notebooks.unshift({ ...val, firebaseKey: child.key, feedbacks: feedbacksArray, avgRating });
                 });
                 renderFeed();
+                if (document.getElementById('meus-cadernos-container') && document.getElementById('meus-cadernos-container').style.display !== 'none') {
+                    if (typeof renderMeusCadernos === 'function') renderMeusCadernos();
+                }
+                if (document.getElementById('viewModal').style.display === 'flex' && currentViewNotebookId) {
+                    viewNotebook(currentViewNotebookId);
+                }
             });
         }
 
@@ -2512,34 +2642,49 @@
                 feed.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-dim); padding:60px 0;"><div style="font-size:48px; margin-bottom:12px;">📚</div><p>Nenhum caderno encontrado. Seja o primeiro a compartilhar!</p></div>`;
                 return;
             }
-            feed.innerHTML = filtered.map(nb => `
+            feed.innerHTML = filtered.map(nb => {
+                let ratingHtml = '';
+                if (nb.feedbacks && nb.feedbacks.length > 0) {
+                    ratingHtml = `<div style="font-size:12px; color:#fbbf24; margin-top:6px; font-weight:600;">⭐ ${nb.avgRating} (${nb.feedbacks.length} avaliações)</div>`;
+                }
+                return `
                 <div class="notebook-card" onclick="viewNotebook(${nb.id})">
                     ${nb.img ? `<img src="${nb.img}" class="notebook-img">` : `<div class="notebook-img" style="background:var(--gradient); display:flex; align-items:center; justify-content:center; font-size:48px;">📓</div>`}
                     <div class="notebook-content">
                         <span class="tag">${nb.subject}</span>
                         <h3 class="notebook-title">${nb.title}</h3>
                         <div class="author">Por ${nb.author}</div>
+                        ${ratingHtml}
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
         }
 
         let currentViewNotebookId = null;
+        let currentViewPages = [];
+        let currentPageIndex = 0;
 
         function viewNotebook(id) {
             currentViewNotebookId = id;
             const nb = notebooks.find(n => n.id === id);
-            document.getElementById('view-img').src = nb.img;
+            
+            currentViewPages = nb.pages && nb.pages.length > 0 ? nb.pages : [nb.img || ''];
+            currentPageIndex = 0;
+            updateCarouselView();
+            
             document.getElementById('view-title').textContent = nb.title;
             document.getElementById('view-author').textContent = 'Por ' + nb.author;
             
             const feedbacksContainer = document.getElementById('view-feedbacks');
             if (nb.feedbacks && nb.feedbacks.length > 0) {
-                feedbacksContainer.innerHTML = nb.feedbacks.map(f => `
+                let html = `<div style="font-size:14px; font-weight:bold; color:#fbbf24; margin-bottom:12px;">Avaliação Geral: ⭐ ${nb.avgRating} (${nb.feedbacks.length} avaliações)</div>`;
+                html += nb.feedbacks.map(f => `
                     <div style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
                         <div style="font-weight: bold; color: var(--primary-light); margin-bottom: 4px;">${f.user} <span style="color:#fbbf24; font-size:11px;">${'★'.repeat(f.rating)}</span></div>
                         ${f.text}
                     </div>
                 `).join('');
+                feedbacksContainer.innerHTML = html;
             } else {
                 feedbacksContainer.innerHTML = '<div style="opacity: 0.5; font-style: italic;">Ainda não há recomendações. Seja o primeiro!</div>';
             }
@@ -2570,19 +2715,27 @@
             
             const nbIndex = notebooks.findIndex(n => n.id === currentViewNotebookId);
             if (nbIndex === -1) return;
+            const nb = notebooks[nbIndex];
             
-            if (!notebooks[nbIndex].feedbacks) notebooks[nbIndex].feedbacks = [];
             let userName = document.getElementById('user-display-name').textContent;
             if (!userName || userName === 'Visitante') userName = 'Visitante Anônimo';
             
-            notebooks[nbIndex].feedbacks.push({ user: userName, text, rating: currentRating });
-            localStorage.setItem('fecad_notebooks', JSON.stringify(notebooks));
-            
-            textInput.value = '';
-            viewNotebook(currentViewNotebookId);
-            
-            if (document.getElementById('meus-cadernos-container').style.display !== 'none') {
-                renderMeusCadernos();
+            const feedbackData = { user: userName, text, rating: currentRating, timestamp: Date.now() };
+
+            if (db && nb.firebaseKey) {
+                db.ref(`notebooks/${nb.firebaseKey}/feedbacks`).push(feedbackData)
+                    .then(() => { textInput.value = ''; })
+                    .catch(e => alert("Erro ao enviar feedback: " + e.message));
+            } else {
+                // Fallback local
+                if (!nb.feedbacks) nb.feedbacks = [];
+                nb.feedbacks.push(feedbackData);
+                localStorage.setItem('fecad_notebooks_local', JSON.stringify(notebooks));
+                textInput.value = '';
+                viewNotebook(currentViewNotebookId);
+                if (document.getElementById('meus-cadernos-container') && document.getElementById('meus-cadernos-container').style.display !== 'none') {
+                    if (typeof renderMeusCadernos === 'function') renderMeusCadernos();
+                }
             }
         }
         
@@ -2612,11 +2765,16 @@
                 return;
             }
             
-            container.innerHTML = myNotebooks.map(nb => `
+            container.innerHTML = myNotebooks.map(nb => {
+                const imgThumb = (nb.pages && nb.pages.length > 0) ? nb.pages[0] : (nb.img || '');
+                return `
                 <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex;">
-                    <img src="${nb.img}" style="width: 200px; height: 100%; object-fit: cover; min-height: 150px; border-right: 1px solid var(--border);">
+                    ${imgThumb ? `<img src="${imgThumb}" style="width: 200px; height: 100%; object-fit: cover; min-height: 150px; border-right: 1px solid var(--border);">` : `<div style="width: 200px; height: 100%; display:flex; align-items:center; justify-content:center; background:var(--gradient); font-size:48px;">📓</div>`}
                     <div style="padding: 20px; flex: 1;">
-                        <span class="tag">${nb.subject}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="tag">${nb.subject}</span>
+                            ${nb.feedbacks && nb.feedbacks.length > 0 ? `<div style="font-size:12px; font-weight:bold; color:#fbbf24;">⭐ ${nb.avgRating} (${nb.feedbacks.length} avaliações)</div>` : ''}
+                        </div>
                         <h3 style="font-size: 18px; font-weight: 700; margin: 8px 0;">${nb.title}</h3>
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
                             <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--primary-light);">Feedbacks Recebidos:</h4>
@@ -2637,17 +2795,19 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+                `
+            }).join('');
         }
 
         function addNotebook() {
             const title = document.getElementById('up-title').value;
             const subject = document.getElementById('up-subject').value;
             const author = document.getElementById('user-display-name').textContent;
-            const img = document.getElementById('up-preview').src || '';
+            
             if (!title || !subject) return alert('Preencha o título e a matéria!');
+            if (uploadedPages.length === 0) return alert('Adicione pelo menos uma foto!');
 
-            const nb = { id: Date.now(), title, subject, author, img, timestamp: Date.now() };
+            const nb = { id: Date.now(), title, subject, author, pages: uploadedPages, img: uploadedPages[0], timestamp: Date.now() };
 
             if (db) {
                 db.ref('notebooks').push(nb)
@@ -2664,6 +2824,45 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function updateCarouselView() {
+            document.getElementById('view-img').src = currentViewPages[currentPageIndex];
+            const controls = document.getElementById('view-carousel-controls');
+            const indicator = document.getElementById('view-page-indicator');
+            if (currentViewPages.length > 1) {
+                controls.style.display = 'flex';
+                indicator.style.display = 'block';
+                indicator.textContent = `Página ${currentPageIndex + 1} / ${currentViewPages.length}`;
+            } else {
+                controls.style.display = 'none';
+                indicator.style.display = 'none';
+            }
+        }
+        function prevPage() { if (currentPageIndex > 0) { currentPageIndex--; updateCarouselView(); } }
+        function nextPage() { if (currentPageIndex < currentViewPages.length - 1) { currentPageIndex++; updateCarouselView(); } }
+
+        let uploadedPages = [];
+        function previewMultipleImages(event) {
+            const files = Array.from(event.target.files).slice(0, 5); // limit to 5
+            uploadedPages = [];
+            const container = document.getElementById('up-preview-container');
+            container.innerHTML = '';
+            document.getElementById('up-text').style.display = files.length ? 'none' : 'block';
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    uploadedPages.push(e.target.result);
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.height = '60px';
+                    img.style.borderRadius = '4px';
+                    img.style.objectFit = 'cover';
+                    container.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
 
         function saveProfileSala() {
             const sel = document.getElementById('profile-sala-select');
@@ -2744,7 +2943,7 @@
             document.getElementById('chat-empty-state').style.display = 'none';
             document.getElementById('chat-top-bar').style.display = 'flex';
             document.getElementById('chat-box').style.display = 'flex';
-            document.getElementById('chat-input-area').style.display = 'flex';
+            document.getElementById('chat-bottom-area').style.display = 'flex';
             document.getElementById('chat-room-avatar').textContent = roomEmoji(r);
             
             // Clear unread count
@@ -2787,22 +2986,39 @@
             // Get user's sala from badge
             const badgeText = document.getElementById('user-badge').textContent;
             const userSala = badgeText.startsWith('Sala ') ? badgeText.replace('Sala ', '').trim() : '';
+            
+            const messageData = {
+                userId: userName,
+                sala: userSala,
+                content: content,
+                timestamp: firebase.database.ServerValue ? firebase.database.ServerValue.TIMESTAMP : Date.now()
+            };
+            
+            if (currentReplyTo) {
+                messageData.replyTo = currentReplyTo;
+                cancelReply();
+            }
 
             if (typeof db !== 'undefined' && db !== null) {
                 const safeRoomName = currentRoom.replace(/[.#$\[\]]/g, '');
-                db.ref('chats/' + safeRoomName).push({
-                    userId: userName,
-                    sala: userSala,
-                    content: content,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP || Date.now()
-                });
+                db.ref('chats/' + safeRoomName).push(messageData);
             } else {
                 // Fallback para mock local
                 const message = document.createElement('div');
                 message.className = 'message msg-sent';
+                let replyHtml = '';
+                if (messageData.replyTo) {
+                    replyHtml = `
+                        <div style="background:rgba(0,0,0,0.15); padding:6px 10px; border-radius:6px; border-left:3px solid var(--primary-light); font-size:11px; margin-bottom:6px; opacity:0.8;">
+                            <div style="font-weight:bold; color:var(--primary-light); margin-bottom:2px;">${messageData.replyTo.user}</div>
+                            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${messageData.replyTo.text}</div>
+                        </div>
+                    `;
+                }
                 message.innerHTML = `
                     <div class="msg-user">Você</div>
                     ${userSala ? `<div style="font-size:10px; color:rgba(255,255,255,0.5); margin-bottom:4px;">Sala ${userSala}</div>` : ''}
+                    ${replyHtml}
                     ${content}
                     <div class="msg-time">${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
                 `;
@@ -2817,6 +3033,19 @@
             }
 
             input.value = '';
+        }
+        
+        let currentReplyTo = null;
+        function startReply(user, text) {
+            currentReplyTo = { user, text };
+            document.getElementById('chat-reply-preview').style.display = 'block';
+            document.getElementById('reply-preview-user').textContent = user;
+            document.getElementById('reply-preview-text').textContent = text;
+            document.getElementById('chat-input').focus();
+        }
+        function cancelReply() {
+            currentReplyTo = null;
+            document.getElementById('chat-reply-preview').style.display = 'none';
         }
 
         function handleSearch() { renderFeed(document.getElementById('global-search').value); }
