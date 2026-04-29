@@ -2248,12 +2248,20 @@
         }
 
         // --- FLASHCARDS AI SYSTEM ---
-        let fcState = { step: 'idle', count: 5, subject: '', mode: '', docContext: '', cards: [] };
+        let fcState = { step: 'idle', count: 5, subject: '', mode: '', docContext: '', cards: [], saved: false };
         let fcSelectedFile = null, fcSelectedFileName = "", fcExtractedText = "";
 
-        function fcInitChat() {
-            fcState = { step: 'ask_mode', count: 5, subject: '', mode: '', docContext: '', cards: [] };
+        function fcInitChat(force = false) {
+            if (!force && fcState.cards && fcState.cards.length > 0 && !fcState.saved) {
+                const conf = confirm('Tem certeza que deseja iniciar uma nova sessão sem salvar? O progresso atual da lista será apagado permanentemente.');
+                if (!conf) return;
+            }
+            
+            fcState = { step: 'ask_mode', count: 5, subject: '', mode: '', docContext: '', cards: [], saved: false };
             document.getElementById('fc-messages').innerHTML = '';
+            document.getElementById('flashcards-view').classList.remove('active');
+            document.getElementById('flashcard-list').innerHTML = '';
+            
             fcAIMessage('Olá! 👋 Sou o <strong>Assistente FECAD</strong>. O que você deseja criar hoje?', `
                 <div class="fc-subject-grid" style="flex-direction:column; gap:8px;">
                     <div class="fc-subject-btn" onclick="fcPickMode('flashcards')">🃏 Flashcards de Revisão</div>
@@ -2777,12 +2785,13 @@
             const subject = fcState.cards[0]?.tag || 'Estudo';
             const now = new Date();
             const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-            const topicName = `Flashcards de ${subject} — ${dateStr}`;
+            const topicName = `${fcState.mode === 'exercises' ? 'Lista de' : 'Flashcards de'} ${subject} — ${dateStr}`;
             const topicId = Date.now();
-            saved.unshift({ id: topicId, name: topicName, cards: fcState.cards, date: now.toISOString() });
+            saved.unshift({ id: topicId, name: topicName, cards: fcState.cards, date: now.toISOString(), isQuiz: fcState.mode === 'exercises' });
             localStorage.setItem('fecad_my_flashcards', JSON.stringify(saved));
             renderTopicsHistory();
-            alert('✅ Tópico "' + topicName + '" salvo!');
+            fcState.saved = true;
+            alert('✅ Tópico "' + topicName + '" salvo na sua conta!');
         }
 
         function renderTopicsHistory() {
