@@ -2549,13 +2549,28 @@
                 
                 if (!q && found) {
                     const regex = new RegExp(`\\b${found}\\b`, 'i');
-                    q = `Complete a lacuna:<br><br>"${clean.replace(regex, '______')}"`;
-                    a = `A palavra correta é: <strong>${found}</strong>.<br><br><small>Contexto: ${clean}</small>`;
+                    const rand = Math.random();
+                    if (rand < 0.33) {
+                        q = `Complete a lacuna:<br><br>"${clean.replace(regex, '______')}"`;
+                        a = `A palavra correta é: <strong>${found}</strong>.<br><br><small>Contexto: ${clean}</small>`;
+                    } else if (rand < 0.66) {
+                        q = `Conceito Oculto:<br>Qual termo estudado na aula se encaixa no trecho abaixo?<br><br>"${clean.replace(regex, '[TERMO]')}"`;
+                        a = `O termo é: <strong>${found}</strong>.<br><br><small>Contexto: ${clean}</small>`;
+                    } else {
+                        q = `Explique a relação ou o que o material afirma sobre o termo: <strong>${found.toUpperCase()}</strong>`;
+                        a = `Segundo o material:<br>${clean}`;
+                    }
                 } 
                 
                 if (!q) {
-                    q = `O que o texto afirma sobre:<br><br>"${clean.substring(0, 40)}..."?`;
-                    a = clean;
+                    const rand = Math.random();
+                    if (rand < 0.5) {
+                        q = `O que o texto afirma sobre o trecho abaixo?<br><br>"${clean.substring(0, 40)}..."`;
+                        a = clean;
+                    } else {
+                        q = `Interpretação:<br>Qual o contexto ou a continuação da seguinte frase?<br><br>"${clean.substring(0, 40)}..."`;
+                        a = clean;
+                    }
                 }
                 
                 if (q && a) cards.push({ q, a, tag: detected.key });
@@ -2653,7 +2668,6 @@
                 el.onclick = () => el.classList.toggle('flipped');
                 el.innerHTML = `
                     <div class="fc-card-face fc-card-front">
-                        <div class="fc-card-subject-tag">${card.tag}</div>
                         <div class="fc-card-q">${card.q}</div>
                         <div class="fc-card-hint">Clique para ver a resposta</div>
                     </div>
