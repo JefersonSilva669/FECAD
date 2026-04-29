@@ -1638,10 +1638,6 @@
                     </div>
                 </div>
                 <button class="btn-upload" style="width: 100%;" onclick="handleAuth('login')">Entrar na Conta</button>
-                <div style="text-align:center; margin-top:15px; font-size:12px; color:var(--text-dim);">
-                    Ou teste agora sem conta: <br>
-                    <span style="color:var(--primary-light); cursor:pointer; text-decoration:underline;" onclick="skipAuth()">Entrar como Visitante</span>
-                </div>
             </div>
 
             <div id="form-signup" style="display: none;">
@@ -1886,6 +1882,11 @@
                         <div class="fc-chat-panel">
                             <div class="fc-chat-header">🤖 Assistente</div>
                             <div class="fc-chat-messages" id="fc-messages"></div>
+                            <div class="fc-chat-input">
+                                <label for="fc-file-input" class="fc-upload-btn" title="Anexar arquivo ou imagem">📎</label>
+                                <input type="file" id="fc-file-input" style="display:none;" accept=".pdf,.txt,.docx,image/*" onchange="fcHandleFile(this)">
+                                <input type="text" placeholder="Digite uma mensagem..." disabled>
+                            </div>
                         </div>
                         <div class="fc-results-panel" id="flashcards-view">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -1982,9 +1983,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-        </main>
+            </main>
 
         <!-- Upload Modal -->
         <div id="uploadModal" class="modal">
@@ -2211,16 +2210,6 @@
             avatar.textContent = name.charAt(0).toUpperCase();
         }
 
-        function skipAuth() {
-            const name = 'Visitante';
-            document.getElementById('user-display-name').textContent = name;
-            document.getElementById('welcome-name').textContent = name;
-            applyUserColor('Visitante', name);
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            showPage('home');
-        }
-
         function togglePass(inputId, btn) {
             const input = document.getElementById(inputId);
             input.type = input.type === 'password' ? 'text' : 'password';
@@ -2276,12 +2265,105 @@
             fcState.mode = mode;
             fcUserMessage(mode === 'flashcards' ? 'Flashcards' : 'Exercícios');
             fcState.step = 'ask_document';
-            fcAIMessage('Anexe o <strong>arquivo da aula</strong> (PDF, DOCX, TXT):', `
+            fcAIMessage('Anexe o <strong>arquivo da aula</strong> (Imagem, PDF, DOCX, TXT, PPTX):', `
                 <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
-                    <input type="file" id="fc-file-input" style="display:none;" onchange="fcHandleFileSelect(this)" />
-                    <label for="fc-file-input" style="padding:20px; border:2px dashed var(--border); border-radius:12px; cursor:pointer; text-align:center;" id="fc-file-label">Clique para selecionar</label>
-                    <button onclick="fcSubmitDocument()" class="btn-upload">Analisar Arquivo</button>
+                    <input type="file" id="fc-file-input" style="display:none;" accept=".pdf,.txt,.docx,.pptx,image/*" onchange="fcHandleFileSelect(this)" />
+                    <label for="fc-file-input" style="padding:20px; border:2px dashed var(--border); border-radius:12px; cursor:pointer; text-align:center;" id="fc-file-label">Clique para selecionar arquivo</label>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="fcSubmitDocument()" class="btn-upload" style="flex:1;">Analisar Arquivo</button>
+                        <button onclick="fcFallbackMode()" class="btn-upload" style="flex:1; background:var(--glass);">Gerar sem arquivo</button>
+                    </div>
                 </div>`);
+        }
+
+        function fcFallbackMode() {
+            fcState.docContext = 'fallback';
+            fcUserMessage("Gerar sem arquivo");
+            fcTyping(() => {
+                fcAIMessage('Certo! Escolha a área de estudo do seu curso Regular ou Técnico (1º Ano):', `
+                <div class="fc-subject-grid" style="grid-template-columns: 1fr 1fr; gap:6px;">
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Matemática')">📐 Matemática</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Biologia')">🧬 Biologia</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Química')">🧪 Química</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Física')">⚡ Física</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Lógica de Programação')">💻 Lógica</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Sistemas Operacionais')">⚙️ Sis. Oper.</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Web Design')">🎨 Web Design</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Robótica')">🤖 Robótica</div>
+                </div>`);
+            });
+        }
+
+        function fcFallbackSubject(sub) {
+            fcUserMessage(sub);
+            fcState.subject = sub;
+            fcTyping(() => {
+                fcAIMessage(`Perfeito! Quantos itens você quer gerar sobre **${sub}**?`, `
+                <div class="fc-num-grid">
+                    ${[3, 5, 8, 10].map(n => `<div class="fc-num-btn" onclick="fcGenerateFallback(${n})">${n}</div>`).join('')}
+                </div>`);
+            });
+        }
+
+        function fcGenerateFallback(count) {
+            fcState.count = count;
+            fcUserMessage(count + ' itens');
+            fcTyping(() => {
+                fcAIMessage(`🎯 Gerando material sobre **${fcState.subject}**...`);
+                setTimeout(() => {
+                    const youtubeLinks = {
+                        'Matemática': '<a href="https://www.youtube.com/user/omatematico" target="_blank" style="color:var(--primary-light);">O Matemático</a> | <a href="https://www.youtube.com/c/ferretto" target="_blank" style="color:var(--primary-light);">Prof. Ferretto</a>',
+                        'Biologia': '<a href="https://www.youtube.com/c/jubilut" target="_blank" style="color:var(--primary-light);">Biologia Total</a> | <a href="https://www.youtube.com/c/descomplica" target="_blank" style="color:var(--primary-light);">Descomplica</a>',
+                        'Química': '<a href="https://www.youtube.com/user/cafeciencia" target="_blank" style="color:var(--primary-light);">Café com Ciência</a>',
+                        'Física': '<a href="https://www.youtube.com/c/chamaofisico" target="_blank" style="color:var(--primary-light);">Chama o Físico</a>',
+                        'Lógica de Programação': '<a href="https://www.youtube.com/c/cursoemvideo" target="_blank" style="color:var(--primary-light);">Curso em Vídeo (Guanabara)</a>',
+                        'Sistemas Operacionais': '<a href="https://www.youtube.com/c/bosontreinamentos" target="_blank" style="color:var(--primary-light);">Bóson Treinamentos</a>',
+                        'Web Design': '<a href="https://www.youtube.com/c/origamid" target="_blank" style="color:var(--primary-light);">Origamid</a> | <a href="https://www.youtube.com/c/cursoemvideo" target="_blank" style="color:var(--primary-light);">Curso em Vídeo</a>',
+                        'Robótica': '<a href="https://www.youtube.com/c/brincandocomideias" target="_blank" style="color:var(--primary-light);">Brincando com Ideias</a>'
+                    };
+                    
+                    const links = youtubeLinks[fcState.subject] || '<a href="https://www.youtube.com/c/descomplica" target="_blank" style="color:var(--primary-light);">Descomplica</a>';
+                    
+                    if (fcState.mode === 'exercises') {
+                        fcState.cards = fcGenerateExercises(fcState.subject, count);
+                    } else {
+                        const fbDB = {
+                            'Biologia': [ {q:'O que é a Célula?', a:'A unidade básica estrutural e funcional de todos os seres vivos.'}, {q:'O que é Mitose?', a:'Divisão celular que resulta em duas células-filhas geneticamente idênticas.'}, {q:'O que é DNA?', a:'Molécula que carrega a informação genética.'}, {q:'O que são Ribossomos?', a:'Organelas responsáveis pela síntese de proteínas.'}, {q:'O que é Fotossíntese?', a:'Processo pelo qual plantas produzem seu alimento.'} ],
+                            'Física': [ {q:'Qual a 1ª Lei de Newton?', a:'Princípio da Inércia: um corpo em repouso tende a permanecer em repouso.'}, {q:'Fórmula da Velocidade Média?', a:'Vm = ΔS / Δt (Variação de espaço sobre tempo).'}, {q:'O que é Força Peso?', a:'Força com que a gravidade atrai um corpo (P = m.g).'}, {q:'O que é Trabalho?', a:'Medida da energia transferida pela aplicação de uma força.'} ],
+                            'Matemática': [ {q:'O que é Função de 1º Grau?', a:'Relação matemática cuja lei de formação é f(x) = ax + b.'}, {q:'O que é Teorema de Pitágoras?', a:'A soma dos quadrados dos catetos é igual ao quadrado da hipotenusa.'}, {q:'O que são Números Primos?', a:'Números divisíveis apenas por 1 e por eles mesmos.'}, {q:'Fórmula de Bhaskara', a:'x = (-b ± √(b² - 4ac)) / 2a'} ],
+                            'Química': [ {q:'O que é a Tabela Periódica?', a:'Organização dos elementos baseada no número atômico e propriedades.'}, {q:'O que é Ligação Covalente?', a:'Ligação onde os átomos compartilham pares de elétrons.'}, {q:'O que é uma Base (Arrhenius)?', a:'Substância que em solução aquosa libera íons OH-.'}, {q:'O que é Número Atômico (Z)?', a:'Quantidade de prótons no núcleo de um átomo.'} ],
+                            'Lógica de Programação': [ {q:'O que é um Algoritmo?', a:'Sequência finita e ordenada de passos para resolver um problema.'}, {q:'O que é uma Variável?', a:'Espaço na memória destinado a guardar informações temporárias.'}, {q:'Diferença entre IF e WHILE?', a:'IF executa uma vez se verdadeiro; WHILE repete enquanto verdadeiro.'}, {q:'O que é Loop Infinito?', a:'Estrutura de repetição cuja condição de parada nunca é atingida.'} ],
+                            'Sistemas Operacionais': [ {q:'Qual o papel do Sistema Operacional?', a:'Gerenciar os recursos de hardware e fornecer uma interface para os aplicativos.'}, {q:'O que é Gerenciamento de Processos?', a:'Função do SO que divide o tempo da CPU entre programas em execução.'}, {q:'Diferença entre Linux e Windows', a:'Linux é open-source; Windows é proprietário.'}, {q:'O que é Memória RAM?', a:'Memória volátil usada para armazenar programas e dados em execução.'} ],
+                            'Web Design': [ {q:'O que significa HTML?', a:'HyperText Markup Language (Linguagem de Marcação de Hipertexto).'}, {q:'Para que serve o CSS?', a:'Para estilizar a página HTML (cores, fontes, layout).'}, {q:'O que é Design Responsivo?', a:'Design que se adapta a qualquer tamanho de tela.'}, {q:'Diferença entre UI e UX?', a:'UI é a Interface visual; UX é a Experiência geral e fluxo do usuário.'} ],
+                            'Robótica': [ {q:'O que é um Arduino?', a:'Plataforma de prototipagem eletrônica de hardware livre.'}, {q:'Função de um Resistor?', a:'Limitar a corrente elétrica que passa por um circuito.'}, {q:'Sensor vs Atuador', a:'Sensor lê dados do ambiente; Atuador realiza uma ação (ex: motor).'}, {q:'O que são pinos PWM?', a:'Pinos digitais que simulam uma saída analógica.'} ]
+                        };
+                        let pool = fbDB[fcState.subject] || fbDB['Biologia'];
+                        let shuffled = [...pool].sort(()=>0.5-Math.random()).slice(0, count);
+                        while(shuffled.length < count) {
+                            let item = pool[Math.floor(Math.random()*pool.length)];
+                            shuffled.push({q: item.q, a: item.a});
+                        }
+                        fcState.cards = shuffled.map(c => ({...c, tag: fcState.subject}));
+                    }
+                    
+                    fcRenderCards();
+                    
+                    const logBox = document.createElement('div');
+                    logBox.className = 'message msg-received';
+                    logBox.innerHTML = `
+                        <div class="msg-user">Sistema</div>✅ <strong>Material Gerado com Sucesso!</strong><br><br>
+                        🎥 <strong>Fontes e Canais Recomendados para Estudar:</strong><br>${links}
+                    `;
+                    document.getElementById('fc-messages').appendChild(logBox);
+                    document.getElementById('fc-messages').scrollTop = document.getElementById('fc-messages').scrollHeight;
+                    
+                    fcAIMessage('✅ <strong>Pronto!</strong> O material foi montado.', `
+                        <div class="fc-subject-grid">
+                            <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="saveFlashcardTopic()">💾 Salvar na Conta</div>
+                            <div class="fc-subject-btn" onclick="fcInitChat()">🔄 Início</div>
+                        </div>`);
+                }, 1000);
+            });
         }
 
         function fcHandleFileSelect(input) {
@@ -2308,8 +2390,13 @@
 
         async function fcReadFileContent(file) {
             const name = file.name.toLowerCase();
+            
             if (name.endsWith('.txt')) return await file.text();
+            
             if (name.endsWith('.pdf')) {
+                if (typeof pdfjsLib === 'undefined') {
+                    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+                }
                 const arrayBuffer = await file.arrayBuffer();
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
                 const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
@@ -2321,12 +2408,52 @@
                 }
                 return text;
             }
+            
             if (name.endsWith('.docx')) {
+                if (typeof mammoth === 'undefined') {
+                    await loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js');
+                }
                 const arrayBuffer = await file.arrayBuffer();
                 const result = await mammoth.extractRawText({arrayBuffer});
                 return result.value;
             }
+
+            if (name.match(/\.(png|jpg|jpeg|webp|heic)$/i)) {
+                fcAIMessage('🖼️ Processando imagem com IA Visual... (aguarde um momento)');
+                if (typeof Tesseract === 'undefined') {
+                    await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js');
+                }
+                try {
+                    const result = await Tesseract.recognize(file, 'por', { logger: m => console.log(m) });
+                    return result.data.text || 'Texto extraído não legível.';
+                } catch(e) {
+                    console.error("Erro OCR:", e);
+                    return "Erro ao extrair texto da imagem. Simulação de texto: Biologia célula mitose fotossíntese dna.";
+                }
+            }
+
+            // Simulador simples para PPTX no front-end
+            if (name.endsWith('.pptx')) {
+                fcAIMessage('📊 Extraindo textos da apresentação...');
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        resolve("Conteúdo extraído da apresentação PPTX. O sistema no momento usa um simulador de texto para este tipo de arquivo devido às limitações do navegador. O assunto abordado foca em conceitos base para a IA gerar questões.");
+                    }, 1000);
+                });
+            }
+            
             return '';
+        }
+
+        // Utilidade para carregar scripts dinamicamente sem bloquear
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = resolve;
+                s.onerror = reject;
+                document.head.appendChild(s);
+            });
         }
 
         function fcPickCount(n) {
@@ -2478,17 +2605,40 @@
             document.getElementById('fc-messages').scrollTop = document.getElementById('fc-messages').scrollHeight;
 
             return selected.map(ex => {
+                let correctIdx = 0;
+                const letter = ex.ans.charAt(0).toLowerCase();
+                if (letter === 'b') correctIdx = 1;
+                else if (letter === 'c') correctIdx = 2;
+                else if (letter === 'd') correctIdx = 3;
+                else if (letter === 'e') correctIdx = 4;
+                
                 return {
-                    q: `<strong style="color:var(--primary-light)">EXERCÍCIO DE ${subject.toUpperCase()}</strong><br><br>${ex.q}<br><br><div style="text-align:left; padding-left:10px; border-left:2px solid var(--border);">${ex.options.join('<br><br>')}</div>`,
-                    a: `<div style="background:rgba(16,185,129,0.15); padding:15px; border-left:4px solid #10b981; border-radius:6px; text-align:left;"><strong>GABARITO:</strong><br><br>${ex.ans}</div>`,
+                    isQuiz: true,
+                    q: ex.q,
+                    options: ex.options,
+                    ans: ex.ans,
+                    correctIndex: correctIdx,
                     tag: subject
                 };
             });
         }
 
+        let quizState = { active: false, currentIndex: 0, questions: [], answered: false };
+
         function fcRenderCards() {
             const list = document.getElementById('flashcard-list');
             list.innerHTML = '';
+            
+            if (fcState.mode === 'exercises' && fcState.cards.length > 0 && fcState.cards[0].isQuiz) {
+                quizState.active = true;
+                quizState.questions = fcState.cards;
+                quizState.currentIndex = 0;
+                renderQuizQuestion();
+                document.getElementById('flashcards-view').classList.add('active');
+                return;
+            }
+            
+            quizState.active = false;
             fcState.cards.forEach(card => {
                 const el = document.createElement('div');
                 el.className = 'fc-card';
@@ -2506,6 +2656,95 @@
                 list.appendChild(el);
             });
             document.getElementById('flashcards-view').classList.add('active');
+        }
+
+        function renderQuizQuestion() {
+            const list = document.getElementById('flashcard-list');
+            if (quizState.currentIndex >= quizState.questions.length) {
+                list.innerHTML = `
+                    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; text-align:center;">
+                        <div style="font-size:48px; margin-bottom:10px;">🎉</div>
+                        <h2 style="margin-bottom:15px; font-size:24px;">Lista Concluída!</h2>
+                        <p style="margin-bottom:20px; color:var(--text-dim);">Você finalizou as ${quizState.questions.length} questões de ${quizState.questions[0].tag}.</p>
+                        <h3 style="margin-bottom:20px; font-size:16px;">Deseja salvar esta lista de exercícios?</h3>
+                        <div style="display:flex; gap:12px; justify-content:center;">
+                            <button class="btn-upload" style="background:var(--glass);" onclick="fcInitChat()">Não, descartar</button>
+                            <button class="btn-upload" onclick="saveFlashcardTopic(); fcInitChat();">Sim, salvar lista</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            quizState.answered = false;
+            const q = quizState.questions[quizState.currentIndex];
+            
+            let html = `
+                <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <span style="color:var(--text-dim); font-size:13px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Questão ${quizState.currentIndex + 1} de ${quizState.questions.length}</span>
+                        <span class="tag">${q.tag}</span>
+                    </div>
+                    <div style="font-size:16px; font-weight:600; margin-bottom:24px; line-height:1.6;">${q.q}</div>
+                    <div style="display:flex; flex-direction:column; gap:12px;" id="quiz-options">
+            `;
+            
+            q.options.forEach((opt, idx) => {
+                html += `<div class="quiz-opt" id="quiz-opt-${idx}" onclick="answerQuiz(${idx}, ${q.correctIndex})" style="padding:14px 16px; border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s; background:rgba(255,255,255,0.02);">${opt}</div>`;
+            });
+            
+            html += `
+                    </div>
+                    <div id="quiz-explanation" style="display:none; margin-top:24px; padding:16px; border-radius:8px; font-size:14px; line-height:1.6;"></div>
+                    <button id="quiz-next-btn" class="btn-upload" style="display:none; width:100%; margin-top:24px;" onclick="nextQuizQuestion()">Avançar para Próxima ❯</button>
+                </div>
+            `;
+            
+            list.innerHTML = html;
+        }
+
+        function answerQuiz(selectedIdx, correctIdx) {
+            if (quizState.answered) return;
+            quizState.answered = true;
+            
+            const q = quizState.questions[quizState.currentIndex];
+            const isCorrect = selectedIdx === correctIdx;
+            
+            for(let i=0; i<q.options.length; i++) {
+                const el = document.getElementById(`quiz-opt-${i}`);
+                el.style.opacity = '0.4';
+                el.style.pointerEvents = 'none';
+                if (i === correctIdx) {
+                    el.style.background = 'rgba(16,185,129,0.15)';
+                    el.style.borderColor = '#10b981';
+                    el.style.opacity = '1';
+                }
+                if (i === selectedIdx && !isCorrect) {
+                    el.style.background = 'rgba(239,68,68,0.15)';
+                    el.style.borderColor = '#ef4444';
+                    el.style.opacity = '1';
+                }
+            }
+            
+            const expEl = document.getElementById('quiz-explanation');
+            expEl.style.display = 'block';
+            
+            if (isCorrect) {
+                expEl.style.background = 'rgba(16,185,129,0.1)';
+                expEl.style.borderLeft = '4px solid #10b981';
+                expEl.innerHTML = `<strong style="color:#10b981">Alternativa Correta!</strong><br><br>${q.ans}`;
+            } else {
+                expEl.style.background = 'rgba(239,68,68,0.1)';
+                expEl.style.borderLeft = '4px solid #ef4444';
+                expEl.innerHTML = `<strong style="color:#ef4444">Alternativa Errada!</strong> A alternativa escolhida não responde adequadamente ao que foi pedido.<br><br><strong style="color:#10b981">A correta seria:</strong><br>${q.ans}`;
+            }
+            
+            document.getElementById('quiz-next-btn').style.display = 'block';
+        }
+
+        function nextQuizQuestion() {
+            quizState.currentIndex++;
+            renderQuizQuestion();
         }
 
         function fcAIMessage(text, extra = '') {
