@@ -2289,17 +2289,24 @@
             } else {
                 const email = document.getElementById('login-email').value.toLowerCase();
                 const pass = document.getElementById('login-pass').value;
-                let user = users.find(u => u.email === email && u.pass === pass);
+                let user = users.find(u => u && u.email === email && u.pass === pass);
                 if (!user && (email === 'admin' || email.includes('jeferson'))) user = { name: 'Jeferson Silva', email, sala: 'Admin' };
+                
                 if (user) {
-                    document.getElementById('user-display-name').textContent = user.name;
-                    document.getElementById('welcome-name').textContent = user.name.split(' ')[0];
-                    applyUserColor(user.sala, user.name);
+                    const safeName = user.name || 'Estudante';
+                    document.getElementById('user-display-name').textContent = safeName;
+                    
+                    const welcomeEl = document.getElementById('welcome-name');
+                    if (welcomeEl) welcomeEl.textContent = safeName.split(' ')[0];
+                    
+                    applyUserColor(user.sala || 'Visitante', safeName);
                     
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('main-app').style.display = 'flex';
                     showPage('home');
-                } else alert('Dados incorretos!');
+                } else {
+                    alert('Dados incorretos! Tente novamente ou use a conta admin.');
+                }
             }
         }
 
@@ -2806,7 +2813,11 @@
                             </div>
                         </div>
                         <div style="display:flex; gap:12px; justify-content:center;" id="fc-card-actions">
-                            <button class="btn-upload" style="background:rgba(99,102,241,0.1); border:1px solid var(--primary);" onclick="document.getElementById('fc-answer-reveal').style.display='block'; document.getElementById('fc-reveal-btn').style.display='none'; document.getElementById('fc-card-actions').innerHTML=\'<button class=\\"btn-upload\\" style=\\"background:rgba(16,185,129,0.15);\\" onclick=\\"nextTestQuestion()\\">✅ Entendido — Próximo ❯</button><button class=\\"btn-upload\\" style=\\"background:rgba(239,68,68,0.1); margin-left:0\\" onclick=\\"nextTestQuestion()\\">❌ Errei — Próximo ❯</button>\';" id="fc-reveal-btn">👁️ Revelar Resposta</button>
+                            <button class="btn-upload" style="background:rgba(99,102,241,0.1); border:1px solid var(--primary);" onclick="document.getElementById('fc-answer-reveal').style.display='block'; this.style.display='none'; document.getElementById('fc-next-actions').style.display='flex';" id="fc-reveal-btn">👁️ Revelar Resposta</button>
+                        </div>
+                        <div style="display:none; gap:12px; justify-content:center;" id="fc-next-actions">
+                            <button class="btn-upload" style="background:rgba(16,185,129,0.15);" onclick="nextTestQuestion()">✅ Entendido — Próximo ❯</button>
+                            <button class="btn-upload" style="background:rgba(239,68,68,0.1); margin-left:0" onclick="nextTestQuestion()">❌ Errei — Próximo ❯</button>
                         </div>
                     </div>
                 `;
