@@ -589,7 +589,7 @@
         .room-preview { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
         .room-badge {
-            background: #ef4444; /* Vermelho vibrante */
+            background: #ef4444;
             color: white;
             font-size: 11px;
             font-weight: 700;
@@ -597,13 +597,14 @@
             height: 20px;
             padding: 0 6px;
             border-radius: 10px;
-            display: none;
+            display: none !important;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             z-index: 10;
+            flex-shrink: 0;
         }
-        .room-badge.visible { display: flex; }
+        .room-badge.visible { display: flex !important; }
 
         /* Área principal do chat */
         .chat-main {
@@ -3195,7 +3196,12 @@
 
         const rooms = ['Matemática', 'Física', 'Química', 'Biologia', 'Geografia', 'História', 'Português', 'Literatura', 'Artes', 'Educação Física', 'Geral'];
         let unreadCounts = {};
+        rooms.forEach(r => unreadCounts[r] = 0);
         
+        function getRoomId(r) {
+            return 'badge-' + btoa(unescape(encodeURIComponent(r))).replace(/=/g, '');
+        }
+
         const roomEmojis = {
             'Matemática': '📊', 'Física': '⚡', 'Química': '⚗️', 'Biologia': '🧬',
             'Geografia': '🌍', 'História': '📜', 'Português': '📝', 'Literatura': '📚',
@@ -3209,16 +3215,17 @@
                     <div class="room-avatar">${roomEmoji(r)}</div>
                     <div class="room-info">
                         <div class="room-name">${r}</div>
-                        <div class="room-preview" id="preview-${r.replace(/\s+/g,'-')}">Clique para entrar na sala</div>
+                        <div class="room-preview" id="preview-${btoa(unescape(encodeURIComponent(r))).replace(/=/g, '')}">Clique para entrar na sala</div>
                     </div>
-                    <span class="room-badge" id="badge-${r.replace(/\s+/g, '-')}"></span>
+                    <span class="room-badge" id="${getRoomId(r)}"></span>
                 </div>`
             ).join('');
             rooms.forEach(r => updateRoomBadge(r));
         }
 
         function updateRoomBadge(r) {
-            const badge = document.getElementById('badge-' + r.replace(/\s+/g, '-'));
+            const badgeId = getRoomId(r);
+            const badge = document.getElementById(badgeId);
             if (badge) {
                 if (unreadCounts[r] > 0) {
                     badge.textContent = unreadCounts[r];
