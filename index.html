@@ -2272,7 +2272,7 @@
         function fcPickMode(mode) {
             fcState.mode = mode;
             document.getElementById('fc-messages').innerHTML = '';
-            fcAIMessage(`Modo selecionado: <strong>${mode === 'flashcards' ? 'Flashcards de Revisão' : 'Lista de Exercícios'}</strong>`);
+            fcAIMessage(`Modo selecionado: <strong style="color:var(--primary);">${mode === 'flashcards' ? 'Flashcards de Revisão' : 'Lista de Exercícios'}</strong> <button onclick="fcInitChat()" style="margin-left:15px; padding:4px 10px; font-size:12px; font-weight:bold; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:var(--text); cursor:pointer; transition:0.2s;">🔄 Trocar Função</button>`);
             
             fcState.step = 'ask_document';
             fcAIMessage('Anexe o <strong>arquivo da aula</strong> (Imagem, PDF, DOCX, TXT, PPTX):', `
