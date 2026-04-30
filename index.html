@@ -40,6 +40,19 @@
             --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
         }
 
+        /* Fixed backgrounds for theme compatibility */
+        .header, .sidebar, .chat-sidebar, .chat-top-bar, .chat-main, .auth-card, .modal-content {
+            background-color: var(--bg-card) !important;
+            color: var(--text-main) !important;
+        }
+
+        .hamburger span { background-color: var(--text-main) !important; }
+        .chat-main { background-color: var(--bg-deep) !important; }
+        .search-bar input, .home-hero-search input, .form-group input, .form-group select { color: var(--text-main) !important; }
+        .light-theme .home-hero-search { background: #f8fafc; }
+        .light-theme .home-hero-search input { color: #1e293b !important; }
+
+
         * {
             margin: 0;
             padding: 0;
@@ -432,9 +445,12 @@
 
         .notebook-img {
             width: 100%;
-            height: 220px;
-            object-fit: cover;
+            height: auto;
+            max-height: 500px;
+            object-fit: contain;
+            background: rgba(0,0,0,0.05);
             border-bottom: 1px solid var(--border);
+            cursor: zoom-in;
         }
 
         .notebook-content {
@@ -1715,6 +1731,7 @@
             </div>
             
             <div class="user-profile">
+                <button onclick="toggleTheme()" class="btn-upload" style="margin-right: 15px; padding: 8px 12px; font-size: 14px; background: var(--glass); color: var(--text-main); border: 1px solid var(--border); box-shadow: none;" id="global-theme-btn">🌓</button>
                 <div style="text-align: right;">
                     <div id="user-display-name" style="font-weight: 600; font-size: 14px;">Carregando...</div>
                     <div id="user-badge" style="font-size: 11px; color: #10b981; margin-top: 3px; padding: 2px 8px; border-radius: 10px; display: inline-block; background: rgba(16, 185, 129, 0.1);">Visitante</div>
@@ -1795,25 +1812,25 @@
                         <div style="max-width: 1200px; margin: 50px auto 0; padding: 0 30px;">
                             <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Destaques para você</h2>
                             <div class="home-grid">
-                                <div class="home-card" style="width: 250px;">
-                                    <div style="font-size: 40px; margin-bottom: 10px;">📐</div>
-                                    <h3>Exatas</h3>
-                                    <p>Matemática e Física</p>
+                                <div class="home-card" onclick="showPage('explorar', document.getElementById('nav-explorar'))">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">📚</div>
+                                    <h3>Explorar Cadernos</h3>
+                                    <p>Veja resumos de outros alunos</p>
                                 </div>
-                                <div class="home-card" style="width: 250px;">
-                                    <div style="font-size: 40px; margin-bottom: 10px;">🧬</div>
-                                    <h3>Biológicas</h3>
-                                    <p>Ciências da Natureza</p>
+                                <div class="home-card" onclick="showPage('chat', document.getElementById('nav-chat'))">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">💬</div>
+                                    <h3>Salas de Chat</h3>
+                                    <p>Tire dúvidas em tempo real</p>
                                 </div>
-                                <div class="home-card" style="width: 250px;">
-                                    <div style="font-size: 40px; margin-bottom: 10px;">🎭</div>
-                                    <h3>Humanas</h3>
-                                    <p>História e Sociedade</p>
+                                <div class="home-card" onclick="showPage('flashcards', document.getElementById('nav-flashcards'))">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">🃏</div>
+                                    <h3>Flashcards & IA</h3>
+                                    <p>Estude com inteligência</p>
                                 </div>
-                                <div class="home-card" style="width: 250px;">
-                                    <div style="font-size: 40px; margin-bottom: 10px;">💻</div>
-                                    <h3>Técnico</h3>
-                                    <p>Programação e TI</p>
+                                <div class="home-card" onclick="showPage('perfil', document.getElementById('nav-perfil'))">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">👤</div>
+                                    <h3>Meu Perfil</h3>
+                                    <p>Gerencie seus dados e sala</p>
                                 </div>
                             </div>
                         </div>
@@ -2046,7 +2063,14 @@
             </div>
         </div>
 
-    </div> <!-- End of #main-app -->
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="modal" onclick="closeLightbox()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:5000; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 15px;">
+            <a id="lightbox-download" href="" download class="btn-upload" style="padding: 10px 20px; text-decoration: none; background:var(--primary);" onclick="event.stopPropagation()">⬇️ Baixar</a>
+            <button class="btn-upload" style="padding: 10px 20px; background:rgba(255,255,255,0.1);" onclick="closeLightbox()">✕ Fechar</button>
+        </div>
+        <img id="lightbox-img" src="" style="max-width: 90%; max-height: 85%; border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,0.5); object-fit: contain;" onclick="event.stopPropagation()">
+    </div>
 
     <!-- Notebook View Modal -->
     <div id="viewModal" class="modal">
@@ -2686,7 +2710,7 @@
             let html = `
                 <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 40px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-                        <button onclick="document.body.classList.toggle('light-theme')" style="background:var(--glass); border:1px solid var(--border); padding:6px 12px; border-radius:12px; cursor:pointer; color:var(--text-main); font-size:14px; font-weight:bold; transition:0.3s;" id="theme-btn">🌓 Alternar Tema</button>
+                        <button onclick="toggleTheme()" style="background:var(--glass); border:1px solid var(--border); padding:6px 12px; border-radius:12px; cursor:pointer; color:var(--text-main); font-size:14px; font-weight:bold; transition:0.3s;" id="theme-btn">🌓 Alternar Tema</button>
                         <span class="tag" style="font-size:12px; opacity:0.7;">Questão ${testState.currentIndex + 1} de ${testState.questions.length} — ${q.tag}</span>
                     </div>
                     <div style="font-size:18px; line-height:1.7; color:var(--text-main); margin-bottom:32px;">
@@ -2908,9 +2932,9 @@
                     ratingHtml = `<div style="font-size:12px; color:#fbbf24; margin-top:6px; font-weight:600;">⭐ ${nb.avgRating} (${nb.feedbacks.length} avaliações)</div>`;
                 }
                 return `
-                <div class="notebook-card" onclick="viewNotebook(${nb.id})">
-                    ${nb.img ? `<img src="${nb.img}" class="notebook-img">` : `<div class="notebook-img" style="background:var(--gradient); display:flex; align-items:center; justify-content:center; font-size:48px;">📓</div>`}
-                    <div class="notebook-content">
+                <div class="notebook-card">
+                    ${nb.img ? `<img src="${nb.img}" class="notebook-img" onclick="openLightbox('${nb.img}')">` : `<div class="notebook-img" style="background:var(--gradient); display:flex; align-items:center; justify-content:center; font-size:48px;">📓</div>`}
+                    <div class="notebook-content" onclick="viewNotebook(${nb.id})">
                         <span class="tag">${nb.subject}</span>
                         <h3 class="notebook-title">${nb.title}</h3>
                         <div class="author">Por ${nb.author}</div>
@@ -3706,7 +3730,35 @@ Para salvar como PDF: <strong>Arquivo → Salvar Como → Tipo: PDF</strong>.`
             document.getElementById('profile-confirm-pass').value = '';
         }
 
+        // ==== THEME & LIGHTBOX LOGIC ====
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            const btn = document.getElementById('global-theme-btn');
+            if(btn) btn.innerHTML = isLight ? '🌞' : '🌓';
+            const testBtn = document.getElementById('theme-btn');
+            if(testBtn) testBtn.innerHTML = isLight ? '🌞 Alternar Tema' : '🌓 Alternar Tema';
+        }
+
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox-download').href = src;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
         // Init
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('theme') === 'light') {
+                document.body.classList.add('light-theme');
+                const btn = document.getElementById('global-theme-btn');
+                if(btn) btn.innerHTML = '🌞';
+            }
+        });
+
         loadNotebooksFromFirebase();
         renderSalas();
         startNotificationsWatcher();
