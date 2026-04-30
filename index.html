@@ -2136,6 +2136,10 @@
 
         let currentChatRef = null;
 
+        function getSafePath(str) {
+            return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_');
+        }
+
         function getSalaColor(sala) {
             const colors = {
                 'A': '#ef4444', 'B': '#f97316', 'C': '#eab308',
@@ -2147,9 +2151,9 @@
         }
 
         function listenToRoom(roomName) {
-            if (!db) return;
+            if (!db || !roomName) return;
             if (currentChatRef) currentChatRef.off('child_added');
-            const safeRoomName = roomName.replace(/[.#$\[\]]/g, '');
+            const safeRoomName = getSafePath(roomName);
             currentChatRef = db.ref('chats/' + safeRoomName);
             
             document.getElementById('chat-top-bar').style.display = 'flex';
@@ -3219,6 +3223,10 @@
             return 'badge-' + r.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
         }
 
+        function getSafePath(r) {
+            return r.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        }
+
         const roomEmojis = {
             'Matemática': '📊', 'Física': '⚡', 'Química': '⚗️', 'Biologia': '🧬',
             'Geografia': '🌍', 'História': '📜', 'Português': '📝', 'Literatura': '📚',
@@ -3311,26 +3319,29 @@
         function startNotificationsWatcher() {
             if (!db) return;
             rooms.forEach(r => {
-                const safeRoomName = r.replace(/[.#$\[\]]/g, '');
+                const path = getSafePath(r);
                 
-                // Watch for new messages
-                db.ref('chats/' + safeRoomName).limitToLast(50).on('child_added', (snapshot) => {
-                    const msg = snapshot.val();
-                    const myName = document.getElementById('user-display-name').textContent;
-                    
-                    if (currentRoom !== r && msg.userId !== myName && msg.userId !== 'Você' && msg.userId !== 'Sistema') {
-                        // Check if this message was already counted (optional, but for now simple increment)
-                        unreadCounts[r] = (unreadCounts[r] || 0) + 1;
-                        updateRoomBadge(r);
+                // Track when initial data is loaded to avoid double counting on start
+                let initialDataLoaded = false;
+                db.ref('chats/' + path).once('value', () => { initialDataLoaded = true; });
+
+                db.ref('chats/' + path).limitToLast(1).on('child_added', (snapshot) => {
+                    if (initialDataLoaded && currentRoom !== r) {
+                        const msg = snapshot.val();
+                        const myName = document.getElementById('user-display-name').textContent;
+                        
+                        if (msg.userId !== myName && msg.userId !== 'Você' && msg.userId !== 'Sistema') {
+                            unreadCounts[r] = (unreadCounts[r] || 0) + 1;
+                            updateRoomBadge(r);
+                        }
                     }
                 });
             });
             
-            // Force update UI every 3 seconds to ensure sync
             setInterval(() => {
                 rooms.forEach(r => updateRoomBadge(r));
                 updateGlobalBadges();
-            }, 3000);
+            }, 5000);
         }
 
         function sendMessage() {
@@ -3358,8 +3369,8 @@
             }
 
             if (typeof db !== 'undefined' && db !== null) {
-                const safeRoomName = currentRoom.replace(/[.#$\[\]]/g, '');
-                db.ref('chats/' + safeRoomName).push(messageData);
+                const path = getSafePath(currentRoom);
+                db.ref('chats/' + path).push(messageData);
             } else {
                 // Fallback para mock local
                 const message = document.createElement('div');
