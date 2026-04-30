@@ -2385,37 +2385,34 @@
             document.getElementById('fc-messages').innerHTML = '';
             fcAIMessage(`Modo selecionado: <strong style="color:var(--primary);">${mode === 'flashcards' ? 'Flashcards de Revisão' : 'Lista de Exercícios'}</strong> <button onclick="fcInitChat()" style="margin-left:15px; padding:4px 10px; font-size:12px; font-weight:bold; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:var(--text); cursor:pointer; transition:0.2s;">🔄 Trocar Função</button>`);
             
-            fcState.step = 'ask_document';
-            fcAIMessage('Anexe o <strong>arquivo da aula</strong> (Imagem, PDF, DOCX, TXT, PPTX):', `
-                <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
-                    <input type="file" id="fc-file-input" style="display:none;" accept=".pdf,.txt,.docx,.pptx,image/*" onchange="fcHandleFileSelect(this)" />
-                    <label for="fc-file-input" style="padding:20px; border:2px dashed var(--border); border-radius:12px; cursor:pointer; text-align:center;" id="fc-file-label">Clique para selecionar arquivo</label>
-                    <div style="display:flex; gap:10px;">
-                        <button onclick="fcSubmitDocument()" class="btn-upload" style="flex:1;">Analisar Arquivo</button>
-                        <button onclick="fcFallbackMode()" class="btn-upload" style="flex:1; background:var(--glass);">Gerar sem arquivo</button>
-                    </div>
-                </div>`);
+            fcFallbackMode();
         }
 
         function fcFallbackMode() {
             fcState.docContext = 'fallback';
-            document.getElementById('fc-messages').innerHTML = '';
-            fcAIMessage('Método: <strong>Gerar sem arquivo (Fallback)</strong>');
             
             fcTyping(() => {
-                fcAIMessage('Certo! Escolha a área de estudo do seu curso Regular ou Técnico (1º Ano):', `
+                fcAIMessage('Certo! Escolha a área de estudo:', `
                 <div class="fc-subject-grid" style="grid-template-columns: 1fr 1fr; gap:6px;">
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Matemática')">📐 Matemática</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Leitura e produção de textos')">📖 Leitura e Produção</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Artes')">🎨 Artes</div>
                     <div class="fc-subject-btn" onclick="fcFallbackSubject('Biologia')">🧬 Biologia</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Química')">🧪 Química</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Direito e Ética')">⚖️ Direito e Ética</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Educação Física')">⚽ Educação Física</div>
                     <div class="fc-subject-btn" onclick="fcFallbackSubject('Física')">⚡ Física</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Lógica de Programação')">💻 Lógica</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Linguagem de Programação')">⌨️ Ling. Prog.</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Manutenção e Suporte')">🔧 Manutenção</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Geografia')">🌍 Geografia</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Gramática da Língua Portuguesa')">📚 Gramática</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Lógica de Programação')">💻 Lógica de Programação</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Steam Maker')">🛠️ Steam Maker</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Linguagem de Programação')">⌨️ Linguagem de Prog.</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Literatura Lusófona')">📖 Literatura Lusófona</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Manutenção e Suporte de Computadores')">🔧 Manutenção</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Matemática')">📐 Matemática</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Química')">🧪 Química</div>
                     <div class="fc-subject-btn" onclick="fcFallbackSubject('Robótica')">🤖 Robótica</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Sistemas Operacionais')">⚙️ Sis. Oper.</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Tecnologias Interativas')">📱 Tec. Interat.</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Web Design')">🎨 Web Design</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Sistemas Operacionais')">⚙️ Sis. Operacionais</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Tecnologias Interativas')">📱 Tec. Interativas</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Web Design')">🌐 Web Design</div>
                 </div>`);
             });
         }
@@ -2773,7 +2770,7 @@
             const list = document.getElementById('flashcard-list');
             if (testState.currentIndex >= testState.questions.length) {
                 list.innerHTML = `
-                    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; text-align:center;">
+                    <div style="width:100%; max-width:800px; margin:0 auto; grid-column: 1 / -1; background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; text-align:center;">
                         <div style="font-size:48px; margin-bottom:10px;">🏆</div>
                         <h2 style="margin-bottom:15px; font-size:24px;">Sessão Concluída!</h2>
                         <p style="margin-bottom:20px; color:var(--text-dim);">Você finalizou todas as questões propostas para este bloco de estudos.</p>
@@ -2793,7 +2790,7 @@
             // === MODO FLASHCARD SIMPLES (pergunta / resposta) ===
             if (!q.options || q.options.length === 0) {
                 list.innerHTML = `
-                    <div style="width:100%; max-width:800px; margin:0 auto; padding:40px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);">
+                    <div style="width:100%; max-width:800px; margin:0 auto; grid-column: 1 / -1; padding:40px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                             <button onclick="toggleTheme()" style="background:var(--glass); border:1px solid var(--border); padding:6px 12px; border-radius:12px; cursor:pointer; color:var(--text-main); font-size:14px; font-weight:bold;" id="theme-btn">🌓 Alternar Tema</button>
                             <span class="tag" style="font-size:12px; opacity:0.7;">Card ${testState.currentIndex + 1} de ${testState.questions.length} — ${q.tag}</span>
@@ -2818,7 +2815,7 @@
 
             // === MODO EXERCÍCIO (múltipla escolha) ===
             let html = `
-                <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 40px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);">
+                <div style="width: 100%; max-width: 800px; margin: 0 auto; grid-column: 1 / -1; padding: 40px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
                         <button onclick="toggleTheme()" style="background:var(--glass); border:1px solid var(--border); padding:6px 12px; border-radius:12px; cursor:pointer; color:var(--text-main); font-size:14px; font-weight:bold; transition:0.3s;" id="theme-btn">🌓 Alternar Tema</button>
                         <span class="tag" style="font-size:12px; opacity:0.7;">Questão ${testState.currentIndex + 1} de ${testState.questions.length} — ${q.tag}</span>
