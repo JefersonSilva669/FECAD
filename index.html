@@ -3320,32 +3320,35 @@
             listenToRoom(r);
         }
 
-        let watcherInitiated = false;
+        let sessionStarts = {};
         function startNotificationsWatcher() {
-            if (!db || watcherInitiated) return;
-            watcherInitiated = true;
-            console.log("--- NOTIFICATION WATCHER STARTED ---");
-            
-            const sessionStart = Date.now();
+            if (!db) return;
+            console.log("--- WATCHER INICIADO (Modo Contador de Sessão) ---");
             
             rooms.forEach(r => {
                 const path = getSafePath(r);
-                const badgeId = getRoomId(r);
                 
-                db.ref('chats/' + path).limitToLast(5).on('child_added', (snapshot) => {
-                    const msg = snapshot.val();
-                    if (!msg) return;
-
-                    // Log detection for debugging (User can see this in F12)
-                    console.log(`[Watcher] Msg in ${r}: from ${msg.userId}. currentRoom: ${currentRoom}`);
-
-                    // Logic: If message is new (or at least close to now) AND we are not in that room
-                    // We use a small 10-second buffer to catch messages sent just before load
-                    if (currentRoom !== r && (msg.timestamp > (sessionStart - 10000))) {
-                        unreadCounts[r] = (unreadCounts[r] || 0) + 1;
-                        console.log(`[Watcher] Room ${r} unread count: ${unreadCounts[r]}`);
+                // Pegar o total atual de mensagens como ponto de partida
+                db.ref('chats/' + path).once('value', (snapshot) => {
+                    sessionStarts[r] = snapshot.numChildren();
+                    
+                    // Escutar qualquer mudança no total de mensagens
+                    db.ref('chats/' + path).on('value', (snap) => {
+                        const currentTotal = snap.numChildren();
+                        const diff = currentTotal - (sessionStarts[r] || 0);
+                        
+                        if (currentRoom === r) {
+                            // Se estou na sala, atualizo o ponto de partida para o total atual
+                            sessionStarts[r] = currentTotal;
+                            unreadCounts[r] = 0;
+                        } else {
+                            // Se não estou na sala, a diferença são as mensagens não lidas
+                            unreadCounts[r] = diff > 0 ? diff : 0;
+                        }
+                        
+                        console.log(`[Watcher] Sala: ${r} | Base: ${sessionStarts[r]} | Atual: ${currentTotal} | Unread: ${unreadCounts[r]}`);
                         updateRoomBadge(r);
-                    }
+                    });
                 });
             });
             
