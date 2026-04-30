@@ -1758,6 +1758,7 @@
                     <li class="nav-item">
                         <a href="#" class="nav-link" id="nav-chat" onclick="showPage('chat', this); toggleSidebar()">
                             <i>💬</i> Salas de Chat
+                            <span class="room-badge" id="nav-chat-badge" style="margin-left: auto;"></span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -1792,21 +1793,6 @@
                             </div>
                         </div>
 
-                        <!-- Pills no meio (Opções rápidas) -->
-                        <div class="home-pills">
-                            <div class="home-pill" onclick="showPage('explorar', document.getElementById('nav-explorar'))">
-                                <i>📚</i> Explorar Resumos
-                            </div>
-                            <div class="home-pill" onclick="showPage('chat', document.getElementById('nav-chat'))">
-                                <i>💬</i> Salas de Estudo
-                            </div>
-                            <div class="home-pill" onclick="showPage('flashcards', document.getElementById('nav-flashcards'))">
-                                <i>🃏</i> Flashcards Mágicos
-                            </div>
-                            <div class="home-pill" onclick="showPage('perfil', document.getElementById('nav-perfil'))">
-                                <i>👤</i> Meu Perfil
-                            </div>
-                        </div>
 
                         <!-- Os Blocos (Cards) centralizados -->
                         <div style="max-width: 1200px; margin: 50px auto 0; padding: 0 30px;">
@@ -1817,10 +1803,11 @@
                                     <h3>Explorar Cadernos</h3>
                                     <p>Veja resumos de outros alunos</p>
                                 </div>
-                                <div class="home-card" onclick="showPage('chat', document.getElementById('nav-chat'))">
+                                <div class="home-card" onclick="showPage('chat', document.getElementById('nav-chat'))" style="position: relative;">
                                     <div style="font-size: 40px; margin-bottom: 10px;">💬</div>
                                     <h3>Salas de Chat</h3>
                                     <p>Tire dúvidas em tempo real</p>
+                                    <span class="room-badge" id="home-chat-badge" style="position: absolute; top: 20px; right: 20px;"></span>
                                 </div>
                                 <div class="home-card" onclick="showPage('flashcards', document.getElementById('nav-flashcards'))">
                                     <div style="font-size: 40px; margin-bottom: 10px;">🃏</div>
@@ -2009,6 +1996,7 @@
                             <button class="btn-upload" style="background: rgba(255,255,255,0.05); color: var(--text-main); padding: 14px 28px; font-size: 14px; box-shadow: none;" onclick="resetProfileForm()">Cancelar Restauração</button>
                             <button class="btn-upload" style="padding: 14px 28px; font-size: 14px;" onclick="saveProfileChanges()">Salvar Alterações</button>
                         </div>
+                        <button class="btn-upload" style="width: 100%; background: #ef4444; margin-top: 20px;" onclick="resetDatabase()">⚠️ Resetar Sistema (Limpar Tudo)</button>
                     </div>
                 </div>
             </main>
@@ -2279,6 +2267,21 @@
                     document.getElementById('main-app').style.display = 'flex';
                     showPage('home');
                 } else alert('Dados incorretos!');
+            }
+        }
+
+        function resetDatabase() {
+            if (!db) return;
+            if (confirm("⚠️ ATENÇÃO: Isso apagará TODOS os chats e cadernos do sistema permanentemente. Deseja continuar?")) {
+                const pass = prompt("Digite a senha mestre para resetar:");
+                if (pass === "FECAD2026") {
+                    db.ref('chats').remove();
+                    db.ref('notebooks').remove();
+                    alert("Sistema resetado com sucesso! Recarregando...");
+                    location.reload();
+                } else {
+                    alert("Senha incorreta!");
+                }
             }
         }
 
@@ -3214,6 +3217,19 @@
                     badge.classList.remove('visible');
                 }
             }
+            
+            // Update global badges
+            const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+            const navBadge = document.getElementById('nav-chat-badge');
+            const homeBadge = document.getElementById('home-chat-badge');
+            
+            if (totalUnread > 0) {
+                if(navBadge) { navBadge.textContent = totalUnread; navBadge.classList.add('visible'); }
+                if(homeBadge) { homeBadge.textContent = totalUnread; homeBadge.classList.add('visible'); }
+            } else {
+                if(navBadge) navBadge.classList.remove('visible');
+                if(homeBadge) homeBadge.classList.remove('visible');
+            }
         }
 
         let currentChatMode = 'chat', currentRoom = null;
@@ -3241,16 +3257,13 @@
             if (!db) return;
             rooms.forEach(r => {
                 const safeRoomName = r.replace(/[.#$\[\]]/g, '');
-                let initialDataLoaded = false;
                 
-                // Set flag to true after initial data load to avoid notifying about old messages
-                db.ref('chats/' + safeRoomName).once('value', () => { initialDataLoaded = true; });
-                
-                db.ref('chats/' + safeRoomName).limitToLast(1).on('child_added', (snapshot) => {
-                    if (initialDataLoaded && currentRoom !== r) {
-                        let userName = document.getElementById('user-display-name').textContent;
-                        let sender = snapshot.val().userId;
-                        if (sender !== userName && sender !== 'Você' && sender !== 'Sistema') {
+                db.ref('chats/' + safeRoomName).on('child_added', (snapshot) => {
+                    if (currentRoom !== r) {
+                        const msg = snapshot.val();
+                        const myName = document.getElementById('user-display-name').textContent;
+                        
+                        if (msg.userId !== myName && msg.userId !== 'Você' && msg.userId !== 'Sistema') {
                             unreadCounts[r] = (unreadCounts[r] || 0) + 1;
                             updateRoomBadge(r);
                         }
@@ -3462,7 +3475,7 @@ MessageBox.Show("Você digitou: " + nome);</code><div class="tip-box">💡 Para 
                     },
                     {
                         q: 'O que é a memória RAM e qual a sua função?',
-                        a: `A <strong>RAM (Random Access Memory)</strong> é a memória temporária do computador. Ela armazena os dados dos programas que estão sendo usados no momento. Quando o computador é desligado, todos os dados na RAM são apagados. Quanto mais RAM, mais programas podem rodar ao mesmo tempo sem lentidão.`
+                        a: `O <strong>RAM (Random Access Memory)</strong> é a memória temporária do computador. Ela armazena os dados dos programas que estão sendo usados no momento. Quando o computador é desligado, todos os dados na RAM são apagados. Quanto mais RAM, mais programas podem rodar ao mesmo tempo sem lentidão.`
                     },
                     {
                         q: 'O que é a CPU (processador) e como ela funciona?',
