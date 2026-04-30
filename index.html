@@ -3323,17 +3323,13 @@
             rooms.forEach(r => {
                 const path = getSafePath(r);
                 
-                db.ref('chats/' + path).on('child_added', (snapshot) => {
+                db.ref('chats/' + path).limitToLast(1).on('child_added', (snapshot) => {
                     const msg = snapshot.val();
-                    const myName = document.getElementById('user-display-name').textContent;
-                    
-                    // Trigger for every message sent AFTER the page was opened
-                    // or within the last 2 seconds to catch race conditions
-                    if (msg.timestamp >= (startTime - 2000) && currentRoom !== r) {
-                        if (msg.userId !== myName && msg.userId !== 'Você' && msg.userId !== 'Sistema') {
-                            unreadCounts[r] = (unreadCounts[r] || 0) + 1;
-                            updateRoomBadge(r);
-                        }
+                    if (currentRoom !== r && msg.timestamp >= (startTime - 5000)) {
+                        // Increment for EVERY message regardless of user
+                        // This fixes the issue where testing in two tabs with same user fails
+                        unreadCounts[r] = (unreadCounts[r] || 0) + 1;
+                        updateRoomBadge(r);
                     }
                 });
             });
