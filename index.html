@@ -2503,7 +2503,6 @@
             const stopwords = new Set(['de','do','da','dos','das','em','no','na','nos','nas','para','com','por','que','se','um','uma','uns','umas','o','a','os','as','e','ou','ao','aos','à','às','seu','sua','este','esta','pelo','pela','mais','mas','como','há','foi','são','uma','isso','ele','ela','ser','está','sido']);
             const fullText = sentences.join(' ');
             
-            // Detectar matéria pelo conteúdo
             const textLower = fullText.toLowerCase();
             const topicMaps = [
                 { key: 'Química', words: ['átomo','mol','ligação','valência','período','tabela periódica','elétron','íon','solução','reação','reagente','produto','elemento'] },
@@ -2521,76 +2520,55 @@
                 return fcGenerateExercises(detected.key, count);
             }
 
-            // Extrair palavras-chave reais do documento
             const wordFreq = {};
             const allWords = fullText.split(/\W+/).filter(w => w.length > 4 && !stopwords.has(w.toLowerCase()));
             allWords.forEach(w => { const k = w.toLowerCase(); wordFreq[k] = (wordFreq[k] || 0) + 1; });
-            const keywords = Object.entries(wordFreq)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 30)
-                .map(e => e[0]);
+            const keywords = Object.entries(wordFreq).sort((a, b) => b[1] - a[1]).slice(0, 30).map(e => e[0]);
 
-            // Feedback visual no chat
             const logBox = document.createElement('div');
             logBox.className = 'message msg-received';
             logBox.innerHTML = `<div class="msg-user">Sistema</div>📄 Detectei conteúdo de <strong>${detected.key}</strong>.<br><small style="opacity:0.7">Palavras-chave: ${keywords.slice(0,5).join(', ')}</small>`;
             document.getElementById('fc-messages').appendChild(logBox);
             document.getElementById('fc-messages').scrollTop = document.getElementById('fc-messages').scrollHeight;
 
-            // Filtrar sentenças
-            const goodSentences = sentences
-                .filter(s => s.trim().length >= 20 && !s.match(/^(fig|tabela|obs|nota|página|quadro|fonte)/i))
-                .sort((a, b) => b.length - a.length);
+            const goodSentences = sentences.filter(s => s.trim().length >= 20 && !s.match(/^(fig|tabela|obs|nota|página|quadro|fonte)/i)).sort((a, b) => b.length - a.length);
 
             const cards = [];
             let attempts = 0;
-            while(cards.length < count && attempts < goodSentences.length * 2 && attempts < 100) {
+            while(cards.length < count && attempts < goodSentences.length * 3 && attempts < 150) {
                 const s = goodSentences[attempts % goodSentences.length] || fullText.substring(attempts*80, attempts*80+120);
                 const clean = s.trim();
                 attempts++;
                 
-                if (!clean || clean.length < 15) continue;
+                if (!clean || clean.length < 25) continue;
 
                 const sentWords = clean.split(/\W+/).map(w => w.toLowerCase());
                 const found = sentWords.find(w => w.length > 4 && keywords.includes(w));
                 
-                let q = '', a = '';
+                let q = '', a = '', options = [], correctIndex = 0;
                 
-                if (clean.match(/\b(é|são|consiste em|significa|representa)\b/i) && clean.length < 150) {
-                    const parts = clean.split(/\b(é|são|consiste em|significa|representa)\b/i);
-                    if (parts.length >= 3 && parts[0].trim().length > 3) {
-                        q = `O que ${parts[1]} "${parts[0].trim()}"?`;
-                        a = clean;
-                    }
-                } 
-                
-                if (!q && found) {
+                if (found) {
                     const regex = new RegExp(`\\b${found}\\b`, 'i');
-                    const rand = Math.random();
-                    if (rand < 0.33) {
-                        q = `Complete a lacuna:<br><br>"${clean.replace(regex, '______')}"`;
-                        a = `A palavra correta é: <strong>${found}</strong>.<br><br><small>Contexto: ${clean}</small>`;
-                    } else if (rand < 0.66) {
-                        q = `Conceito Oculto:<br>Qual termo estudado na aula se encaixa no trecho abaixo?<br><br>"${clean.replace(regex, '[TERMO]')}"`;
-                        a = `O termo é: <strong>${found}</strong>.<br><br><small>Contexto: ${clean}</small>`;
-                    } else {
-                        q = `Explique a relação ou o que o material afirma sobre o termo: <strong>${found.toUpperCase()}</strong>`;
-                        a = `Segundo o material:<br>${clean}`;
+                    q = `No contexto estudado, a frase a seguir refere-se a qual termo central?<br><br><em>"${clean.replace(regex, '______')}"</em>`;
+                    
+                    options = [ found, keywords[Math.floor(Math.random() * keywords.length)], keywords[Math.floor(Math.random() * keywords.length)], keywords[Math.floor(Math.random() * keywords.length)], "Nenhuma das anteriores" ];
+                    options = [...new Set(options)];
+                    while(options.length < 5) {
+                        options.push(keywords[Math.floor(Math.random() * keywords.length)] || "Conceito secundário");
+                        options = [...new Set(options)];
                     }
-                } 
-                
-                if (!q) {
-                    const rand = Math.random();
-                    if (rand < 0.5) {
-                        q = `O que o texto afirma sobre o trecho abaixo?<br><br>"${clean.substring(0, 40)}..."`;
-                        a = clean;
-                    } else {
-                        q = `Interpretação:<br>Qual o contexto ou a continuação da seguinte frase?<br><br>"${clean.substring(0, 40)}..."`;
-                        a = clean;
-                    }
+                    options.sort(() => 0.5 - Math.random());
+                    correctIndex = options.indexOf(found);
+                    a = `A frase completa no material de estudo é: <em>"${clean}"</em>. O termo oculto era <strong>${found}</strong>.`;
+                } else {
+                    q = `Qual é a interpretação ou continuação correta da seguinte afirmação do texto base?<br><br><em>"${clean.substring(0, 50)}..."</em>`;
+                    options = [ clean, "Refere-se a um processo que não ocorre em situações normais.", "É um conceito pouco relevante e secundário neste estudo.", "Contradiz o que foi explicado na introdução do material.", "Todas as alternativas anteriores estão incorretas." ];
+                    options.sort(() => 0.5 - Math.random());
+                    correctIndex = options.indexOf(clean);
+                    a = `O texto original integral afirma que: <em>"${clean}"</em>.`;
                 }
                 
-                if (q && a) cards.push({ q, a, tag: detected.key });
+                cards.push({ isQuiz: true, q, options, correctIndex, ans: a, tag: detected.key });
             }
             return cards;
         }
@@ -2598,39 +2576,44 @@
         function fcGenerateExercises(subject, count) {
             const dbEx = {
                 'Biologia': [
-                    { q: "(ENEM) Mitocôndrias são organelas celulares cujas principais funções são:", options: ["a) Fotossíntese", "b) Respiração celular", "c) Síntese de proteínas", "d) Digestão intracelular", "e) Armazenamento de lipídios"], ans: "b) Respiração celular. As mitocôndrias são as usinas de energia das células aeróbicas." },
-                    { q: "(FUVEST) O códon corresponde a uma trinca de bases do:", options: ["a) DNA", "b) RNA transportador", "c) RNA ribossômico", "d) RNA mensageiro", "e) Ribossomo"], ans: "d) RNA mensageiro. Os códons do RNAm são lidos pelos anticódons do RNAt." },
-                    { q: "(UNICAMP) A fotossíntese e a respiração celular são processos que se complementam, pois:", options: ["a) Ambos consomem oxigênio", "b) A fotossíntese produz o oxigênio consumido na respiração", "c) Ambos produzem glicose", "d) A respiração produz o oxigênio para a fotossíntese", "e) Apenas ocorrem em plantas"], ans: "b) A fotossíntese produz o oxigênio e a glicose que são consumidos na respiração celular." },
-                    { q: "(ENEM) As vacinas atuam estimulando o sistema imunológico a produzir:", options: ["a) Antígenos", "b) Anticorpos", "c) Antibióticos", "d) Glóbulos vermelhos", "e) Plaquetas"], ans: "b) Anticorpos. As vacinas contêm antígenos que estimulam a memória imunológica e produção de anticorpos." },
-                    { q: "(UNESP) O processo de divisão celular que reduz pela metade o número de cromossomos é a:", options: ["a) Mitose", "b) Meiose", "c) Clivagem", "d) Fissão binária", "e) Brotamento"], ans: "b) Meiose. Ocorre na formação de gametas, gerando células haploides." }
+                    { q: "(ENEM) Mitocôndrias são organelas celulares cujas principais funções são:", options: ["a) Fotossíntese", "b) Respiração celular", "c) Síntese de proteínas", "d) Digestão intracelular", "e) Armazenamento de lipídios"], ans: "Respiração celular. As mitocôndrias são as usinas de energia das células aeróbicas." },
+                    { q: "(FUVEST) O códon corresponde a uma trinca de bases do:", options: ["a) DNA", "b) RNA transportador", "c) RNA ribossômico", "d) RNA mensageiro", "e) Ribossomo"], ans: "RNA mensageiro. Os códons do RNAm são lidos pelos anticódons do RNAt." },
+                    { q: "(UNICAMP) A fotossíntese e a respiração celular são processos que se complementam, pois:", options: ["a) Ambos consomem oxigênio", "b) A fotossíntese produz o oxigênio consumido na respiração", "c) Ambos produzem glicose", "d) A respiração produz o oxigênio para a fotossíntese", "e) Apenas ocorrem em plantas"], ans: "A fotossíntese produz o oxigênio e a glicose que são consumidos na respiração celular." },
+                    { q: "(ENEM) As vacinas atuam estimulando o sistema imunológico a produzir:", options: ["a) Antígenos", "b) Anticorpos", "c) Antibióticos", "d) Glóbulos vermelhos", "e) Plaquetas"], ans: "Anticorpos. As vacinas contêm antígenos que estimulam a memória imunológica." },
+                    { q: "(UNESP) O processo de divisão celular que reduz pela metade o número de cromossomos é a:", options: ["a) Mitose", "b) Meiose", "c) Clivagem", "d) Fissão binária", "e) Brotamento"], ans: "Meiose. Ocorre na formação de gametas, gerando células haploides." },
+                    { q: "(UERJ) Os lipídios são compostos orgânicos que atuam no organismo principalmente como:", options: ["a) Catalisadores biológicos", "b) Reserva energética de longo prazo", "c) Transportadores de oxigênio", "d) Base do código genético", "e) Anticorpos naturais"], ans: "Reserva energética de longo prazo. Lipídios (gorduras) armazenam grande quantidade de energia." }
                 ],
                 'Química': [
-                    { q: "(ENEM) O elemento químico presente em todos os compostos orgânicos é o:", options: ["a) Oxigênio", "b) Nitrogênio", "c) Carbono", "d) Hidrogênio", "e) Enxofre"], ans: "c) Carbono. É a base da química orgânica devido a sua tetravalência." },
-                    { q: "(FUVEST) Ácidos, segundo Arrhenius, são substâncias que em solução aquosa liberam como cátion exclusivo o:", options: ["a) H+", "b) OH-", "c) Na+", "d) Cl-", "e) O2-"], ans: "a) H+ (ou H3O+). É a definição clássica de Arrhenius para ácidos." },
-                    { q: "(UNICAMP) Uma solução de pH = 3 é considerada:", options: ["a) Fortemente básica", "b) Levemente básica", "c) Neutra", "d) Levemente ácida", "e) Fortemente ácida"], ans: "e) Fortemente ácida. A escala de pH vai de 0 a 14, sendo < 7 ácido, e 3 é bem ácido." },
-                    { q: "(ENEM) A reação de um ácido com uma base produz:", options: ["a) Apenas água", "b) Apenas sal", "c) Sal e água", "d) Ácido e sal", "e) Base e água"], ans: "c) Sal e água. É a clássica reação de neutralização." },
-                    { q: "(UNESP) O isótopo mais abundante do carbono, o Carbono-12, possui em seu núcleo:", options: ["a) 6 prótons e 6 nêutrons", "b) 6 prótons e 8 nêutrons", "c) 8 prótons e 6 nêutrons", "d) 12 prótons e 12 nêutrons", "e) 6 prótons e 0 nêutrons"], ans: "a) 6 prótons e 6 nêutrons. (A = Z + N -> 12 = 6 + N -> N = 6)." }
+                    { q: "(ENEM) O elemento químico presente em todos os compostos orgânicos é o:", options: ["a) Oxigênio", "b) Nitrogênio", "c) Carbono", "d) Hidrogênio", "e) Enxofre"], ans: "Carbono. É a base da química orgânica devido a sua tetravalência." },
+                    { q: "(FUVEST) Ácidos, segundo Arrhenius, são substâncias que em solução aquosa liberam como cátion exclusivo o:", options: ["a) H+", "b) OH-", "c) Na+", "d) Cl-", "e) O2-"], ans: "H+ (ou H3O+). É a definição clássica de Arrhenius." },
+                    { q: "(UNICAMP) Uma solução de pH = 3 é considerada:", options: ["a) Fortemente básica", "b) Levemente básica", "c) Neutra", "d) Levemente ácida", "e) Fortemente ácida"], ans: "Fortemente ácida. A escala de pH vai de 0 a 14, sendo < 7 ácido." },
+                    { q: "(ENEM) A reação de um ácido com uma base produz:", options: ["a) Apenas água", "b) Apenas sal", "c) Sal e água", "d) Ácido e sal", "e) Base e água"], ans: "Sal e água. É a clássica reação de neutralização." },
+                    { q: "(UNESP) O isótopo mais abundante do carbono, o Carbono-12, possui em seu núcleo:", options: ["a) 6 prótons e 6 nêutrons", "b) 6 prótons e 8 nêutrons", "c) 8 prótons e 6 nêutrons", "d) 12 prótons e 12 nêutrons", "e) 6 prótons e 0 nêutrons"], ans: "6 prótons e 6 nêutrons. (A = Z + N -> 12 = 6 + N -> N = 6)." },
+                    { q: "(ENEM) O processo de separação de misturas homogêneas líquido-líquido baseia-se na diferença de:", options: ["a) Densidade", "b) Solubilidade", "c) Ponto de fusão", "d) Ponto de ebulição", "e) Massa molar"], ans: "Ponto de ebulição. Esse é o princípio da destilação fracionada." }
                 ],
                 'Física': [
-                    { q: "(ENEM) Segundo a 2ª Lei de Newton, a força resultante sobre um corpo é igual ao produto de sua massa pela sua:", options: ["a) Velocidade", "b) Aceleração", "c) Energia", "d) Posição", "e) Densidade"], ans: "b) Aceleração. A famosa equação F = m * a." },
-                    { q: "(FUVEST) A energia cinética de um corpo está diretamente relacionada com a sua:", options: ["a) Altura", "b) Massa e velocidade", "c) Temperatura", "d) Posição", "e) Cor"], ans: "b) Massa e velocidade. A fórmula é Ec = (m * v^2) / 2." },
-                    { q: "(UNICAMP) A unidade de medida de potência no Sistema Internacional (SI) é o:", options: ["a) Joule", "b) Newton", "c) Watt", "d) Volt", "e) Ampère"], ans: "c) Watt. 1 Watt equivale a 1 Joule por segundo." },
-                    { q: "(ENEM) O som é uma onda:", options: ["a) Eletromagnética e transversal", "b) Mecânica e transversal", "c) Mecânica e longitudinal", "d) Eletromagnética e longitudinal", "e) Gravitacional"], ans: "c) Mecânica e longitudinal. O som precisa de um meio material para se propagar." },
-                    { q: "(UNESP) Dois corpos em equilíbrio térmico possuem necessariamente a mesma:", options: ["a) Massa", "b) Energia Térmica", "c) Capacidade térmica", "d) Temperatura", "e) Densidade"], ans: "d) Temperatura. É a condição para que não haja fluxo de calor entre eles." }
+                    { q: "(ENEM) Segundo a 2ª Lei de Newton, a força resultante sobre um corpo é igual ao produto de sua massa pela sua:", options: ["a) Velocidade", "b) Aceleração", "c) Energia", "d) Posição", "e) Densidade"], ans: "Aceleração. A famosa equação F = m * a." },
+                    { q: "(FUVEST) A energia cinética de um corpo está diretamente relacionada com a sua:", options: ["a) Altura", "b) Massa e velocidade", "c) Temperatura", "d) Posição", "e) Cor"], ans: "Massa e velocidade. A fórmula é Ec = (m * v^2) / 2." },
+                    { q: "(UNICAMP) A unidade de medida de potência no Sistema Internacional (SI) é o:", options: ["a) Joule", "b) Newton", "c) Watt", "d) Volt", "e) Ampère"], ans: "Watt. 1 Watt equivale a 1 Joule por segundo." },
+                    { q: "(ENEM) O som é uma onda:", options: ["a) Eletromagnética e transversal", "b) Mecânica e transversal", "c) Mecânica e longitudinal", "d) Eletromagnética e longitudinal", "e) Gravitacional"], ans: "Mecânica e longitudinal. O som precisa de um meio material para se propagar." },
+                    { q: "(UNESP) Dois corpos em equilíbrio térmico possuem necessariamente a mesma:", options: ["a) Massa", "b) Energia Térmica", "c) Capacidade térmica", "d) Temperatura", "e) Densidade"], ans: "Temperatura. É a condição para que não haja fluxo de calor entre eles." },
+                    { q: "(UFMG) Se a distância entre duas cargas elétricas é reduzida à metade, a força de repulsão entre elas fica:", options: ["a) Metade", "b) O dobro", "c) Quatro vezes maior", "d) Um quarto", "e) Inalterada"], ans: "Quatro vezes maior. A força é inversamente proporcional ao quadrado da distância (Lei de Coulomb)." }
                 ],
                 'Matemática': [
-                    { q: "(ENEM) Em um triângulo retângulo, o quadrado da hipotenusa é igual à:", options: ["a) Soma dos catetos", "b) Diferença dos quadrados dos catetos", "c) Soma dos quadrados dos catetos", "d) Metade da soma dos catetos", "e) Produto dos catetos"], ans: "c) Soma dos quadrados dos catetos. O clássico Teorema de Pitágoras: c^2 = a^2 + b^2." },
-                    { q: "(FUVEST) O logaritmo de 1 em qualquer base a (a > 0 e a ≠ 1) é igual a:", options: ["a) a", "b) 1", "c) -1", "d) 0", "e) Não existe"], ans: "d) 0. Pois qualquer número elevado a 0 é 1 (a^0 = 1)." },
-                    { q: "(UNICAMP) Uma função do 2º grau do tipo f(x) = ax² + bx + c, com a > 0, tem um gráfico em forma de parábola com concavidade voltada para:", options: ["a) Cima", "b) Baixo", "c) Esquerda", "d) Direita", "e) É uma reta"], ans: "a) Cima. Quando o coeficiente 'a' é positivo, a concavidade é para cima." },
-                    { q: "(ENEM) O fatorial de 5 (5!) é igual a:", options: ["a) 15", "b) 25", "c) 120", "d) 60", "e) 24"], ans: "c) 120. Pois 5! = 5 * 4 * 3 * 2 * 1 = 120." },
-                    { q: "(UNESP) A área de um círculo de raio r é dada pela fórmula:", options: ["a) 2πr", "b) πr²", "c) 4πr²", "d) (4/3)πr³", "e) π²r"], ans: "b) πr². A área do círculo é o produto de Pi pelo quadrado do raio." }
+                    { q: "(ENEM) Em um triângulo retângulo, o quadrado da hipotenusa é igual à:", options: ["a) Soma dos catetos", "b) Diferença dos quadrados dos catetos", "c) Soma dos quadrados dos catetos", "d) Metade da soma dos catetos", "e) Produto dos catetos"], ans: "Soma dos quadrados dos catetos. O clássico Teorema de Pitágoras: c^2 = a^2 + b^2." },
+                    { q: "(FUVEST) O logaritmo de 1 em qualquer base a (a > 0 e a ≠ 1) é igual a:", options: ["a) a", "b) 1", "c) -1", "d) 0", "e) Não existe"], ans: "0. Pois qualquer número elevado a 0 é 1 (a^0 = 1)." },
+                    { q: "(UNICAMP) Uma função do 2º grau do tipo f(x) = ax² + bx + c, com a > 0, tem um gráfico em forma de parábola com concavidade voltada para:", options: ["a) Cima", "b) Baixo", "c) Esquerda", "d) Direita", "e) É uma reta"], ans: "Cima. Quando o coeficiente 'a' é positivo, a concavidade é para cima." },
+                    { q: "(ENEM) O fatorial de 5 (5!) é igual a:", options: ["a) 15", "b) 25", "c) 120", "d) 60", "e) 24"], ans: "120. Pois 5! = 5 * 4 * 3 * 2 * 1 = 120." },
+                    { q: "(UNESP) A área de um círculo de raio r é dada pela fórmula:", options: ["a) 2πr", "b) πr²", "c) 4πr²", "d) (4/3)πr³", "e) π²r"], ans: "πr². A área do círculo é o produto de Pi pelo quadrado do raio." },
+                    { q: "(ENEM) A soma dos ângulos internos de um triângulo qualquer na geometria plana é sempre:", options: ["a) 90 graus", "b) 180 graus", "c) 270 graus", "d) 360 graus", "e) 100 graus"], ans: "180 graus. É uma das propriedades fundamentais da geometria Euclidiana." }
                 ],
                 'Geral': [
-                    { q: "(ENEM) Qual é o continente com a maior extensão territorial do mundo?", options: ["a) América", "b) África", "c) Europa", "d) Ásia", "e) Antártida"], ans: "d) Ásia. É o maior e mais populoso continente." },
-                    { q: "(FUVEST) A Revolução Francesa iniciou-se em qual ano?", options: ["a) 1500", "b) 1776", "c) 1789", "d) 1822", "e) 1914"], ans: "c) 1789. Com a Queda da Bastilha." },
-                    { q: "(UNICAMP) Qual destes é considerado o maior planeta do Sistema Solar?", options: ["a) Terra", "b) Marte", "c) Júpiter", "d) Saturno", "e) Vênus"], ans: "c) Júpiter." },
-                    { q: "(ENEM) Qual foi o primeiro país da América Latina a declarar independência?", options: ["a) Brasil", "b) Argentina", "c) México", "d) Haiti", "e) Colômbia"], ans: "d) Haiti. Em 1804." },
-                    { q: "(UNESP) O processo de desertificação está mais associado a qual bioma brasileiro?", options: ["a) Amazônia", "b) Cerrado", "c) Caatinga", "d) Pantanal", "e) Pampa"], ans: "c) Caatinga. Devido ao clima semiárido e degradação do solo." }
+                    { q: "(ENEM) Qual é o continente com a maior extensão territorial do mundo?", options: ["a) América", "b) África", "c) Europa", "d) Ásia", "e) Antártida"], ans: "Ásia. É o maior e mais populoso continente." },
+                    { q: "(FUVEST) A Revolução Francesa iniciou-se em qual ano?", options: ["a) 1500", "b) 1776", "c) 1789", "d) 1822", "e) 1914"], ans: "1789. Com a Queda da Bastilha." },
+                    { q: "(UNICAMP) Qual destes é considerado o maior planeta do Sistema Solar?", options: ["a) Terra", "b) Marte", "c) Júpiter", "d) Saturno", "e) Vênus"], ans: "Júpiter." },
+                    { q: "(ENEM) Qual foi o primeiro país da América Latina a declarar independência?", options: ["a) Brasil", "b) Argentina", "c) México", "d) Haiti", "e) Colômbia"], ans: "Haiti. Em 1804, impulsionado por uma rebelião de escravizados." },
+                    { q: "(UNESP) O processo de desertificação está mais associado a qual bioma brasileiro?", options: ["a) Amazônia", "b) Cerrado", "c) Caatinga", "d) Pantanal", "e) Pampa"], ans: "Caatinga. Devido ao clima semiárido e degradação do solo." },
+                    { q: "(FUVEST) O fenômeno El Niño consiste no aquecimento anormal das águas de qual oceano?", options: ["a) Atlântico Norte", "b) Pacífico Equatorial", "c) Índico", "d) Ártico", "e) Atlântico Sul"], ans: "Pacífico Equatorial. Modificando padrões de clima em todo o planeta." }
                 ]
             };
 
@@ -2663,120 +2646,30 @@
             });
         }
 
-        let quizState = { active: false, currentIndex: 0, questions: [], answered: false };
-        let reviewState = { active: false, currentIndex: 0, cards: [], reviewedCount: 0, reviewQueue: [], showingAnswer: false };
+        let testState = { active: false, currentIndex: 0, questions: [], answered: false };
 
         function fcRenderCards() {
             const list = document.getElementById('flashcard-list');
             list.innerHTML = '';
             
-            if (fcState.mode === 'exercises' && fcState.cards.length > 0 && fcState.cards[0].isQuiz) {
-                quizState.active = true;
-                quizState.questions = fcState.cards;
-                quizState.currentIndex = 0;
-                renderQuizQuestion();
+            if (fcState.cards && fcState.cards.length > 0) {
+                testState.active = true;
+                testState.questions = fcState.cards;
+                testState.currentIndex = 0;
+                renderTestQuestion();
                 document.getElementById('flashcards-view').classList.add('active');
-                return;
             }
-            
-            if (fcState.mode === 'flashcards' && fcState.cards.length > 0) {
-                reviewState.active = true;
-                reviewState.cards = fcState.cards.map(c => ({...c, hasBeenSeen: false}));
-                reviewState.reviewQueue = [...reviewState.cards];
-                reviewState.reviewedCount = 0;
-                reviewState.showingAnswer = false;
-                renderReviewCard();
-                document.getElementById('flashcards-view').classList.add('active');
-                return;
-            }
-            
-            document.getElementById('flashcards-view').classList.add('active');
         }
 
-        function renderReviewCard() {
+        function renderTestQuestion() {
             const list = document.getElementById('flashcard-list');
-            if (reviewState.reviewQueue.length === 0) {
+            if (testState.currentIndex >= testState.questions.length) {
                 list.innerHTML = `
                     <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; text-align:center;">
                         <div style="font-size:48px; margin-bottom:10px;">🏆</div>
-                        <h2 style="margin-bottom:15px; font-size:24px;">Revisão Concluída!</h2>
-                        <p style="margin-bottom:20px; color:var(--text-dim);">Você revisou todos os cartões desta sessão (incluindo as repetições dos que achou difíceis).</p>
-                        <h3 style="margin-bottom:20px; font-size:16px;">Deseja salvar este baralho de flashcards?</h3>
-                        <div style="display:flex; gap:12px; justify-content:center;">
-                            <button class="btn-upload" style="background:var(--glass);" onclick="fcInitChat()">Não, descartar</button>
-                            <button class="btn-upload" onclick="saveFlashcardTopic(); fcInitChat();">Sim, salvar baralho</button>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
-
-            const card = reviewState.reviewQueue[0];
-            const isFlipped = reviewState.showingAnswer;
-            const progress = reviewState.reviewedCount;
-            const total = reviewState.cards.length;
-
-            let html = `
-                <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:20px; display:flex; flex-direction:column; align-items:center;">
-                    <div style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                        <span style="color:var(--text-dim); font-size:13px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Progresso Base: ${progress} de ${total}</span>
-                    </div>
-
-                    <div class="fc-card" style="width:100%; max-width:400px; height:280px; margin-bottom:20px; cursor:pointer;" onclick="toggleReviewCard()" id="active-review-card">
-                        <div class="fc-card-face fc-card-front" style="display: ${isFlipped ? 'none' : 'flex'}; align-items:center; justify-content:center; flex-direction:column;">
-                            <div class="fc-card-q" style="font-size:18px; text-align:center;">${card.q}</div>
-                            <div class="fc-card-hint" style="margin-top:auto; font-weight:bold;">Tocar para virar</div>
-                        </div>
-                        <div class="fc-card-face fc-card-back" style="display: ${isFlipped ? 'flex' : 'none'}; align-items:center; justify-content:center; flex-direction:column; transform:none;">
-                            <div class="fc-card-a" style="font-size:16px; text-align:center;">${card.a}</div>
-                            <div class="fc-card-hint" style="margin-top:auto; font-weight:bold;">Como você se saiu?</div>
-                        </div>
-                    </div>
-            `;
-
-            if (isFlipped) {
-                html += `
-                    <div style="display:flex; gap:10px; width:100%; max-width:400px;">
-                        <button class="btn-upload" style="flex:1; background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.3);" onclick="answerReview('hard')">Não sabia (Repetir depois)</button>
-                        <button class="btn-upload" style="flex:1; background:rgba(16,185,129,0.2); color:#10b981; border:1px solid rgba(16,185,129,0.3);" onclick="answerReview('easy')">Já sabia (Próximo)</button>
-                    </div>
-                `;
-            } else {
-                html += `
-                    <button class="btn-upload" style="width:100%; max-width:400px; background:var(--glass);" onclick="toggleReviewCard()">Mostrar Resposta</button>
-                `;
-            }
-
-            html += `</div>`;
-            list.innerHTML = html;
-        }
-
-        function toggleReviewCard() {
-            reviewState.showingAnswer = !reviewState.showingAnswer;
-            renderReviewCard();
-        }
-
-        function answerReview(difficulty) {
-            const card = reviewState.reviewQueue.shift(); 
-            if (difficulty === 'hard') {
-                reviewState.reviewQueue.push(card); 
-            } else {
-                if (!card.hasBeenSeen) reviewState.reviewedCount++;
-            }
-            card.hasBeenSeen = true;
-            reviewState.showingAnswer = false;
-            renderReviewCard();
-        }
-
-        function renderQuizQuestion() {
-            const list = document.getElementById('flashcard-list');
-            if (quizState.currentIndex >= quizState.questions.length) {
-                list.innerHTML = `
-                    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:30px; text-align:center;">
-                        <div style="font-size:48px; margin-bottom:10px;">🎉</div>
-                        <h2 style="margin-bottom:15px; font-size:24px;">Lista Concluída!</h2>
-                        <p style="margin-bottom:20px; color:var(--text-dim);">Você finalizou as ${quizState.questions.length} questões de ${quizState.questions[0].tag}.</p>
-                        <h3 style="margin-bottom:20px; font-size:16px;">Deseja salvar esta lista de exercícios?</h3>
+                        <h2 style="margin-bottom:15px; font-size:24px;">Sessão Concluída!</h2>
+                        <p style="margin-bottom:20px; color:var(--text-dim);">Você finalizou todas as questões propostas para este bloco de estudos.</p>
+                        <h3 style="margin-bottom:20px; font-size:16px;">Deseja salvar esta lista para refazer no futuro?</h3>
                         <div style="display:flex; gap:12px; justify-content:center;">
                             <button class="btn-upload" style="background:var(--glass);" onclick="fcInitChat()">Não, descartar</button>
                             <button class="btn-upload" onclick="saveFlashcardTopic(); fcInitChat();">Sim, salvar lista</button>
@@ -2786,75 +2679,90 @@
                 return;
             }
 
-            quizState.answered = false;
-            const q = quizState.questions[quizState.currentIndex];
+            testState.answered = false;
+            const q = testState.questions[testState.currentIndex];
             
             let html = `
-                <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                        <span style="color:var(--text-dim); font-size:13px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Questão ${quizState.currentIndex + 1} de ${quizState.questions.length}</span>
-                        <span class="tag">${q.tag}</span>
+                <div style="max-width: 800px; margin: 0 auto; padding: 10px 40px;">
+                    <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:30px;">
+                        <span class="tag" style="font-size:12px; opacity:0.7;">Questão ${testState.currentIndex + 1} de ${testState.questions.length} — ${q.tag}</span>
                     </div>
-                    <div style="font-size:16px; font-weight:600; margin-bottom:24px; line-height:1.6;">${q.q}</div>
-                    <div style="display:flex; flex-direction:column; gap:12px;" id="quiz-options">
+                    <div style="font-size:18px; line-height:1.7; color:var(--text); margin-bottom:32px;">
+                        <span style="color:#ef4444; font-weight:bold; font-size:20px;">${testState.currentIndex + 1}. </span>
+                        ${q.q}
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:12px;" id="test-options">
             `;
             
+            const letras = ['a)', 'b)', 'c)', 'd)', 'e)'];
             q.options.forEach((opt, idx) => {
-                html += `<div class="quiz-opt" id="quiz-opt-${idx}" onclick="answerQuiz(${idx}, ${q.correctIndex})" style="padding:14px 16px; border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s; background:rgba(255,255,255,0.02);">${opt}</div>`;
+                let optText = opt;
+                if (/^[a-e]\)/i.test(optText)) optText = optText.replace(/^[a-e]\)\s*/i, '');
+
+                html += `
+                    <div class="test-opt" id="test-opt-${idx}" onclick="answerTest(${idx}, ${q.correctIndex})" 
+                         style="font-size:16px; line-height:1.5; cursor:pointer; padding:12px 16px; border-radius:8px; transition: background 0.2s; display:flex; gap:14px; background:rgba(255,255,255,0.03);">
+                        <span style="font-weight:bold; min-width:20px; opacity:0.8;">${letras[idx]}</span> 
+                        <span>${optText}</span>
+                    </div>`;
             });
             
             html += `
                     </div>
-                    <div id="quiz-explanation" style="display:none; margin-top:24px; padding:16px; border-radius:8px; font-size:14px; line-height:1.6;"></div>
-                    <button id="quiz-next-btn" class="btn-upload" style="display:none; width:100%; margin-top:24px;" onclick="nextQuizQuestion()">Avançar para Próxima ❯</button>
+                    <div id="test-explanation" style="display:none; margin-top:30px; padding:24px; border-radius:12px; font-size:15px; line-height:1.6;"></div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+                        <button id="test-next-btn" class="btn-upload" style="display:none; width:auto; padding:12px 30px;" onclick="nextTestQuestion()">Avançar para Próxima ❯</button>
+                    </div>
                 </div>
             `;
             
             list.innerHTML = html;
         }
 
-        function answerQuiz(selectedIdx, correctIdx) {
-            if (quizState.answered) return;
-            quizState.answered = true;
+        function answerTest(selectedIdx, correctIdx) {
+            if (testState.answered) return;
+            testState.answered = true;
             
-            const q = quizState.questions[quizState.currentIndex];
+            const q = testState.questions[testState.currentIndex];
             const isCorrect = selectedIdx === correctIdx;
             
             for(let i=0; i<q.options.length; i++) {
-                const el = document.getElementById(`quiz-opt-${i}`);
-                el.style.opacity = '0.4';
+                const el = document.getElementById(`test-opt-${i}`);
                 el.style.pointerEvents = 'none';
+                el.style.border = '1px solid transparent';
+                
                 if (i === correctIdx) {
                     el.style.background = 'rgba(16,185,129,0.15)';
-                    el.style.borderColor = '#10b981';
-                    el.style.opacity = '1';
-                }
-                if (i === selectedIdx && !isCorrect) {
+                    el.style.color = '#10b981';
+                    el.style.border = '1px solid rgba(16,185,129,0.4)';
+                } else if (i === selectedIdx && !isCorrect) {
                     el.style.background = 'rgba(239,68,68,0.15)';
-                    el.style.borderColor = '#ef4444';
-                    el.style.opacity = '1';
+                    el.style.color = '#ef4444';
+                    el.style.border = '1px solid rgba(239,68,68,0.4)';
+                } else {
+                    el.style.opacity = '0.4';
                 }
             }
             
-            const expEl = document.getElementById('quiz-explanation');
+            const expEl = document.getElementById('test-explanation');
             expEl.style.display = 'block';
             
             if (isCorrect) {
-                expEl.style.background = 'rgba(16,185,129,0.1)';
+                expEl.style.background = 'rgba(16,185,129,0.05)';
                 expEl.style.borderLeft = '4px solid #10b981';
-                expEl.innerHTML = `<strong style="color:#10b981">Alternativa Correta!</strong><br><br>${q.ans}`;
+                expEl.innerHTML = `<strong style="color:#10b981; font-size:18px; display:block; margin-bottom:10px;">✔️ Exatamente!</strong>${q.ans}`;
             } else {
-                expEl.style.background = 'rgba(239,68,68,0.1)';
+                expEl.style.background = 'rgba(239,68,68,0.05)';
                 expEl.style.borderLeft = '4px solid #ef4444';
-                expEl.innerHTML = `<strong style="color:#ef4444">Alternativa Errada!</strong> A alternativa escolhida não responde adequadamente ao que foi pedido.<br><br><strong style="color:#10b981">A correta seria:</strong><br>${q.ans}`;
+                expEl.innerHTML = `<strong style="color:#ef4444; font-size:18px; display:block; margin-bottom:10px;">❌ Incorreto.</strong> A alternativa escolhida não responde adequadamente ao que foi pedido.<br><br><strong style="color:#10b981">Gabarito e Explicação:</strong><br>${q.ans}`;
             }
             
-            document.getElementById('quiz-next-btn').style.display = 'block';
+            document.getElementById('test-next-btn').style.display = 'inline-block';
         }
 
-        function nextQuizQuestion() {
-            quizState.currentIndex++;
-            renderQuizQuestion();
+        function nextTestQuestion() {
+            testState.currentIndex++;
+            renderTestQuestion();
         }
 
         function fcAIMessage(text, extra = '') {
