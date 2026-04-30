@@ -2500,147 +2500,137 @@
         }
 
         function fcGenerateQAFromText(sentences, count) {
-            const stopwords = new Set(['de','do','da','dos','das','em','no','na','nos','nas','para','com','por','que','se','um','uma','uns','umas','o','a','os','as','e','ou','ao','aos','à','às','seu','sua','este','esta','pelo','pela','mais','mas','como','há','foi','são','uma','isso','ele','ela','ser','está','sido']);
-            const fullText = sentences.join(' ');
+            const fullText = sentences.join(' ').toLowerCase();
             
-            const textLower = fullText.toLowerCase();
             const topicMaps = [
-                { key: 'Química', words: ['átomo','mol','ligação','valência','período','tabela periódica','elétron','íon','solução','reação','reagente','produto','elemento'] },
-                { key: 'Biologia', words: ['célula','dna','rna','proteína','mitose','meiose','organela','gene','cromossomo','organismo','fotossíntese','ecossistema','espécie','tecido'] },
-                { key: 'Física', words: ['força','velocidade','aceleração','newton','energia','massa','potência','corrente','tensão','resistência','onda','frequência','óptica'] },
-                { key: 'Matemática', words: ['função','equação','inequação','derivada','integral','logaritmo','seno','cosseno','tangente','matriz','vetor','probabilidade','fatorial'] },
-                { key: 'História', words: ['guerra','revolução','império','colônia','monarquia','república','século','nação','tratado','independência','escravidão'] },
-                { key: 'Geografia', words: ['clima','bioma','relevo','população','urbanização','território','latitude','longitude','continente','oceano','erosão','fronteira'] },
-                { key: 'Português', words: ['verbo','substantivo','oração','sujeito','predicado','adjetivo','texto','poema','literatura','autor','figura de linguagem'] }
+                { key: 'Química', words: ['átomo','mol','ligação','valência','período','tabela periódica','elétron','íon','solução','reação','reagente','produto','elemento','ácido','base','sal','óxido'] },
+                { key: 'Biologia', words: ['célula','dna','rna','proteína','mitose','meiose','organela','gene','cromossomo','organismo','fotossíntese','ecossistema','espécie','tecido','genética'] },
+                { key: 'Física', words: ['força','velocidade','aceleração','newton','energia','massa','potência','corrente','tensão','resistência','onda','frequência','óptica','gravidade','termodinâmica'] },
+                { key: 'Matemática', words: ['função','equação','inequação','derivada','integral','logaritmo','seno','cosseno','tangente','matriz','vetor','probabilidade','fatorial','triângulo','área'] },
+                { key: 'Lógica de Programação', words: ['algoritmo','código','loop','variável','função','array','objeto','javascript','python','compilador','debug','boolean','if','else','while'] },
+                { key: 'Sistemas Operacionais', words: ['linux','windows','kernel','processo','memória ram','disco','arquivo','sistema','cpu','thread','bash','shell','diretório'] },
+                { key: 'Web Design', words: ['html','css','layout','design','responsivo','grid','flexbox','interface','ui','ux','cores','tipografia'] },
+                { key: 'Robótica', words: ['arduino','sensor','motor','atuador','circuito','placa','robô','eletrônica','voltagem','corrente','resistor'] },
+                { key: 'História', words: ['guerra','revolução','império','colônia','monarquia','república','século','nação','tratado','independência','escravidão','feudalismo'] },
+                { key: 'Geografia', words: ['clima','bioma','relevo','população','urbanização','território','latitude','longitude','continente','oceano','erosão','fronteira','globalização'] }
             ];
-            const detected = topicMaps.find(m => m.words.some(w => textLower.includes(w))) || { key: 'Estudo' };
+            
+            let detected = topicMaps.find(m => m.words.some(w => fullText.includes(w))) || { key: 'Geral' };
             fcState.subject = detected.key;
-
-            if (fcState.mode === 'exercises') {
-                return fcGenerateExercises(detected.key, count);
-            }
-
-            const wordFreq = {};
-            const allWords = fullText.split(/\W+/).filter(w => w.length > 4 && !stopwords.has(w.toLowerCase()));
-            allWords.forEach(w => { const k = w.toLowerCase(); wordFreq[k] = (wordFreq[k] || 0) + 1; });
-            const keywords = Object.entries(wordFreq).sort((a, b) => b[1] - a[1]).slice(0, 30).map(e => e[0]);
 
             const logBox = document.createElement('div');
             logBox.className = 'message msg-received';
-            logBox.innerHTML = `<div class="msg-user">Sistema</div>📄 Detectei conteúdo de <strong>${detected.key}</strong>.<br><small style="opacity:0.7">Palavras-chave: ${keywords.slice(0,5).join(', ')}</small>`;
+            logBox.innerHTML = `<div class="msg-user">Sistema</div>📄 Detectei que o material trata principalmente de <strong>${detected.key}</strong>.<br><small style="opacity:0.7">Buscando as questões do banco oficial...</small>`;
             document.getElementById('fc-messages').appendChild(logBox);
             document.getElementById('fc-messages').scrollTop = document.getElementById('fc-messages').scrollHeight;
 
-            const goodSentences = sentences.filter(s => s.trim().length >= 20 && !s.match(/^(fig|tabela|obs|nota|página|quadro|fonte)/i)).sort((a, b) => b.length - a.length);
-
-            const cards = [];
-            let attempts = 0;
-            while(cards.length < count && attempts < goodSentences.length * 3 && attempts < 150) {
-                const s = goodSentences[attempts % goodSentences.length] || fullText.substring(attempts*80, attempts*80+120);
-                const clean = s.trim();
-                attempts++;
-                
-                if (!clean || clean.length < 25) continue;
-
-                const sentWords = clean.split(/\W+/).map(w => w.toLowerCase());
-                const found = sentWords.find(w => w.length > 4 && keywords.includes(w));
-                
-                let q = '', a = '', options = [], correctIndex = 0;
-                
-                if (found) {
-                    const regex = new RegExp(`\\b${found}\\b`, 'i');
-                    q = `No contexto estudado, a frase a seguir refere-se a qual termo central?<br><br><em>"${clean.replace(regex, '______')}"</em>`;
-                    
-                    options = [ found, keywords[Math.floor(Math.random() * keywords.length)], keywords[Math.floor(Math.random() * keywords.length)], keywords[Math.floor(Math.random() * keywords.length)], "Nenhuma das anteriores" ];
-                    options = [...new Set(options)];
-                    while(options.length < 5) {
-                        options.push(keywords[Math.floor(Math.random() * keywords.length)] || "Conceito secundário");
-                        options = [...new Set(options)];
-                    }
-                    options.sort(() => 0.5 - Math.random());
-                    correctIndex = options.indexOf(found);
-                    a = `A frase completa no material de estudo é: <em>"${clean}"</em>. O termo oculto era <strong>${found}</strong>.`;
-                } else {
-                    q = `Qual é a interpretação ou continuação correta da seguinte afirmação do texto base?<br><br><em>"${clean.substring(0, 50)}..."</em>`;
-                    options = [ clean, "Refere-se a um processo que não ocorre em situações normais.", "É um conceito pouco relevante e secundário neste estudo.", "Contradiz o que foi explicado na introdução do material.", "Todas as alternativas anteriores estão incorretas." ];
-                    options.sort(() => 0.5 - Math.random());
-                    correctIndex = options.indexOf(clean);
-                    a = `O texto original integral afirma que: <em>"${clean}"</em>.`;
-                }
-                
-                cards.push({ isQuiz: true, q, options, correctIndex, ans: a, tag: detected.key });
-            }
-            return cards;
+            return fcGenerateExercises(detected.key, count);
         }
 
         function fcGenerateExercises(subject, count) {
             const dbEx = {
                 'Biologia': [
-                    { q: "(ENEM) Mitocôndrias são organelas celulares cujas principais funções são:", options: ["a) Fotossíntese", "b) Respiração celular", "c) Síntese de proteínas", "d) Digestão intracelular", "e) Armazenamento de lipídios"], ans: "Respiração celular. As mitocôndrias são as usinas de energia das células aeróbicas." },
-                    { q: "(FUVEST) O códon corresponde a uma trinca de bases do:", options: ["a) DNA", "b) RNA transportador", "c) RNA ribossômico", "d) RNA mensageiro", "e) Ribossomo"], ans: "RNA mensageiro. Os códons do RNAm são lidos pelos anticódons do RNAt." },
-                    { q: "(UNICAMP) A fotossíntese e a respiração celular são processos que se complementam, pois:", options: ["a) Ambos consomem oxigênio", "b) A fotossíntese produz o oxigênio consumido na respiração", "c) Ambos produzem glicose", "d) A respiração produz o oxigênio para a fotossíntese", "e) Apenas ocorrem em plantas"], ans: "A fotossíntese produz o oxigênio e a glicose que são consumidos na respiração celular." },
-                    { q: "(ENEM) As vacinas atuam estimulando o sistema imunológico a produzir:", options: ["a) Antígenos", "b) Anticorpos", "c) Antibióticos", "d) Glóbulos vermelhos", "e) Plaquetas"], ans: "Anticorpos. As vacinas contêm antígenos que estimulam a memória imunológica." },
-                    { q: "(UNESP) O processo de divisão celular que reduz pela metade o número de cromossomos é a:", options: ["a) Mitose", "b) Meiose", "c) Clivagem", "d) Fissão binária", "e) Brotamento"], ans: "Meiose. Ocorre na formação de gametas, gerando células haploides." },
-                    { q: "(UERJ) Os lipídios são compostos orgânicos que atuam no organismo principalmente como:", options: ["a) Catalisadores biológicos", "b) Reserva energética de longo prazo", "c) Transportadores de oxigênio", "d) Base do código genético", "e) Anticorpos naturais"], ans: "Reserva energética de longo prazo. Lipídios (gorduras) armazenam grande quantidade de energia." }
+                    { correct: 1, q: "(ENEM) Mitocôndrias são organelas celulares cujas principais funções são:", options: ["Fotossíntese", "Respiração celular", "Síntese de proteínas", "Digestão intracelular", "Armazenamento de lipídios"], ans: "Respiração celular. As mitocôndrias são as usinas de energia das células aeróbicas." },
+                    { correct: 3, q: "(FUVEST) O códon corresponde a uma trinca de bases do:", options: ["DNA", "RNA transportador", "RNA ribossômico", "RNA mensageiro", "Ribossomo"], ans: "RNA mensageiro. Os códons do RNAm são lidos pelos anticódons do RNAt." },
+                    { correct: 1, q: "(UNICAMP) A fotossíntese e a respiração celular são processos que se complementam, pois:", options: ["Ambos consomem oxigênio", "A fotossíntese produz o oxigênio consumido na respiração", "Ambos produzem glicose", "A respiração produz o oxigênio para a fotossíntese", "Apenas ocorrem em plantas"], ans: "A fotossíntese produz o oxigênio e a glicose que são consumidos na respiração celular." },
+                    { correct: 1, q: "(ENEM) As vacinas atuam estimulando o sistema imunológico a produzir:", options: ["Antígenos", "Anticorpos", "Antibióticos", "Glóbulos vermelhos", "Plaquetas"], ans: "Anticorpos. As vacinas contêm antígenos que estimulam a memória imunológica." },
+                    { correct: 1, q: "(UNESP) O processo de divisão celular que reduz pela metade o número de cromossomos é a:", options: ["Mitose", "Meiose", "Clivagem", "Fissão binária", "Brotamento"], ans: "Meiose. Ocorre na formação de gametas, gerando células haploides." },
+                    { correct: 1, q: "(UERJ) Os lipídios são compostos orgânicos que atuam no organismo principalmente como:", options: ["Catalisadores biológicos", "Reserva energética de longo prazo", "Transportadores de oxigênio", "Base do código genético", "Anticorpos naturais"], ans: "Reserva energética de longo prazo. Lipídios armazenam muita energia." },
+                    { correct: 2, q: "(ENEM) Qual das estruturas abaixo é exclusiva das células vegetais?", options: ["Ribossomo", "Membrana plasmática", "Parede celular celulósica", "Núcleo verdadeiro", "Complexo golgiense"], ans: "A parede celular celulósica (juntamente com os cloroplastos) é exclusiva das células vegetais." },
+                    { correct: 0, q: "(FUVEST) O sangue arterial é rico em oxigênio e percorre a circulação sistêmica partindo do:", options: ["Ventrículo esquerdo", "Átrio direito", "Átrio esquerdo", "Ventrículo direito", "Nenhuma das anteriores"], ans: "Ventrículo esquerdo, que o impulsiona para a artéria aorta." },
+                    { correct: 3, q: "(UNIFESP) As proteínas são formadas pela união sequencial de:", options: ["Monossacarídeos", "Ácidos graxos", "Nucleotídeos", "Aminoácidos", "Vitaminas"], ans: "As proteínas são longas cadeias formadas pela união de aminoácidos por meio de ligações peptídicas." },
+                    { correct: 2, q: "(ENEM) O cruzamento entre um indivíduo Aa e outro Aa resultará numa descendência com a proporção fenotípica clássica de:", options: ["1:1", "1:2:1", "3:1", "9:3:3:1", "100% iguais"], ans: "3:1 (Três com fenótipo dominante e um com fenótipo recessivo na 1ª Lei de Mendel)." },
+                    { correct: 4, q: "(MACKENZIE) A enzima responsável por digerir proteínas no estômago sob um pH bastante ácido é a:", options: ["Amilase", "Lípase", "Ptialina", "Bílis", "Pepsina"], ans: "Pepsina. Ela age otimamente no estômago com auxílio do ácido clorídrico." },
+                    { correct: 1, q: "(FUVEST) Organismos procariontes caracterizam-se por:", options: ["Possuírem carioteca", "Não possuírem envoltório nuclear (carioteca)", "Serem todos pluricelulares", "Não possuírem material genético", "Se reproduzirem apenas assexuadamente"], ans: "Não possuem envoltório nuclear isolando o material genético." },
+                    { correct: 0, q: "(UNICAMP) O grupo de animais que possui o exoesqueleto de quitina e apêndices articulados é o dos:", options: ["Artrópodes", "Moluscos", "Anelídeos", "Equinodermos", "Cordados"], ans: "Artrópodes (insetos, aracnídeos, crustáceos etc)." },
+                    { correct: 3, q: "(ENEM) Relações ecológicas harmônicas onde ambos se beneficiam mas não podem viver separados chamam-se:", options: ["Comensalismo", "Amensalismo", "Protocooperação", "Mutualismo obrigatório", "Parasitismo"], ans: "Mutualismo obrigatório. Exemplo clássico: liquens." },
+                    { correct: 1, q: "(UNESP) O hormônio responsável por diminuir o nível de glicose no sangue é a:", options: ["Adrenalina", "Insulina", "Glucagon", "Tiroxina", "Testosterona"], ans: "Insulina. Produzida no pâncreas, promove a absorção da glicose pelas células." }
                 ],
                 'Química': [
-                    { q: "(ENEM) O elemento químico presente em todos os compostos orgânicos é o:", options: ["a) Oxigênio", "b) Nitrogênio", "c) Carbono", "d) Hidrogênio", "e) Enxofre"], ans: "Carbono. É a base da química orgânica devido a sua tetravalência." },
-                    { q: "(FUVEST) Ácidos, segundo Arrhenius, são substâncias que em solução aquosa liberam como cátion exclusivo o:", options: ["a) H+", "b) OH-", "c) Na+", "d) Cl-", "e) O2-"], ans: "H+ (ou H3O+). É a definição clássica de Arrhenius." },
-                    { q: "(UNICAMP) Uma solução de pH = 3 é considerada:", options: ["a) Fortemente básica", "b) Levemente básica", "c) Neutra", "d) Levemente ácida", "e) Fortemente ácida"], ans: "Fortemente ácida. A escala de pH vai de 0 a 14, sendo < 7 ácido." },
-                    { q: "(ENEM) A reação de um ácido com uma base produz:", options: ["a) Apenas água", "b) Apenas sal", "c) Sal e água", "d) Ácido e sal", "e) Base e água"], ans: "Sal e água. É a clássica reação de neutralização." },
-                    { q: "(UNESP) O isótopo mais abundante do carbono, o Carbono-12, possui em seu núcleo:", options: ["a) 6 prótons e 6 nêutrons", "b) 6 prótons e 8 nêutrons", "c) 8 prótons e 6 nêutrons", "d) 12 prótons e 12 nêutrons", "e) 6 prótons e 0 nêutrons"], ans: "6 prótons e 6 nêutrons. (A = Z + N -> 12 = 6 + N -> N = 6)." },
-                    { q: "(ENEM) O processo de separação de misturas homogêneas líquido-líquido baseia-se na diferença de:", options: ["a) Densidade", "b) Solubilidade", "c) Ponto de fusão", "d) Ponto de ebulição", "e) Massa molar"], ans: "Ponto de ebulição. Esse é o princípio da destilação fracionada." }
+                    { correct: 2, q: "(ENEM) O elemento químico presente em todos os compostos orgânicos é o:", options: ["Oxigênio", "Nitrogênio", "Carbono", "Hidrogênio", "Enxofre"], ans: "Carbono. É a base da química orgânica devido a sua tetravalência." },
+                    { correct: 0, q: "(FUVEST) Ácidos, segundo Arrhenius, são substâncias que em solução aquosa liberam como cátion exclusivo o:", options: ["H+", "OH-", "Na+", "Cl-", "O2-"], ans: "H+ (ou H3O+). É a definição clássica de Arrhenius." },
+                    { correct: 4, q: "(UNICAMP) Uma solução de pH = 3 é considerada:", options: ["Fortemente básica", "Levemente básica", "Neutra", "Levemente ácida", "Fortemente ácida"], ans: "Fortemente ácida. A escala vai de 0 a 14, sendo abaixo de 7 considerado ácido." },
+                    { correct: 2, q: "(ENEM) A reação de um ácido com uma base produz:", options: ["Apenas água", "Apenas sal", "Sal e água", "Ácido e sal", "Base e água"], ans: "Sal e água. Esta é a clássica reação de neutralização." },
+                    { correct: 0, q: "(UNESP) O isótopo mais abundante do carbono, o Carbono-12, possui em seu núcleo:", options: ["6 prótons e 6 nêutrons", "6 prótons e 8 nêutrons", "8 prótons e 6 nêutrons", "12 prótons e 12 nêutrons", "6 prótons e 0 nêutrons"], ans: "6 prótons e 6 nêutrons. (Massa 12 = 6 Prótons + 6 Nêutrons)." },
+                    { correct: 3, q: "(ENEM) O processo de separação de misturas homogêneas líquido-líquido baseia-se na diferença de:", options: ["Densidade", "Solubilidade", "Ponto de fusão", "Ponto de ebulição", "Massa molar"], ans: "Ponto de ebulição. Princípio da destilação fracionada." },
+                    { correct: 1, q: "(FUVEST) Ligação iônica ocorre predominantemente através da:", options: ["Compartilhamento de elétrons", "Transferência de elétrons", "Atração nuclear", "Repulsão eletrostática", "Ponte de hidrogênio"], ans: "Transferência de elétrons de um metal para um ametal." },
+                    { correct: 0, q: "(UFMG) Moléculas de água são atraídas entre si através de intensas forças chamadas:", options: ["Ligações de hidrogênio", "Forças de London", "Interações dipolo-induzido", "Forças de Van der Waals", "Ligações metálicas"], ans: "Ligações de hidrogênio. Elas conferem à água seu alto ponto de ebulição." },
+                    { correct: 2, q: "(UNICAMP) Um gás nas Condições Normais de Temperatura e Pressão (CNTP) tem o volume molar igual a:", options: ["10,5 L", "20,0 L", "22,4 L", "24,5 L", "30,0 L"], ans: "22,4 L por cada 1 mol de gás nas CNTP." },
+                    { correct: 4, q: "(ENEM) Qual gás é o principal causador natural do Efeito Estufa (excluindo vapor d'água)?", options: ["Metano", "CFC", "Ozônio", "Monóxido de carbono", "Dióxido de carbono (CO2)"], ans: "Dióxido de carbono (CO2), derivado majoritariamente da queima de combustíveis fósseis e respiração." },
+                    { correct: 1, q: "(ITA) O número quântico principal (n) determina principalmente:", options: ["O formato do orbital", "O nível de energia (camada)", "A orientação espacial", "A rotação do elétron", "O momento angular"], ans: "O nível de energia (as camadas K, L, M, N...)." },
+                    { correct: 0, q: "(UFRJ) Na tabela periódica, elementos de uma mesma família possuem:", options: ["Mesmo número de elétrons de valência", "Mesmo número atômico", "Mesma massa atômica", "Mesmo raio iônico", "Mesmo número de nêutrons"], ans: "O mesmo número de elétrons de valência, gerando propriedades químicas semelhantes." },
+                    { correct: 1, q: "(ENEM) Fenômenos físicos diferem de químicos pois:", options: ["Não alteram a massa", "Não alteram a estrutura molecular da substância", "Alteram a estrutura atômica", "Só ocorrem em gases", "Produzem luz obrigatoriamente"], ans: "Não alteram a estrutura molecular. A evaporação da água é um fenômeno físico." },
+                    { correct: 3, q: "(UNESP) Uma solução insaturada é aquela que:", options: ["Possui corpo de fundo", "Apresenta soluto acima do limite", "Está no limite de saturação", "Pode ainda dissolver mais soluto na mesma temperatura", "Não conduz corrente elétrica"], ans: "Pode ainda dissolver mais soluto pois não alcançou o coeficiente de solubilidade." }
                 ],
                 'Física': [
-                    { q: "(ENEM) Segundo a 2ª Lei de Newton, a força resultante sobre um corpo é igual ao produto de sua massa pela sua:", options: ["a) Velocidade", "b) Aceleração", "c) Energia", "d) Posição", "e) Densidade"], ans: "Aceleração. A famosa equação F = m * a." },
-                    { q: "(FUVEST) A energia cinética de um corpo está diretamente relacionada com a sua:", options: ["a) Altura", "b) Massa e velocidade", "c) Temperatura", "d) Posição", "e) Cor"], ans: "Massa e velocidade. A fórmula é Ec = (m * v^2) / 2." },
-                    { q: "(UNICAMP) A unidade de medida de potência no Sistema Internacional (SI) é o:", options: ["a) Joule", "b) Newton", "c) Watt", "d) Volt", "e) Ampère"], ans: "Watt. 1 Watt equivale a 1 Joule por segundo." },
-                    { q: "(ENEM) O som é uma onda:", options: ["a) Eletromagnética e transversal", "b) Mecânica e transversal", "c) Mecânica e longitudinal", "d) Eletromagnética e longitudinal", "e) Gravitacional"], ans: "Mecânica e longitudinal. O som precisa de um meio material para se propagar." },
-                    { q: "(UNESP) Dois corpos em equilíbrio térmico possuem necessariamente a mesma:", options: ["a) Massa", "b) Energia Térmica", "c) Capacidade térmica", "d) Temperatura", "e) Densidade"], ans: "Temperatura. É a condição para que não haja fluxo de calor entre eles." },
-                    { q: "(UFMG) Se a distância entre duas cargas elétricas é reduzida à metade, a força de repulsão entre elas fica:", options: ["a) Metade", "b) O dobro", "c) Quatro vezes maior", "d) Um quarto", "e) Inalterada"], ans: "Quatro vezes maior. A força é inversamente proporcional ao quadrado da distância (Lei de Coulomb)." }
+                    { correct: 1, q: "(ENEM) Segundo a 2ª Lei de Newton, a força resultante sobre um corpo é igual ao produto de sua massa pela sua:", options: ["Velocidade", "Aceleração", "Energia", "Posição", "Densidade"], ans: "Aceleração. Equação F = m * a." },
+                    { correct: 1, q: "(FUVEST) A energia cinética de um corpo está diretamente relacionada com a sua:", options: ["Altura", "Massa e velocidade", "Temperatura", "Posição", "Cor"], ans: "Massa e velocidade. Fórmula: Ec = (m * v^2) / 2." },
+                    { correct: 2, q: "(UNICAMP) A unidade de medida de potência no Sistema Internacional (SI) é o:", options: ["Joule", "Newton", "Watt", "Volt", "Ampère"], ans: "Watt. 1 Watt equivale a 1 Joule por segundo." },
+                    { correct: 2, q: "(ENEM) O som é uma onda:", options: ["Eletromagnética e transversal", "Mecânica e transversal", "Mecânica e longitudinal", "Eletromagnética e longitudinal", "Gravitacional"], ans: "Mecânica e longitudinal. Necessita de meio material e oscila na direção de propagação." },
+                    { correct: 3, q: "(UNESP) Dois corpos em equilíbrio térmico possuem necessariamente a mesma:", options: ["Massa", "Energia Térmica", "Capacidade térmica", "Temperatura", "Densidade"], ans: "Temperatura. Não há fluxo de calor entre corpos de mesma temperatura." },
+                    { correct: 2, q: "(UFMG) Se a distância entre duas cargas elétricas é reduzida à metade, a força de repulsão entre elas fica:", options: ["Metade", "O dobro", "Quatro vezes maior", "Um quarto", "Inalterada"], ans: "Quatro vezes maior. Inversamente proporcional ao quadrado da distância." },
+                    { correct: 0, q: "(ENEM) O princípio de Arquimedes diz que todo corpo submerso sofre uma força vertical para cima chamada de:", options: ["Empuxo", "Peso", "Normal", "Atrito", "Tensão"], ans: "Empuxo, que é equivalente ao peso do volume de fluido deslocado." },
+                    { correct: 4, q: "(FUVEST) Uma lente divergente conjuga sempre um tipo de imagem para objetos reais:", options: ["Real e invertida", "Real e direita", "Virtual e maior", "Virtual e invertida", "Virtual, direita e menor"], ans: "Virtual, direita e menor. Como nos espelhos convexos." },
+                    { correct: 1, q: "(UNICAMP) Se dobrarmos a tensão aplicada em um resistor ôhmico, a corrente elétrica que o atravessa:", options: ["Cai pela metade", "Dobra", "Quadruplica", "Não se altera", "Fica imprevisível"], ans: "Dobra. A Lei de Ohm (U = R.i) mostra relação linear." },
+                    { correct: 3, q: "(UFRJ) Na queda livre no vácuo, dois corpos de massas diferentes caem com:", options: ["Acelerações diferentes", "Velocidades diferentes em tempo igual", "Tempos de queda diferentes", "A mesma aceleração constante", "Aceleração nula"], ans: "A mesma aceleração constante (gravidade), independentemente da massa." },
+                    { correct: 1, q: "(ENEM) A transferência de calor em fluidos, devido a diferença de densidades que geram correntes, é a:", options: ["Condução", "Convecção", "Radiação", "Dilatação", "Sublimação"], ans: "Convecção. Ocorre em líquidos e gases, como na geladeira." },
+                    { correct: 2, q: "(FUVEST) A energia armazenada numa mola esticada ou comprimida é a:", options: ["Cinética", "Potencial gravitacional", "Potencial elástica", "Térmica", "Luminosa"], ans: "Potencial elástica. A fórmula é Ep = (k * x^2) / 2." },
+                    { correct: 0, q: "(UNESP) Qual destas grandezas é considerada vetorial?", options: ["Velocidade", "Massa", "Tempo", "Temperatura", "Distância percorrida"], ans: "Velocidade. Ela precisa de direção e sentido além da magnitude, diferentemente da massa." },
+                    { correct: 3, q: "(ENEM) O efeito Doppler é comumente percebido no nosso cotidiano em ondas:", options: ["De raio X", "De rádio", "Gama", "Sonoras", "Magnéticas"], ans: "Sonoras. É a alteração da frequência percebida devido ao movimento da fonte." }
                 ],
                 'Matemática': [
-                    { q: "(ENEM) Em um triângulo retângulo, o quadrado da hipotenusa é igual à:", options: ["a) Soma dos catetos", "b) Diferença dos quadrados dos catetos", "c) Soma dos quadrados dos catetos", "d) Metade da soma dos catetos", "e) Produto dos catetos"], ans: "Soma dos quadrados dos catetos. O clássico Teorema de Pitágoras: c^2 = a^2 + b^2." },
-                    { q: "(FUVEST) O logaritmo de 1 em qualquer base a (a > 0 e a ≠ 1) é igual a:", options: ["a) a", "b) 1", "c) -1", "d) 0", "e) Não existe"], ans: "0. Pois qualquer número elevado a 0 é 1 (a^0 = 1)." },
-                    { q: "(UNICAMP) Uma função do 2º grau do tipo f(x) = ax² + bx + c, com a > 0, tem um gráfico em forma de parábola com concavidade voltada para:", options: ["a) Cima", "b) Baixo", "c) Esquerda", "d) Direita", "e) É uma reta"], ans: "Cima. Quando o coeficiente 'a' é positivo, a concavidade é para cima." },
-                    { q: "(ENEM) O fatorial de 5 (5!) é igual a:", options: ["a) 15", "b) 25", "c) 120", "d) 60", "e) 24"], ans: "120. Pois 5! = 5 * 4 * 3 * 2 * 1 = 120." },
-                    { q: "(UNESP) A área de um círculo de raio r é dada pela fórmula:", options: ["a) 2πr", "b) πr²", "c) 4πr²", "d) (4/3)πr³", "e) π²r"], ans: "πr². A área do círculo é o produto de Pi pelo quadrado do raio." },
-                    { q: "(ENEM) A soma dos ângulos internos de um triângulo qualquer na geometria plana é sempre:", options: ["a) 90 graus", "b) 180 graus", "c) 270 graus", "d) 360 graus", "e) 100 graus"], ans: "180 graus. É uma das propriedades fundamentais da geometria Euclidiana." }
+                    { correct: 2, q: "(ENEM) Em um triângulo retângulo, o quadrado da hipotenusa é igual à:", options: ["Soma dos catetos", "Diferença dos quadrados dos catetos", "Soma dos quadrados dos catetos", "Metade da soma dos catetos", "Produto dos catetos"], ans: "Soma dos quadrados dos catetos. O famoso Teorema de Pitágoras." },
+                    { correct: 3, q: "(FUVEST) O logaritmo de 1 em qualquer base a (a > 0 e a ≠ 1) é igual a:", options: ["a", "1", "-1", "0", "Não existe"], ans: "0. Porque qualquer base elevada a 0 é 1." },
+                    { correct: 0, q: "(UNICAMP) Uma função do 2º grau do tipo f(x) = ax² + bx + c, com a > 0, tem um gráfico em forma de parábola com concavidade voltada para:", options: ["Cima", "Baixo", "Esquerda", "Direita", "É uma reta"], ans: "Cima. Coeficiente 'a' positivo = concavidade (boca) para cima." },
+                    { correct: 2, q: "(ENEM) O fatorial de 5 (5!) é igual a:", options: ["15", "25", "120", "60", "24"], ans: "120. (5 * 4 * 3 * 2 * 1)." },
+                    { correct: 1, q: "(UNESP) A área de um círculo de raio r é dada pela fórmula:", options: ["2πr", "πr²", "4πr²", "(4/3)πr³", "π²r"], ans: "πr². O produto de Pi pelo raio ao quadrado." },
+                    { correct: 1, q: "(ENEM) A soma dos ângulos internos de um triângulo qualquer na geometria plana é sempre:", options: ["90 graus", "180 graus", "270 graus", "360 graus", "100 graus"], ans: "180 graus. Fundamental em geometria plana." },
+                    { correct: 3, q: "(FUVEST) Probabilidade: qual a chance de sair um número par num dado justo de 6 faces?", options: ["1/6", "2/6", "1/4", "1/2", "2/3"], ans: "1/2 (50%). Existem 3 faces pares em um total de 6." },
+                    { correct: 2, q: "(MACKENZIE) Quantos subconjuntos pode ter um conjunto com 3 elementos?", options: ["3", "6", "8", "9", "12"], ans: "8. (Fórmula 2^n, sendo n=3)." },
+                    { correct: 0, q: "(ENEM) A fórmula da Bhaskara é utilizada para resolver:", options: ["Equações do 2º Grau", "Sistemas Lineares", "Matrizes", "Polinômios do 1º Grau", "Logaritmos"], ans: "Equações do 2º Grau." },
+                    { correct: 3, q: "(UNICAMP) Seno e Cosseno na circunferência trigonométrica representam, respectivamente, quais eixos do plano cartesiano?", options: ["X e Y", "X e X", "Y e Y", "Y e X", "Nenhum deles"], ans: "Y e X (Seno corre no eixo Y - vertical, Cosseno no eixo X - horizontal)." },
+                    { correct: 1, q: "(ENEM) Se o log(2) = 0,30, qual é o valor aproximado de log(4)?", options: ["0,45", "0,60", "0,90", "1,20", "2,00"], ans: "0,60. (log(4) = log(2^2) = 2 * log(2))." },
+                    { correct: 2, q: "(FUVEST) Uma PG tem termo geral 2, 4, 8, 16... A razão q é:", options: ["1", "1/2", "2", "4", "8"], ans: "2. Em uma Progressão Geométrica, o próximo termo é o anterior vezes a razão." },
+                    { correct: 0, q: "(UNESP) O valor de x na equação 2x + 4 = 10 é:", options: ["3", "4", "5", "6", "10"], ans: "3. Isolando: 2x = 6 -> x = 3." },
+                    { correct: 4, q: "(UNICAMP) Qual é o perímetro de um quadrado de lado L?", options: ["L", "L²", "2L", "3L", "4L"], ans: "4L. O perímetro é a soma dos quatro lados iguais do quadrado." }
                 ],
                 'Geral': [
-                    { q: "(ENEM) Qual é o continente com a maior extensão territorial do mundo?", options: ["a) América", "b) África", "c) Europa", "d) Ásia", "e) Antártida"], ans: "Ásia. É o maior e mais populoso continente." },
-                    { q: "(FUVEST) A Revolução Francesa iniciou-se em qual ano?", options: ["a) 1500", "b) 1776", "c) 1789", "d) 1822", "e) 1914"], ans: "1789. Com a Queda da Bastilha." },
-                    { q: "(UNICAMP) Qual destes é considerado o maior planeta do Sistema Solar?", options: ["a) Terra", "b) Marte", "c) Júpiter", "d) Saturno", "e) Vênus"], ans: "Júpiter." },
-                    { q: "(ENEM) Qual foi o primeiro país da América Latina a declarar independência?", options: ["a) Brasil", "b) Argentina", "c) México", "d) Haiti", "e) Colômbia"], ans: "Haiti. Em 1804, impulsionado por uma rebelião de escravizados." },
-                    { q: "(UNESP) O processo de desertificação está mais associado a qual bioma brasileiro?", options: ["a) Amazônia", "b) Cerrado", "c) Caatinga", "d) Pantanal", "e) Pampa"], ans: "Caatinga. Devido ao clima semiárido e degradação do solo." },
-                    { q: "(FUVEST) O fenômeno El Niño consiste no aquecimento anormal das águas de qual oceano?", options: ["a) Atlântico Norte", "b) Pacífico Equatorial", "c) Índico", "d) Ártico", "e) Atlântico Sul"], ans: "Pacífico Equatorial. Modificando padrões de clima em todo o planeta." }
+                    { correct: 3, q: "(ENEM) Qual é o continente com a maior extensão territorial do mundo?", options: ["América", "África", "Europa", "Ásia", "Antártida"], ans: "Ásia. O continente com maior área de terras imersas." },
+                    { correct: 2, q: "(FUVEST) A Revolução Francesa iniciou-se em qual ano?", options: ["1500", "1776", "1789", "1822", "1914"], ans: "1789. O estopim histórico com a Queda da Bastilha." },
+                    { correct: 2, q: "(UNICAMP) Qual destes é considerado o maior planeta do Sistema Solar?", options: ["Terra", "Marte", "Júpiter", "Saturno", "Vênus"], ans: "Júpiter, o gigante gasoso." },
+                    { correct: 3, q: "(ENEM) Qual foi o primeiro país da América Latina a declarar independência?", options: ["Brasil", "Argentina", "México", "Haiti", "Colômbia"], ans: "Haiti. Em 1804, via rebelião de escravizados." },
+                    { correct: 2, q: "(UNESP) O processo de desertificação está mais associado a qual bioma brasileiro?", options: ["Amazônia", "Cerrado", "Caatinga", "Pantanal", "Pampa"], ans: "Caatinga, por conta do semiárido sensível ao uso do solo." },
+                    { correct: 1, q: "(FUVEST) O fenômeno El Niño consiste no aquecimento anormal das águas de qual oceano?", options: ["Atlântico Norte", "Pacífico Equatorial", "Índico", "Ártico", "Atlântico Sul"], ans: "Pacífico Equatorial." },
+                    { correct: 0, q: "(ENEM) Quem pintou o famoso quadro 'Mona Lisa'?", options: ["Leonardo da Vinci", "Michelangelo", "Vincent van Gogh", "Pablo Picasso", "Salvador Dalí"], ans: "Leonardo da Vinci, no período do Renascimento." },
+                    { correct: 3, q: "(UNICAMP) O Aquífero Guarani localiza-se na região:", options: ["Norte do Brasil", "Nordeste", "América Central", "Centro-Sul da América do Sul", "Península Ibérica"], ans: "Centro-Sul da América do Sul, abrangendo Brasil, Paraguai, Argentina e Uruguai." },
+                    { correct: 1, q: "(FUVEST) Machado de Assis foi o principal expoente literário do:", options: ["Romantismo", "Realismo", "Modernismo", "Parnasianismo", "Naturalismo"], ans: "Realismo. Ele inaugurou a escola no Brasil com Memórias Póstumas de Brás Cubas." },
+                    { correct: 4, q: "(ENEM) A queda do Muro de Berlim ocorreu no ano de:", options: ["1945", "1969", "1975", "1985", "1989"], ans: "1989, marcando simbolicamente o fim da Guerra Fria." }
                 ]
             };
 
-            const pool = dbEx[subject] || dbEx['Geral'];
+            const pool = dbEx[subject] || dbEx['Geral'] || dbEx['Matemática'];
             const shuffled = [...pool].sort(() => 0.5 - Math.random());
-            const selected = shuffled.slice(0, Math.min(count, shuffled.length));
+            
+            // Replicar o banco se count for maior que as questões (Fallback de segurança)
+            while (shuffled.length < count) {
+                shuffled.push(...([...pool].sort(() => 0.5 - Math.random())));
+            }
+            
+            const selected = shuffled.slice(0, count);
 
             const logBox = document.createElement('div');
             logBox.className = 'message msg-received';
-            logBox.innerHTML = `<div class="msg-user">Sistema</div>📝 Preparei <strong>${selected.length} questões de vestibulares</strong> focadas em ${subject}!`;
+            logBox.innerHTML = `<div class="msg-user">Sistema</div>📝 Preparei <strong>${selected.length} questões reais (Vestibulares/Concursos)</strong> focadas em ${subject}!`;
             document.getElementById('fc-messages').appendChild(logBox);
             document.getElementById('fc-messages').scrollTop = document.getElementById('fc-messages').scrollHeight;
 
             return selected.map(ex => {
-                let correctIdx = 0;
-                const letter = ex.ans.charAt(0).toLowerCase();
-                if (letter === 'b') correctIdx = 1;
-                else if (letter === 'c') correctIdx = 2;
-                else if (letter === 'd') correctIdx = 3;
-                else if (letter === 'e') correctIdx = 4;
-                
                 return {
                     isQuiz: true,
                     q: ex.q,
                     options: ex.options,
+                    correctIndex: ex.correct,
                     ans: ex.ans,
-                    correctIndex: correctIdx,
                     tag: subject
                 };
             });
