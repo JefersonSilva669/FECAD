@@ -589,6 +589,7 @@
         .room-preview { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
         .room-item { position: relative; cursor: pointer; }
+        /* Badge geral (salas internas do chat) */
         .room-badge {
             background: #ff3b30 !important;
             color: white !important;
@@ -611,6 +612,16 @@
             pointer-events: none;
         }
         .room-badge.visible { display: flex !important; }
+
+        /* Badge INLINE da sidebar (nav-chat-badge) — não flutua */
+        #nav-chat-badge {
+            position: relative !important;
+            top: auto !important;
+            right: auto !important;
+            transform: none !important;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
 
         @keyframes pulse-red {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
@@ -1771,9 +1782,9 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link" id="nav-chat" onclick="showPage('chat', this); toggleSidebar()">
-                            <i>💬</i> Salas de Chat
-                            <span class="room-badge" id="nav-chat-badge" style="margin-left: auto;"></span>
+                        <a href="#" class="nav-link" id="nav-chat" onclick="showPage('chat', this); toggleSidebar()" style="display:flex; align-items:center; gap:8px;">
+                            <i>&#128172;</i> Salas de Chat
+                            <span class="room-badge" id="nav-chat-badge"></span>
                         </a>
                     </li>
                     <li class="nav-item">
