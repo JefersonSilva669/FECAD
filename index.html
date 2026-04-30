@@ -588,12 +588,12 @@
         .room-name { font-weight: 600; font-size: 14px; color: var(--text-main); }
         .room-preview { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
-        .room-item { position: relative; }
+        .room-item { position: relative; cursor: pointer; }
         .room-badge {
             background: #ff3b30 !important;
             color: white !important;
             font-size: 11px !important;
-            font-weight: 700 !important;
+            font-weight: 800 !important;
             min-width: 22px;
             height: 22px;
             padding: 0 6px;
@@ -601,13 +601,13 @@
             display: none;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 12px rgba(255, 59, 48, 0.7);
-            z-index: 999;
+            box-shadow: 0 0 15px rgba(255, 59, 48, 0.8);
+            z-index: 9999;
             position: absolute;
             right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            animation: pulse-red 2s infinite;
+            animation: pulse-red 1.5s infinite;
             pointer-events: none;
         }
         .room-badge.visible { display: flex !important; }
@@ -3239,20 +3239,22 @@
         function roomEmoji(r) { return roomEmojis[r] || '#'; }
 
         function updateRoomBadge(r) {
-            const id = getRoomId(r);
-            const badge = document.getElementById(id);
             const count = unreadCounts[r] || 0;
             
-            if (badge) {
-                if (count > 0) {
-                    badge.textContent = count > 99 ? '99+' : count;
-                    badge.classList.add('visible');
-                    badge.style.display = 'flex';
-                } else {
-                    badge.classList.remove('visible');
-                    badge.style.display = 'none';
-                }
+            // 1. Sidebar Badge (Dentro do Chat)
+            const sidebarBadge = document.getElementById(getRoomId(r));
+            if (sidebarBadge) {
+                sidebarBadge.textContent = count > 99 ? '99+' : count;
+                sidebarBadge.classList.toggle('visible', count > 0);
             }
+            
+            // 2. Home Page Badge (Cards de Disciplinas)
+            const homeBadge = document.getElementById('badge-home-' + getSafePath(r));
+            if (homeBadge) {
+                homeBadge.textContent = count;
+                homeBadge.style.display = count > 0 ? 'flex' : 'none';
+            }
+            
             localStorage.setItem('fecad_unread', JSON.stringify(unreadCounts));
             updateGlobalBadges();
         }
@@ -3323,36 +3325,34 @@
         let sessionStarts = {};
         function startNotificationsWatcher() {
             if (!db) return;
-            console.log("--- WATCHER INICIADO (Modo Contador de Sessão) ---");
+            console.log("🚀 SISTEMA DE NOTIFICAÇÕES ATIVADO");
             
-            rooms.forEach(r => {
-                const path = getSafePath(r);
-                
-                // Pegar o total atual de mensagens como ponto de partida
-                db.ref('chats/' + path).once('value', (snapshot) => {
-                    sessionStarts[r] = snapshot.numChildren();
-                    
-                    // Escutar qualquer mudança no total de mensagens
-                    db.ref('chats/' + path).on('value', (snap) => {
-                        const currentTotal = snap.numChildren();
-                        const diff = currentTotal - (sessionStarts[r] || 0);
-                        
-                        if (currentRoom === r) {
-                            // Se estou na sala, atualizo o ponto de partida para o total atual
-                            sessionStarts[r] = currentTotal;
-                            unreadCounts[r] = 0;
-                        } else {
-                            // Se não estou na sala, a diferença são as mensagens não lidas
-                            unreadCounts[r] = diff > 0 ? diff : 0;
-                        }
-                        
-                        console.log(`[Watcher] Sala: ${r} | Base: ${sessionStarts[r]} | Atual: ${currentTotal} | Unread: ${unreadCounts[r]}`);
-                        updateRoomBadge(r);
-                    });
-                });
+            let ready = false;
+            // Carregar estado inicial para ignorar mensagens antigas
+            db.ref('chats').once('value', () => {
+                console.log("✅ Dados iniciais ignorados. Escutando novas mensagens...");
+                ready = true; 
             });
-            
-            setInterval(updateGlobalBadges, 2000);
+
+            // Listener de Nível Superior: Escuta qualquer mudança em qualquer sala
+            db.ref('chats').on('child_changed', (snapshot) => {
+                if (!ready) return;
+                const path = snapshot.key;
+                const roomName = rooms.find(name => getSafePath(name) === path);
+                
+                if (roomName && currentRoom !== roomName) {
+                    unreadCounts[roomName] = (unreadCounts[roomName] || 0) + 1;
+                    console.log(`🔔 NOVA MENSAGEM: ${roomName} (Total: ${unreadCounts[roomName]})`);
+                    updateRoomBadge(roomName);
+                }
+            });
+
+            // Heartbeat para garantir que o script não morra
+            setInterval(() => {
+                if (Object.values(unreadCounts).some(v => v > 0)) {
+                    updateGlobalBadges();
+                }
+            }, 5000);
         }
 
         function sendMessage() {
