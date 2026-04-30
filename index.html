@@ -2271,7 +2271,9 @@
 
         function fcPickMode(mode) {
             fcState.mode = mode;
-            fcUserMessage(mode === 'flashcards' ? 'Flashcards' : 'Exercícios');
+            document.getElementById('fc-messages').innerHTML = '';
+            fcAIMessage(`Modo selecionado: <strong>${mode === 'flashcards' ? 'Flashcards de Revisão' : 'Lista de Exercícios'}</strong>`);
+            
             fcState.step = 'ask_document';
             fcAIMessage('Anexe o <strong>arquivo da aula</strong> (Imagem, PDF, DOCX, TXT, PPTX):', `
                 <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
@@ -2286,7 +2288,9 @@
 
         function fcFallbackMode() {
             fcState.docContext = 'fallback';
-            fcUserMessage("Gerar sem arquivo");
+            document.getElementById('fc-messages').innerHTML = '';
+            fcAIMessage('Método: <strong>Gerar sem arquivo (Fallback)</strong>');
+            
             fcTyping(() => {
                 fcAIMessage('Certo! Escolha a área de estudo do seu curso Regular ou Técnico (1º Ano):', `
                 <div class="fc-subject-grid" style="grid-template-columns: 1fr 1fr; gap:6px;">
@@ -2303,8 +2307,10 @@
         }
 
         function fcFallbackSubject(sub) {
-            fcUserMessage(sub);
             fcState.subject = sub;
+            document.getElementById('fc-messages').innerHTML = '';
+            fcAIMessage(`Matéria escolhida: <strong>${sub}</strong>`);
+            
             fcTyping(() => {
                 fcAIMessage(`Perfeito! Quantos itens você quer gerar sobre **${sub}**?`, `
                 <div class="fc-num-grid">
@@ -2315,7 +2321,9 @@
 
         function fcGenerateFallback(count) {
             fcState.count = count;
-            fcUserMessage(count + ' itens');
+            document.getElementById('fc-messages').innerHTML = '';
+            fcAIMessage(`Quantidade definida: <strong>${count} itens</strong>`);
+            
             fcTyping(() => {
                 fcAIMessage(`🎯 Gerando material sobre **${fcState.subject}**...`);
                 setTimeout(() => {
@@ -2384,11 +2392,16 @@
 
         async function fcSubmitDocument() {
             if (!fcSelectedFile) return alert('Anexe o arquivo!');
-            fcUserMessage('Arquivo: ' + fcSelectedFileName);
+            document.getElementById('fc-messages').innerHTML = '';
+            fcAIMessage(`Arquivo anexado: <strong>${fcSelectedFileName}</strong>`);
+            
             fcTyping(async () => {
                 fcAIMessage('📖 Lendo e analisando o conteúdo...');
                 fcExtractedText = await fcReadFileContent(fcSelectedFile);
-                fcAIMessage('✅ Arquivo analisado! Quantos itens você quer?', `
+                
+                document.getElementById('fc-messages').innerHTML = '';
+                fcAIMessage(`Arquivo: <strong>${fcSelectedFileName}</strong> (Lido com sucesso)`);
+                fcAIMessage('✅ Quantos itens você quer gerar a partir do texto?', `
                     <div class="fc-num-grid">
                         ${[3, 5, 8, 10].map(n => `<div class="fc-num-btn" onclick="fcPickCount(${n})">${n}</div>`).join('')}
                     </div>`);
@@ -2466,16 +2479,20 @@
 
         function fcPickCount(n) {
             fcState.count = n;
-            fcUserMessage(n + ' itens');
+            document.getElementById('fc-messages').innerHTML = '';
+            fcAIMessage(`Quantidade definida: <strong>${n} itens</strong>`);
+            
             fcTyping(() => {
-                fcAIMessage(`🎯 Gerando seu material personalizado...`);
+                fcAIMessage(`🎯 Gerando seu material personalizado a partir do documento...`);
                 setTimeout(() => {
                     const sentences = fcExtractedText.split(/[.!?\n]+/).filter(s => s.trim().length > 25);
                     fcState.cards = fcGenerateQAFromText(sentences, n);
                     fcRenderCards();
-                    fcAIMessage('✅ <strong>Pronto!</strong> Use os cartões ao lado para estudar. Clique em qualquer cartão para ver a resposta!', `
-                        <div class="fc-subject-grid">
-                            <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="saveFlashcardTopic()">💾 Salvar Tópico</div>
+                    
+                    document.getElementById('fc-messages').innerHTML = '';
+                    fcAIMessage('✅ <strong>Pronto!</strong> O material foi gerado com sucesso.', `
+                        <div class="fc-subject-grid" style="margin-top:15px;">
+                            <div class="fc-subject-btn" style="border-color:#10b981; color:#10b981;" onclick="saveFlashcardTopic()">💾 Salvar na Conta</div>
                             <div class="fc-subject-btn" onclick="fcInitChat()">🔄 Nova sessão</div>
                         </div>`);
                 }, 1000);
