@@ -1912,11 +1912,6 @@
                         <div class="fc-chat-panel">
                             <div class="fc-chat-header">🤖 Assistente</div>
                             <div class="fc-chat-messages" id="fc-messages"></div>
-                            <div class="fc-chat-input">
-                                <label for="fc-file-input" class="fc-upload-btn" title="Anexar arquivo ou imagem">📎</label>
-                                <input type="file" id="fc-file-input" style="display:none;" accept=".pdf,.txt,.docx,image/*" onchange="fcHandleFile(this)">
-                                <input type="text" placeholder="Digite uma mensagem..." disabled>
-                            </div>
                         </div>
                         <div class="fc-results-panel" id="flashcards-view">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -2074,6 +2069,23 @@
             <button class="btn-upload" style="padding: 10px 20px; background:rgba(255,255,255,0.1);" onclick="closeLightbox()">✕ Fechar</button>
         </div>
         <img id="lightbox-img" src="" style="max-width: 90%; max-height: 85%; border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,0.5); object-fit: contain;" onclick="event.stopPropagation()">
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:420px; text-align:center;">
+            <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+            <h3 style="font-size:20px; margin-bottom:8px; color:#ef4444;">Resetar Sistema</h3>
+            <p style="color:var(--text-dim); font-size:14px; margin-bottom:24px;">Esta ação apagará <strong>TODOS</strong> os chats e cadernos permanentemente. Digite a senha mestre para confirmar.</p>
+            <div style="position:relative; margin-bottom:20px;">
+                <input type="password" id="reset-pass-input" placeholder="Senha mestre..." style="width:100%; background:var(--bg-deep); border:1px solid #ef4444; border-radius:12px; padding:14px 48px 14px 16px; color:var(--text-main); font-size:15px; outline:none;" onkeydown="if(event.key==='Enter') confirmReset()">
+                <button onclick="toggleResetPass()" id="reset-eye-btn" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:20px; line-height:1;">👁️</button>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button class="btn-upload" style="flex:1; background:rgba(255,255,255,0.05); color:var(--text-main); box-shadow:none;" onclick="closeModal('resetModal'); document.getElementById('reset-pass-input').value='';">Cancelar</button>
+                <button class="btn-upload" style="flex:1; background:#ef4444;" onclick="confirmReset()">🗑️ Confirmar Reset</button>
+            </div>
+        </div>
     </div>
 
     <!-- Notebook View Modal -->
@@ -2309,15 +2321,40 @@
         function resetDatabase() {
             if (!db) return;
             if (confirm("⚠️ ATENÇÃO: Isso apagará TODOS os chats e cadernos do sistema permanentemente. Deseja continuar?")) {
-                const pass = prompt("Digite a senha mestre para resetar:");
-                if (pass === "FECAD2026") {
-                    db.ref('chats').remove();
-                    db.ref('notebooks').remove();
-                    alert("Sistema resetado com sucesso! Recarregando...");
-                    location.reload();
-                } else {
-                    alert("Senha incorreta!");
-                }
+                document.getElementById('reset-pass-input').value = '';
+                openModal('resetModal');
+                setTimeout(() => document.getElementById('reset-pass-input').focus(), 100);
+            }
+        }
+
+        function toggleResetPass() {
+            const input = document.getElementById('reset-pass-input');
+            const btn = document.getElementById('reset-eye-btn');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            btn.textContent = input.type === 'password' ? '👁️' : '🙈';
+        }
+
+        function confirmReset() {
+            const pass = document.getElementById('reset-pass-input').value;
+            if (pass === 'FECAD2026') {
+                closeModal('resetModal');
+                db.ref('chats').remove();
+                db.ref('notebooks').remove();
+                rooms.forEach(r => {
+                    unreadCounts[r] = 0;
+                    updateRoomBadge(r);
+                });
+                localStorage.removeItem('fecad_unread');
+                alert('Sistema resetado com sucesso! Recarregando...');
+                location.reload();
+            } else {
+                document.getElementById('reset-pass-input').value = '';
+                document.getElementById('reset-pass-input').style.borderColor = '#ff3b30';
+                document.getElementById('reset-pass-input').placeholder = 'Senha incorreta! Tente novamente...';
+                setTimeout(() => {
+                    document.getElementById('reset-pass-input').style.borderColor = '#ef4444';
+                    document.getElementById('reset-pass-input').placeholder = 'Senha mestre...';
+                }, 2000);
             }
         }
 
