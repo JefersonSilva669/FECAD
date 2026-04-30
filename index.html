@@ -589,21 +589,22 @@
         .room-preview { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
         .room-badge {
-            background: #ff3b30; /* Vermelho iOS */
-            color: white;
-            font-size: 11px;
-            font-weight: 700;
+            background: #ff3b30 !important; /* Vermelho iOS */
+            color: white !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
             min-width: 22px;
             height: 22px;
             padding: 0 6px;
             border-radius: 11px;
-            display: none !important;
+            display: none;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 10px rgba(255, 59, 48, 0.4);
-            z-index: 100;
+            box-shadow: 0 0 12px rgba(255, 59, 48, 0.6);
+            z-index: 999;
             flex-shrink: 0;
             animation: pulse-red 2s infinite;
+            pointer-events: none;
         }
         .room-badge.visible { display: flex !important; }
 
@@ -3309,35 +3310,41 @@
             document.getElementById('chat-bottom-area').style.display = 'flex';
             document.getElementById('chat-room-avatar').textContent = roomEmoji(r);
             
-            // Clear unread count
-            unreadCounts[r] = 0;
-            updateRoomBadge(r);
+            // Mark as read: store the current total messages as the 'seen' baseline
+            const path = getSafePath(r);
+            db.ref('chats/' + path).once('value', (snapshot) => {
+                const total = snapshot.numChildren();
+                localStorage.setItem('last_count_' + path, total);
+                unreadCounts[r] = 0;
+                updateRoomBadge(r);
+            });
             
             listenToRoom(r);
         }
 
         function startNotificationsWatcher() {
             if (!db) return;
-            const startTime = Date.now();
             
             rooms.forEach(r => {
                 const path = getSafePath(r);
                 
-                db.ref('chats/' + path).limitToLast(1).on('child_added', (snapshot) => {
-                    const msg = snapshot.val();
-                    if (currentRoom !== r && msg.timestamp >= (startTime - 5000)) {
-                        // Increment for EVERY message regardless of user
-                        // This fixes the issue where testing in two tabs with same user fails
-                        unreadCounts[r] = (unreadCounts[r] || 0) + 1;
-                        updateRoomBadge(r);
+                // Watch the total message count for each room
+                db.ref('chats/' + path).on('value', (snapshot) => {
+                    const total = snapshot.numChildren();
+                    const lastSeen = parseInt(localStorage.getItem('last_count_' + path) || 0);
+                    
+                    if (currentRoom === r) {
+                        // If we are currently in the room, update the 'seen' baseline automatically
+                        localStorage.setItem('last_count_' + path, total);
+                        unreadCounts[r] = 0;
+                    } else {
+                        // Calculate unread count based on the difference
+                        const diff = total - lastSeen;
+                        unreadCounts[r] = diff > 0 ? diff : 0;
                     }
+                    updateRoomBadge(r);
                 });
             });
-            
-            setInterval(() => {
-                rooms.forEach(r => updateRoomBadge(r));
-                updateGlobalBadges();
-            }, 3000);
         }
 
         function sendMessage() {
