@@ -3318,18 +3318,18 @@
 
         function startNotificationsWatcher() {
             if (!db) return;
+            const startTime = Date.now();
+            
             rooms.forEach(r => {
                 const path = getSafePath(r);
                 
-                // Track when initial data is loaded to avoid double counting on start
-                let initialDataLoaded = false;
-                db.ref('chats/' + path).once('value', () => { initialDataLoaded = true; });
-
-                db.ref('chats/' + path).limitToLast(1).on('child_added', (snapshot) => {
-                    if (initialDataLoaded && currentRoom !== r) {
-                        const msg = snapshot.val();
-                        const myName = document.getElementById('user-display-name').textContent;
-                        
+                db.ref('chats/' + path).on('child_added', (snapshot) => {
+                    const msg = snapshot.val();
+                    const myName = document.getElementById('user-display-name').textContent;
+                    
+                    // Trigger for every message sent AFTER the page was opened
+                    // or within the last 2 seconds to catch race conditions
+                    if (msg.timestamp >= (startTime - 2000) && currentRoom !== r) {
                         if (msg.userId !== myName && msg.userId !== 'Você' && msg.userId !== 'Sistema') {
                             unreadCounts[r] = (unreadCounts[r] || 0) + 1;
                             updateRoomBadge(r);
@@ -3341,7 +3341,7 @@
             setInterval(() => {
                 rooms.forEach(r => updateRoomBadge(r));
                 updateGlobalBadges();
-            }, 5000);
+            }, 3000);
         }
 
         function sendMessage() {
