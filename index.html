@@ -3308,9 +3308,7 @@
             document.getElementById('chat-bottom-area').style.display = 'flex';
             document.getElementById('chat-room-avatar').textContent = roomEmoji(r);
             
-            // Mark as read: store the current time as the 'last read' baseline
-            const path = getSafePath(r);
-            localStorage.setItem('last_read_' + path, Date.now());
+            // Mark as read
             unreadCounts[r] = 0;
             updateRoomBadge(r);
             
@@ -3319,23 +3317,33 @@
 
         function startNotificationsWatcher() {
             if (!db) return;
+            let status = {};
             
             rooms.forEach(r => {
                 const path = getSafePath(r);
-                // Get the last time the user read this room, default to now if never read
-                const lastRead = parseInt(localStorage.getItem('last_read_' + path) || Date.now());
+                status[r] = false;
                 
+                // Track current messages to ignore them
+                db.ref('chats/' + path).once('value', () => {
+                    setTimeout(() => { status[r] = true; }, 500);
+                });
+                
+                // Watch for ANY new message added
                 db.ref('chats/' + path).on('child_added', (snapshot) => {
-                    const msg = snapshot.val();
-                    if (!msg || !msg.timestamp) return;
-                    
-                    // Trigger for any message sent AFTER the user last read this room
-                    if (msg.timestamp > lastRead && currentRoom !== r) {
-                        unreadCounts[r] = (unreadCounts[r] || 0) + 1;
-                        updateRoomBadge(r);
+                    if (status[r] && currentRoom !== r) {
+                        const msg = snapshot.val();
+                        // Verify it's not from current user (optional but let's keep it for cleanliness)
+                        const myName = document.getElementById('user-display-name').textContent;
+                        if (msg.userId !== myName && msg.userId !== 'Você') {
+                            unreadCounts[r] = (unreadCounts[r] || 0) + 1;
+                            updateRoomBadge(r);
+                        }
                     }
                 });
             });
+            
+            // Periodically refresh global count just in case
+            setInterval(updateGlobalBadges, 3000);
         }
 
         function sendMessage() {
