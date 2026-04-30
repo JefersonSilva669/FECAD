@@ -2410,9 +2410,12 @@
                     <div class="fc-subject-btn" onclick="fcFallbackSubject('Química')">🧪 Química</div>
                     <div class="fc-subject-btn" onclick="fcFallbackSubject('Física')">⚡ Física</div>
                     <div class="fc-subject-btn" onclick="fcFallbackSubject('Lógica de Programação')">💻 Lógica</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Sistemas Operacionais')">⚙️ Sis. Oper.</div>
-                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Web Design')">🎨 Web Design</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Linguagem de Programação')">⌨️ Ling. Prog.</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Manutenção e Suporte')">🔧 Manutenção</div>
                     <div class="fc-subject-btn" onclick="fcFallbackSubject('Robótica')">🤖 Robótica</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Sistemas Operacionais')">⚙️ Sis. Oper.</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Tecnologias Interativas')">📱 Tec. Interat.</div>
+                    <div class="fc-subject-btn" onclick="fcFallbackSubject('Web Design')">🎨 Web Design</div>
                 </div>`);
             });
         }
@@ -2458,15 +2461,19 @@
                             'Biologia': [ {q:'O que é a Célula?', a:'A unidade básica estrutural e funcional de todos os seres vivos.'}, {q:'O que é Mitose?', a:'Divisão celular que resulta em duas células-filhas geneticamente idênticas.'}, {q:'O que é DNA?', a:'Molécula que carrega a informação genética.'}, {q:'O que são Ribossomos?', a:'Organelas responsáveis pela síntese de proteínas.'}, {q:'O que é Fotossíntese?', a:'Processo pelo qual plantas produzem seu alimento.'} ],
                             'Física': [ {q:'Qual a 1ª Lei de Newton?', a:'Princípio da Inércia: um corpo em repouso tende a permanecer em repouso.'}, {q:'Fórmula da Velocidade Média?', a:'Vm = ΔS / Δt (Variação de espaço sobre tempo).'}, {q:'O que é Força Peso?', a:'Força com que a gravidade atrai um corpo (P = m.g).'}, {q:'O que é Trabalho?', a:'Medida da energia transferida pela aplicação de uma força.'} ],
                             'Matemática': [ {q:'O que é Função de 1º Grau?', a:'Relação matemática cuja lei de formação é f(x) = ax + b.'}, {q:'O que é Teorema de Pitágoras?', a:'A soma dos quadrados dos catetos é igual ao quadrado da hipotenusa.'}, {q:'O que são Números Primos?', a:'Números divisíveis apenas por 1 e por eles mesmos.'}, {q:'Fórmula de Bhaskara', a:'x = (-b ± √(b² - 4ac)) / 2a'} ],
-                            'Química': [ {q:'O que é a Tabela Periódica?', a:'Organização dos elementos baseada no número atômico e propriedades.'}, {q:'O que é Ligação Covalente?', a:'Ligação onde os átomos compartilham pares de elétrons.'}, {q:'O que é uma Base (Arrhenius)?', a:'Substância que em solução aquosa libera íons OH-.'}, {q:'O que é Número Atômico (Z)?', a:'Quantidade de prótons no núcleo de um átomo.'} ],
-                            'Lógica de Programação': [ {q:'O que é um Algoritmo?', a:'Sequência finita e ordenada de passos para resolver um problema.'}, {q:'O que é uma Variável?', a:'Espaço na memória destinado a guardar informações temporárias.'}, {q:'Diferença entre IF e WHILE?', a:'IF executa uma vez se verdadeiro; WHILE repete enquanto verdadeiro.'}, {q:'O que é Loop Infinito?', a:'Estrutura de repetição cuja condição de parada nunca é atingida.'} ],
-                            'Sistemas Operacionais': [ {q:'Qual o papel do Sistema Operacional?', a:'Gerenciar os recursos de hardware e fornecer uma interface para os aplicativos.'}, {q:'O que é Gerenciamento de Processos?', a:'Função do SO que divide o tempo da CPU entre programas em execução.'}, {q:'Diferença entre Linux e Windows', a:'Linux é open-source; Windows é proprietário.'}, {q:'O que é Memória RAM?', a:'Memória volátil usada para armazenar programas e dados em execução.'} ],
-                            'Web Design': [ {q:'O que significa HTML?', a:'HyperText Markup Language (Linguagem de Marcação de Hipertexto).'}, {q:'Para que serve o CSS?', a:'Para estilizar a página HTML (cores, fontes, layout).'}, {q:'O que é Design Responsivo?', a:'Design que se adapta a qualquer tamanho de tela.'}, {q:'Diferença entre UI e UX?', a:'UI é a Interface visual; UX é a Experiência geral e fluxo do usuário.'} ],
-                            'Robótica': [ {q:'O que é um Arduino?', a:'Plataforma de prototipagem eletrônica de hardware livre.'}, {q:'Função de um Resistor?', a:'Limitar a corrente elétrica que passa por um circuito.'}, {q:'Sensor vs Atuador', a:'Sensor lê dados do ambiente; Atuador realiza uma ação (ex: motor).'}, {q:'O que são pinos PWM?', a:'Pinos digitais que simulam uma saída analógica.'} ]
+                            'Química': [ {q:'O que é a Tabela Periódica?', a:'Organização dos elementos baseada no número atômico e propriedades.'}, {q:'O que é Ligação Covalente?', a:'Ligação onde os átomos compartilham pares de elétrons.'}, {q:'O que é uma Base (Arrhenius)?', a:'Substância que em solução aquosa libera íons OH-.'}, {q:'O que é Número Atômico (Z)?', a:'Quantidade de prótons no núcleo de um átomo.'} ]
                         };
+                        
+                        // Populate dynamically from revisaoData
+                        if (typeof revisaoData !== 'undefined') {
+                            revisaoData.forEach(sub => {
+                                fbDB[sub.name] = sub.topics.map(t => ({ q: t.q, a: t.a }));
+                            });
+                        }
+
                         let pool = fbDB[fcState.subject] || fbDB['Biologia'];
                         let shuffled = [...pool].sort(()=>0.5-Math.random()).slice(0, count);
-                        while(shuffled.length < count) {
+                        while(shuffled.length < count && pool.length > 0) {
                             let item = pool[Math.floor(Math.random()*pool.length)];
                             shuffled.push({q: item.q, a: item.a});
                         }
@@ -2783,6 +2790,33 @@
             testState.answered = false;
             const q = testState.questions[testState.currentIndex];
             
+            // === MODO FLASHCARD SIMPLES (pergunta / resposta) ===
+            if (!q.options || q.options.length === 0) {
+                list.innerHTML = `
+                    <div style="width:100%; max-width:800px; margin:0 auto; padding:40px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                            <button onclick="toggleTheme()" style="background:var(--glass); border:1px solid var(--border); padding:6px 12px; border-radius:12px; cursor:pointer; color:var(--text-main); font-size:14px; font-weight:bold;" id="theme-btn">🌓 Alternar Tema</button>
+                            <span class="tag" style="font-size:12px; opacity:0.7;">Card ${testState.currentIndex + 1} de ${testState.questions.length} — ${q.tag}</span>
+                        </div>
+                        <div style="font-size:13px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Pergunta</div>
+                        <div style="font-size:20px; line-height:1.7; color:var(--text-main); margin-bottom:32px; padding:24px; background:rgba(99,102,241,0.05); border:1px solid rgba(99,102,241,0.2); border-radius:16px;">
+                            ${q.q}
+                        </div>
+                        <div id="fc-answer-reveal" style="display:none;">
+                            <div style="font-size:13px; font-weight:700; color:#10b981; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Resposta</div>
+                            <div style="font-size:17px; line-height:1.7; color:var(--text-main); padding:24px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.3); border-radius:16px; margin-bottom:24px;">
+                                ${q.a}
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:12px; justify-content:center;" id="fc-card-actions">
+                            <button class="btn-upload" style="background:rgba(99,102,241,0.1); border:1px solid var(--primary);" onclick="document.getElementById('fc-answer-reveal').style.display='block'; document.getElementById('fc-reveal-btn').style.display='none'; document.getElementById('fc-card-actions').innerHTML=\'<button class=\\"btn-upload\\" style=\\"background:rgba(16,185,129,0.15);\\" onclick=\\"nextTestQuestion()\\">✅ Entendido — Próximo ❯</button><button class=\\"btn-upload\\" style=\\"background:rgba(239,68,68,0.1); margin-left:0\\" onclick=\\"nextTestQuestion()\\">❌ Errei — Próximo ❯</button>\';" id="fc-reveal-btn">👁️ Revelar Resposta</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // === MODO EXERCÍCIO (múltipla escolha) ===
             let html = `
                 <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 40px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
