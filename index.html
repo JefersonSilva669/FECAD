@@ -3088,40 +3088,36 @@
                 feedbacksContainer.innerHTML = '<div style="opacity: 0.5; font-style: italic;">Ainda não há recomendações. Seja o primeiro!</div>';
             }
             
-            setupInteractiveStars();
+            setupInteractiveStars(1); // sempre começa em 1 estrela ao abrir
             openModal('viewModal');
         }
 
-        let currentRating = 5;
-        function setupInteractiveStars() {
+        let currentRating = 1;
+        function setupInteractiveStars(initialRating) {
+            currentRating = (initialRating !== undefined) ? initialRating : currentRating;
             const container = document.getElementById('interactive-stars');
-            if(container) {
-                renderStars();
+            if (container) {
+                container.setAttribute('data-rating', currentRating);
+                _drawStars(currentRating, false);
             }
         }
-        function renderStars() {
+        function _drawStars(highlight, isHover) {
             const container = document.getElementById('interactive-stars');
             if (!container) return;
-            container.innerHTML = Array(5).fill(0).map((_, i) =>
-                `<span style="color: ${i < currentRating ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; cursor:pointer; font-size:28px; padding: 2px 4px; transition:transform 0.1s;" 
-                 onmouseover="highlightStars(${i+1})" 
-                 onmouseout="renderStars()" 
-                 onclick="setRating(${i+1})">&#9733;</span>`
-            ).join('');
-        }
-        function highlightStars(n) {
-            const container = document.getElementById('interactive-stars');
-            if (!container) return;
-            container.innerHTML = Array(5).fill(0).map((_, i) =>
-                `<span style="color: ${i < n ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; cursor:pointer; font-size:28px; padding: 2px 4px; transform:scale(1.2)" 
-                 onmouseover="highlightStars(${i+1})" 
-                 onmouseout="renderStars()" 
-                 onclick="setRating(${i+1})">&#9733;</span>`
-            ).join('');
+            const saved = parseInt(container.getAttribute('data-rating')) || 1;
+            container.innerHTML = Array(5).fill(0).map((_, i) => {
+                const lit = i < highlight;
+                return `<span 
+                    style="color:${lit ? '#fbbf24' : 'rgba(255,255,255,0.15)'}; cursor:pointer; font-size:32px; padding:0 3px; display:inline-block; transition:transform 0.1s; transform:${lit && isHover ? 'scale(1.25)' : 'scale(1)'};"
+                    onmouseover="_drawStars(${i+1}, true)"
+                    onmouseout="_drawStars(parseInt(document.getElementById('interactive-stars').getAttribute('data-rating')), false)"
+                    onclick="currentRating=${i+1}; document.getElementById('interactive-stars').setAttribute('data-rating', ${i+1}); _drawStars(${i+1}, false);"
+                >&#9733;</span>`;
+            }).join('');
         }
         function setRating(n) {
             currentRating = n;
-            renderStars();
+            setupInteractiveStars(n);
         }
 
         function addFeedback() {
@@ -3137,7 +3133,8 @@
             let userName = document.getElementById('user-display-name').textContent;
             if (!userName || userName === 'Visitante') userName = 'Visitante Anônimo';
             
-            const feedbackData = { user: userName, text, rating: currentRating, timestamp: Date.now() };
+            const savedRating = parseInt(document.getElementById('interactive-stars')?.getAttribute('data-rating')) || currentRating;
+            const feedbackData = { user: userName, text, rating: savedRating, timestamp: Date.now() };
 
             if (db && nb.firebaseKey) {
                 db.ref(`notebooks/${nb.firebaseKey}/feedbacks`).push(feedbackData)
