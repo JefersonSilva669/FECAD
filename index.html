@@ -3195,11 +3195,13 @@
         }
 
         const rooms = ['Matemática', 'Física', 'Química', 'Biologia', 'Geografia', 'História', 'Português', 'Literatura', 'Artes', 'Educação Física', 'Geral'];
-        let unreadCounts = {};
-        rooms.forEach(r => unreadCounts[r] = 0);
+        let unreadCounts = JSON.parse(localStorage.getItem('fecad_unread') || '{}');
         
+        // Ensure all rooms have a count
+        rooms.forEach(r => { if(unreadCounts[r] === undefined) unreadCounts[r] = 0; });
+
         function getRoomId(r) {
-            return 'badge-' + btoa(unescape(encodeURIComponent(r))).replace(/=/g, '');
+            return 'badge-' + r.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
         }
 
         const roomEmojis = {
@@ -3224,16 +3226,16 @@
         }
 
         function updateRoomBadge(r) {
-            const badgeId = getRoomId(r);
-            const badge = document.getElementById(badgeId);
+            const badge = document.getElementById(getRoomId(r));
             if (badge) {
                 if (unreadCounts[r] > 0) {
-                    badge.textContent = unreadCounts[r];
+                    badge.textContent = unreadCounts[r] > 99 ? '99+' : unreadCounts[r];
                     badge.classList.add('visible');
                 } else {
                     badge.classList.remove('visible');
                 }
             }
+            localStorage.setItem('fecad_unread', JSON.stringify(unreadCounts));
             updateGlobalBadges();
         }
 
@@ -3277,18 +3279,24 @@
             rooms.forEach(r => {
                 const safeRoomName = r.replace(/[.#$\[\]]/g, '');
                 
-                db.ref('chats/' + safeRoomName).on('child_added', (snapshot) => {
-                    if (currentRoom !== r) {
-                        const msg = snapshot.val();
-                        const myName = document.getElementById('user-display-name').textContent;
-                        
-                        if (msg.userId !== myName && msg.userId !== 'Você' && msg.userId !== 'Sistema') {
-                            unreadCounts[r] = (unreadCounts[r] || 0) + 1;
-                            updateRoomBadge(r);
-                        }
+                // Watch for new messages
+                db.ref('chats/' + safeRoomName).limitToLast(50).on('child_added', (snapshot) => {
+                    const msg = snapshot.val();
+                    const myName = document.getElementById('user-display-name').textContent;
+                    
+                    if (currentRoom !== r && msg.userId !== myName && msg.userId !== 'Você' && msg.userId !== 'Sistema') {
+                        // Check if this message was already counted (optional, but for now simple increment)
+                        unreadCounts[r] = (unreadCounts[r] || 0) + 1;
+                        updateRoomBadge(r);
                     }
                 });
             });
+            
+            // Force update UI every 3 seconds to ensure sync
+            setInterval(() => {
+                rooms.forEach(r => updateRoomBadge(r));
+                updateGlobalBadges();
+            }, 3000);
         }
 
         function sendMessage() {
