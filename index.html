@@ -2138,7 +2138,8 @@
         let currentChatRef = null;
 
         function getSafePath(str) {
-            return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_');
+            if (!str) return 'geral';
+            return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
         }
 
         function getSalaColor(sala) {
@@ -3224,9 +3225,6 @@
             return 'badge-' + r.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
         }
 
-        function getSafePath(r) {
-            return r.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-        }
 
         const roomEmojis = {
             'Matemática': '📊', 'Física': '⚡', 'Química': '⚗️', 'Biologia': '🧬',
@@ -3310,14 +3308,11 @@
             document.getElementById('chat-bottom-area').style.display = 'flex';
             document.getElementById('chat-room-avatar').textContent = roomEmoji(r);
             
-            // Mark as read: store the current total messages as the 'seen' baseline
+            // Mark as read: store the current time as the 'last read' baseline
             const path = getSafePath(r);
-            db.ref('chats/' + path).once('value', (snapshot) => {
-                const total = snapshot.numChildren();
-                localStorage.setItem('last_count_' + path, total);
-                unreadCounts[r] = 0;
-                updateRoomBadge(r);
-            });
+            localStorage.setItem('last_read_' + path, Date.now());
+            unreadCounts[r] = 0;
+            updateRoomBadge(r);
             
             listenToRoom(r);
         }
@@ -3327,22 +3322,18 @@
             
             rooms.forEach(r => {
                 const path = getSafePath(r);
+                // Get the last time the user read this room, default to now if never read
+                const lastRead = parseInt(localStorage.getItem('last_read_' + path) || Date.now());
                 
-                // Watch the total message count for each room
-                db.ref('chats/' + path).on('value', (snapshot) => {
-                    const total = snapshot.numChildren();
-                    const lastSeen = parseInt(localStorage.getItem('last_count_' + path) || 0);
+                db.ref('chats/' + path).on('child_added', (snapshot) => {
+                    const msg = snapshot.val();
+                    if (!msg || !msg.timestamp) return;
                     
-                    if (currentRoom === r) {
-                        // If we are currently in the room, update the 'seen' baseline automatically
-                        localStorage.setItem('last_count_' + path, total);
-                        unreadCounts[r] = 0;
-                    } else {
-                        // Calculate unread count based on the difference
-                        const diff = total - lastSeen;
-                        unreadCounts[r] = diff > 0 ? diff : 0;
+                    // Trigger for any message sent AFTER the user last read this room
+                    if (msg.timestamp > lastRead && currentRoom !== r) {
+                        unreadCounts[r] = (unreadCounts[r] || 0) + 1;
+                        updateRoomBadge(r);
                     }
-                    updateRoomBadge(r);
                 });
             });
         }
