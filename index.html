@@ -2476,11 +2476,8 @@
                         }
 
                         let pool = fbDB[fcState.subject] || fbDB['Biologia'];
-                        let shuffled = [...pool].sort(()=>0.5-Math.random()).slice(0, count);
-                        while(shuffled.length < count && pool.length > 0) {
-                            let item = pool[Math.floor(Math.random()*pool.length)];
-                            shuffled.push({q: item.q, a: item.a});
-                        }
+                        let actualCount = Math.min(count, pool.length);
+                        let shuffled = [...pool].sort(()=>0.5-Math.random()).slice(0, actualCount);
                         fcState.cards = shuffled.map(c => ({...c, tag: fcState.subject}));
                     }
                     
@@ -2731,14 +2728,10 @@
             };
 
             const pool = dbEx[subject] || dbEx['Geral'] || dbEx['Matemática'];
+            const actualCount = Math.min(count, pool.length);
             const shuffled = [...pool].sort(() => 0.5 - Math.random());
             
-            // Replicar o banco se count for maior que as questões (Fallback de segurança)
-            while (shuffled.length < count) {
-                shuffled.push(...([...pool].sort(() => 0.5 - Math.random())));
-            }
-            
-            const selected = shuffled.slice(0, count);
+            const selected = shuffled.slice(0, actualCount);
 
             const logBox = document.createElement('div');
             logBox.className = 'message msg-received';
