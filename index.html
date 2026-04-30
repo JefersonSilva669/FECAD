@@ -3320,35 +3320,36 @@
             listenToRoom(r);
         }
 
+        let watcherInitiated = false;
         function startNotificationsWatcher() {
-            if (!db) return;
-            let status = {};
+            if (!db || watcherInitiated) return;
+            watcherInitiated = true;
+            console.log("--- NOTIFICATION WATCHER STARTED ---");
+            
+            const sessionStart = Date.now();
             
             rooms.forEach(r => {
                 const path = getSafePath(r);
-                status[r] = false;
+                const badgeId = getRoomId(r);
                 
-                // Track current messages to ignore them
-                db.ref('chats/' + path).once('value', () => {
-                    setTimeout(() => { status[r] = true; }, 500);
-                });
-                
-                // Watch for ANY new message added
-                db.ref('chats/' + path).on('child_added', (snapshot) => {
-                    if (status[r] && currentRoom !== r) {
-                        const msg = snapshot.val();
-                        // Verify it's not from current user (optional but let's keep it for cleanliness)
-                        const myName = document.getElementById('user-display-name').textContent;
-                        if (msg.userId !== myName && msg.userId !== 'Você') {
-                            unreadCounts[r] = (unreadCounts[r] || 0) + 1;
-                            updateRoomBadge(r);
-                        }
+                db.ref('chats/' + path).limitToLast(5).on('child_added', (snapshot) => {
+                    const msg = snapshot.val();
+                    if (!msg) return;
+
+                    // Log detection for debugging (User can see this in F12)
+                    console.log(`[Watcher] Msg in ${r}: from ${msg.userId}. currentRoom: ${currentRoom}`);
+
+                    // Logic: If message is new (or at least close to now) AND we are not in that room
+                    // We use a small 10-second buffer to catch messages sent just before load
+                    if (currentRoom !== r && (msg.timestamp > (sessionStart - 10000))) {
+                        unreadCounts[r] = (unreadCounts[r] || 0) + 1;
+                        console.log(`[Watcher] Room ${r} unread count: ${unreadCounts[r]}`);
+                        updateRoomBadge(r);
                     }
                 });
             });
             
-            // Periodically refresh global count just in case
-            setInterval(updateGlobalBadges, 3000);
+            setInterval(updateGlobalBadges, 2000);
         }
 
         function sendMessage() {
