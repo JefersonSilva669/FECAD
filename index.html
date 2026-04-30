@@ -29,6 +29,17 @@
             --gradient: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
         }
 
+        body.light-theme {
+            --bg-deep: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-overlay: rgba(255, 255, 255, 0.7);
+            --text-main: #0f172a;
+            --text-dim: #475569;
+            --border: rgba(0, 0, 0, 0.1);
+            --glass: rgba(0, 0, 0, 0.03);
+            --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -2673,11 +2684,12 @@
             const q = testState.questions[testState.currentIndex];
             
             let html = `
-                <div style="max-width: 800px; margin: 0 auto; padding: 10px 40px;">
-                    <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:30px;">
+                <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 40px; background:var(--bg-card); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                        <button onclick="document.body.classList.toggle('light-theme')" style="background:var(--glass); border:1px solid var(--border); padding:6px 12px; border-radius:12px; cursor:pointer; color:var(--text-main); font-size:14px; font-weight:bold; transition:0.3s;" id="theme-btn">🌓 Alternar Tema</button>
                         <span class="tag" style="font-size:12px; opacity:0.7;">Questão ${testState.currentIndex + 1} de ${testState.questions.length} — ${q.tag}</span>
                     </div>
-                    <div style="font-size:18px; line-height:1.7; color:var(--text); margin-bottom:32px;">
+                    <div style="font-size:18px; line-height:1.7; color:var(--text-main); margin-bottom:32px;">
                         <span style="color:#ef4444; font-weight:bold; font-size:20px;">${testState.currentIndex + 1}. </span>
                         ${q.q}
                     </div>
