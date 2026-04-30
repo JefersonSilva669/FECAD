@@ -2007,7 +2007,7 @@
                             <button class="btn-upload" style="padding: 14px 28px; font-size: 14px;" onclick="saveProfileChanges()">Salvar Alterações</button>
                         </div>
                         <button class="btn-upload" style="width: 100%; background: #ef4444; margin-top: 20px;" onclick="resetDatabase()">⚠️ Resetar Sistema (Limpar Tudo)</button>
-                        <button class="btn-upload" style="width: 100%; background: #6366f1; margin-top: 10px;" onclick="testNotification()">🔔 Testar Notificação (Simular)</button>
+                        <button class="btn-upload" style="width: 100%; background: #6366f1; margin-top: 10px;" onclick="testNotification()">&#128276; Testar Notifica&#231;&#227;o (Simular)</button>
                     </div>
                 </div>
             </main>
@@ -2475,7 +2475,11 @@
                             });
                         }
 
-                        let pool = fbDB[fcState.subject] || fbDB['Biologia'];
+                        let pool = fbDB[fcState.subject] || null;
+                        if (!pool || pool.length === 0) {
+                            fcAIMessage(`⚠️ Não há flashcards cadastrados para <strong>${fcState.subject}</strong> ainda. Tente outra matéria ou use o modo Exercícios.`);
+                            return;
+                        }
                         let actualCount = Math.min(count, pool.length);
                         let shuffled = [...pool].sort(()=>0.5-Math.random()).slice(0, actualCount);
                         fcState.cards = shuffled.map(c => ({...c, tag: fcState.subject}));
@@ -3092,14 +3096,32 @@
         function setupInteractiveStars() {
             const container = document.getElementById('interactive-stars');
             if(container) {
-                currentRating = 5;
-                const renderStars = () => {
-                    container.innerHTML = Array(5).fill(0).map((_, i) => 
-                        `<span style="color: ${i < currentRating ? '#fbbf24' : 'rgba(255,255,255,0.2)'}" onclick="currentRating=${i+1}; setupInteractiveStars();">★</span>`
-                    ).join('');
-                };
                 renderStars();
             }
+        }
+        function renderStars() {
+            const container = document.getElementById('interactive-stars');
+            if (!container) return;
+            container.innerHTML = Array(5).fill(0).map((_, i) =>
+                `<span style="color: ${i < currentRating ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; cursor:pointer; font-size:28px; padding: 2px 4px; transition:transform 0.1s;" 
+                 onmouseover="highlightStars(${i+1})" 
+                 onmouseout="renderStars()" 
+                 onclick="setRating(${i+1})">&#9733;</span>`
+            ).join('');
+        }
+        function highlightStars(n) {
+            const container = document.getElementById('interactive-stars');
+            if (!container) return;
+            container.innerHTML = Array(5).fill(0).map((_, i) =>
+                `<span style="color: ${i < n ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; cursor:pointer; font-size:28px; padding: 2px 4px; transform:scale(1.2)" 
+                 onmouseover="highlightStars(${i+1})" 
+                 onmouseout="renderStars()" 
+                 onclick="setRating(${i+1})">&#9733;</span>`
+            ).join('');
+        }
+        function setRating(n) {
+            currentRating = n;
+            renderStars();
         }
 
         function addFeedback() {
@@ -3506,10 +3528,21 @@
             const sidebar = document.getElementById('app-sidebar');
             const hamburger = document.getElementById('hamburger-btn');
             const overlay = document.getElementById('sidebar-overlay');
-            
-            sidebar.classList.toggle('active');
-            hamburger.classList.toggle('active');
-            overlay.classList.toggle('active');
+            const isOpen = sidebar.classList.contains('active');
+            if (isOpen) {
+                sidebar.classList.remove('active');
+                hamburger.classList.remove('active');
+                overlay.classList.remove('active');
+            } else {
+                sidebar.classList.add('active');
+                hamburger.classList.add('active');
+                overlay.classList.add('active');
+            }
+        }
+        function closeSidebar() {
+            document.getElementById('app-sidebar').classList.remove('active');
+            document.getElementById('hamburger-btn').classList.remove('active');
+            document.getElementById('sidebar-overlay').classList.remove('active');
         }
 
         function previewImage(event) {
